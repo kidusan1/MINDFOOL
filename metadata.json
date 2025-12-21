@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Mindfool",
+  "description": "A minimalist Buddhist practice and self-growth application featuring meditation timers, course management, and habit tracking.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
