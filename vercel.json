@@ -1,22 +1,8 @@
 {
-    "rewrites": [
-      {
-        "source": "/supabase/:path*",
-        "destination": "https://qcbpsqvoyxifwtkszlrm.supabase.co/rest/v1/:path*"
-      },
-      {
-        "source": "/supabase-auth/:path*",
-        "destination": "https://qcbpsqvoyxifwtkszlrm.supabase.co/auth/v1/:path*"
-      }
-    ],
-    "headers": [
-      {
-        "source": "/supabase/(.*)",
-        "headers": [
-          { "key": "Access-Control-Allow-Origin", "value": "*" },
-          { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-          { "key": "Access-Control-Allow-Headers", "value": "apikey, Authorization, Content-Type" }
-        ]
-      }
-    ]
-  }
+  "rewrites": [
+    {
+      "source": "/supabase/:path*",
+      "destination": "https://qcbpsqvoyxifwtkszlrm.supabase.co/rest/v1/:path*"
+    }
+  ]
+}
