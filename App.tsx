@@ -230,23 +230,22 @@ const App: React.FC = () => {
   // 全局数据监听：从 Supabase 拉取所有用户的功课时长、打卡和请假状态
   const loadAllUsersData = useCallback(async () => {
     try {
-      // 拉取所有用户的 stats 数据
-      const { data: statsData, error: statsError } = await supabase
-        .from('user_data')
-        .select('user_id, content')
-        .eq('key_name', 'growth_app_stats');
+      // 从 daily_stats 表拉取当天所有用户的数据（最准确和实时）
+      const todayStr = new Date().toISOString().split('T')[0];
+      const { data: dailyStatsData, error: dailyStatsError } = await supabase
+        .from('daily_stats')
+        .select('user_id, nianfo, baifo, zenghui, breath')
+        .eq('date', todayStr);
       
-      if (!statsError && statsData) {
+      if (!dailyStatsError && dailyStatsData) {
         const allStats: Record<string, DailyStats> = {};
-        statsData.forEach((row: any) => {
-          if (row.content && typeof row.content === 'object') {
-            allStats[row.user_id] = {
-              nianfo: row.content.nianfo || 0,
-              baifo: row.content.baifo || 0,
-              zenghui: row.content.zenghui || 0,
-              breath: row.content.breath || 0,
-            };
-          }
+        dailyStatsData.forEach((row: any) => {
+          allStats[row.user_id] = {
+            nianfo: row.nianfo || 0,
+            baifo: row.baifo || 0,
+            zenghui: row.zenghui || 0,
+            breath: row.breath || 0,
+          };
         });
         // 合并到现有的 userStatsMap
         setUserStatsMap(prev => ({ ...prev, ...allStats }));
@@ -528,7 +527,7 @@ const App: React.FC = () => {
             checkInStatus: '',
             updatedAt: ''
         };
-        return {
+        const updated = {
             ...prev,
             [key]: {
                 ...existing,
@@ -536,6 +535,9 @@ const App: React.FC = () => {
                 updatedAt: new Date().toISOString()
             }
         };
+        // 立即保存到全局配置，确保实时同步
+        saveGlobalConfig('weekly_states', updated);
+        return updated;
     });
   };
 
@@ -781,8 +783,17 @@ const App: React.FC = () => {
     // 重新加载所有用户列表（确保包含最新注册的用户）
     await loadAllUsers();
     
-    // 重新加载所有用户数据
+    // 重新加载所有用户数据（包括功课时长和打卡/请假状态）
     await loadAllUsersData();
+    
+    // 如果是新用户，确保立即在全局数据中可见
+    if (isNewUser) {
+      // 延迟一下确保数据已保存
+      setTimeout(async () => {
+        await loadAllUsers();
+        await loadAllUsersData();
+      }, 1000);
+    }
     
     // 检查是否是管理员登录（账号 管理员 和密码 010101）
     if ((user.name === '管理员' || user.isAdmin === true) && 
