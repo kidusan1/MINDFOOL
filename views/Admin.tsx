@@ -24,10 +24,11 @@ interface AdminProps {
   lang: Language;
   authCode: string;
   setAuthCode: (code: string) => void;
+  onSaveGlobalConfigs: () => Promise<void>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
-  allUsers, onUpdateUserPermission, coursesMap, courseContents, onUpdateCourseContent, onUpdateCourseStatus, onUpdateCourseTitle, onAddCourseWeek, onDeleteCourseWeek, weeklyStates, splashQuotes, setSplashQuotes, homeQuotes, setHomeQuotes, checkInConfig, setCheckInConfig, lang, authCode, setAuthCode
+  allUsers, onUpdateUserPermission, coursesMap, courseContents, onUpdateCourseContent, onUpdateCourseStatus, onUpdateCourseTitle, onAddCourseWeek, onDeleteCourseWeek, weeklyStates, splashQuotes, setSplashQuotes, homeQuotes, setHomeQuotes, checkInConfig, setCheckInConfig, lang, authCode, setAuthCode, onSaveGlobalConfigs
 }) => {
   const t = TRANSLATIONS[lang].admin;
   const [activeTab, setActiveTab] = useState<'signups' | 'courses' | 'users' | 'config'>('signups');
@@ -201,7 +202,7 @@ const Admin: React.FC<AdminProps> = ({
                                 placeholder={t.contentPlaceholder} 
                             />
                         </div>
-                        <button onClick={() => showToast('修改已保存')} className="w-full py-4 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-transform active:scale-[0.98]">
+                        <button onClick={async () => { await onSaveGlobalConfigs(); showToast('修改已保存'); }} className="w-full py-4 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-transform active:scale-[0.98]">
                             保存当前周修改
                         </button>
                     </div>
@@ -294,7 +295,7 @@ const Admin: React.FC<AdminProps> = ({
                                     className="w-full h-40 bg-gray-50 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-primary/20 leading-relaxed" 
                                 />
                             </div>
-                            <button onClick={() => showToast('配置已更新')} className="w-full py-4 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary/90 transition-colors">
+                            <button onClick={async () => { await onSaveGlobalConfigs(); showToast('配置已更新'); }} className="w-full py-4 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary/90 transition-colors">
                                 保存配置
                             </button>
                         </div>
@@ -352,7 +353,7 @@ const Admin: React.FC<AdminProps> = ({
                                 >
                                     {t.getLocation}
                                 </button>
-                                <button onClick={() => { setCheckInConfig(checkInConfig); showToast('定位点已同步'); }} className="py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary/90 transition-colors">
+                                <button onClick={async () => { await onSaveGlobalConfigs(); showToast('定位点已同步'); }} className="py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary/90 transition-colors">
                                     保存定位设置
                                 </button>
                             </div>

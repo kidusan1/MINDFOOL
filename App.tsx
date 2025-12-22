@@ -105,6 +105,27 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // 保存全局配置到 Supabase
+  const saveGlobalConfig = useCallback(async (key: string, content: any) => {
+    try {
+      const { error } = await supabase
+        .from('global_configs')
+        .upsert({
+          key: key,
+          content: content,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'key'
+        });
+      
+      if (error) {
+        console.error(`Error saving global config ${key} to Supabase:`, error);
+      }
+    } catch (err) {
+      console.error(`Error saving global config ${key} to Supabase:`, err);
+    }
+  }, []);
+
   const [allUsers, setAllUsers] = useState<User[]>(() => loadState('growth_app_users', INITIAL_USERS));
   const [authCode, setAuthCode] = useState(() => loadState('growth_app_auth_code', '888888'));
   const [splashQuotes, setSplashQuotes] = useState<string[]>(() => loadState('growth_app_splash_quotes', DEFAULT_SPLASH_QUOTES));
@@ -119,6 +140,49 @@ const App: React.FC = () => {
   const [checkInConfig, setCheckInConfig] = useState<CheckInConfig>(() => loadState('growth_app_checkin_config', INITIAL_CHECKIN_CONFIG));
   const [lang, setLang] = useState<Language>(() => loadState('growth_app_lang', 'zh'));
   
+  // 从 Supabase 加载全局配置
+  const loadGlobalConfig = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('global_configs')
+        .select('key, content');
+
+      if (error) {
+        console.error('Error loading global configs from Supabase:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        data.forEach((row: { key: string; content: any }) => {
+          const { key, content } = row;
+          
+          switch (key) {
+            case 'courses_map':
+              if (content) setCoursesMap(content);
+              break;
+            case 'course_contents':
+              if (content) setCourseContents(content);
+              break;
+            case 'splash_quotes':
+              if (content && Array.isArray(content)) setSplashQuotes(content);
+              break;
+            case 'home_quotes':
+              if (content && Array.isArray(content)) setHomeQuotes(content);
+              break;
+            case 'checkin_config':
+              if (content) setCheckInConfig(content);
+              break;
+            case 'auth_code':
+              if (content) setAuthCode(content);
+              break;
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error loading global configs from Supabase:', err);
+    }
+  }, []);
+  
   // currentUser 需要在所有使用它的 useEffect 之前定义
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showSplash, setShowSplash] = useState(true);
@@ -132,9 +196,6 @@ const App: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
 
   useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUsers)); }, [allUsers]);
-  useEffect(() => { localStorage.setItem('growth_app_auth_code', JSON.stringify(authCode)); }, [authCode]);
-  useEffect(() => { localStorage.setItem('growth_app_splash_quotes', JSON.stringify(splashQuotes)); }, [splashQuotes]);
-  useEffect(() => { localStorage.setItem('growth_app_home_quotes', JSON.stringify(homeQuotes)); }, [homeQuotes]);
   
   // 同步用户数据到 Supabase
   useEffect(() => {
@@ -185,11 +246,39 @@ const App: React.FC = () => {
     localStorage.setItem('growth_app_weekly_states', JSON.stringify(weeklyStates));
   }, [weeklyStates, currentUser, saveToSupabase]);
 
-  useEffect(() => { localStorage.setItem('growth_app_courses_map', JSON.stringify(coursesMap)); }, [coursesMap]);
-  useEffect(() => { localStorage.setItem('growth_app_course_content', JSON.stringify(courseContents)); }, [courseContents]);
+  useEffect(() => { 
+    localStorage.setItem('growth_app_courses_map', JSON.stringify(coursesMap));
+    saveGlobalConfig('courses_map', coursesMap);
+  }, [coursesMap, saveGlobalConfig]);
+  
+  useEffect(() => { 
+    localStorage.setItem('growth_app_course_content', JSON.stringify(courseContents));
+    saveGlobalConfig('course_contents', courseContents);
+  }, [courseContents, saveGlobalConfig]);
+  
   useEffect(() => { localStorage.setItem('growth_app_week_shift', JSON.stringify(weekShift)); }, [weekShift]);
-  useEffect(() => { localStorage.setItem('growth_app_checkin_config', JSON.stringify(checkInConfig)); }, [checkInConfig]);
+  
+  useEffect(() => { 
+    localStorage.setItem('growth_app_checkin_config', JSON.stringify(checkInConfig));
+    saveGlobalConfig('checkin_config', checkInConfig);
+  }, [checkInConfig, saveGlobalConfig]);
+  
   useEffect(() => { localStorage.setItem('growth_app_lang', JSON.stringify(lang)); }, [lang]);
+  
+  useEffect(() => { 
+    localStorage.setItem('growth_app_splash_quotes', JSON.stringify(splashQuotes));
+    saveGlobalConfig('splash_quotes', splashQuotes);
+  }, [splashQuotes, saveGlobalConfig]);
+  
+  useEffect(() => { 
+    localStorage.setItem('growth_app_home_quotes', JSON.stringify(homeQuotes));
+    saveGlobalConfig('home_quotes', homeQuotes);
+  }, [homeQuotes, saveGlobalConfig]);
+  
+  useEffect(() => { 
+    localStorage.setItem('growth_app_auth_code', JSON.stringify(authCode));
+    saveGlobalConfig('auth_code', authCode);
+  }, [authCode, saveGlobalConfig]);
 
   useEffect(() => {
     let changed = false;
@@ -207,6 +296,11 @@ const App: React.FC = () => {
       }
     }
   }, [allUsers, currentUser]);
+
+  // 初始化：加载全局配置
+  useEffect(() => {
+    loadGlobalConfig();
+  }, [loadGlobalConfig]);
 
   // 初始化：检查 Supabase session 并加载用户数据
   useEffect(() => {
@@ -471,15 +565,58 @@ const App: React.FC = () => {
   const openEditModal = (rec: GrowthRecord) => { setEditingRecord(rec); setHistory(prev => [...prev, ViewName.RECORD]); setCurrentView(ViewName.RECORD_INPUT); };
   const openNewRecordModal = () => { setEditingRecord(null); setHistory(prev => [...prev, ViewName.RECORD]); setCurrentView(ViewName.RECORD_INPUT); };
   
-  const handleUpdateCourseContent = (version: string, id: number, content: string) => setCourseContents(prev => ({ ...prev, [`${version}-${id}`]: content }));
-  const handleUpdateCourseStatus = (version: string, id: number, status: CourseStatus) => setCoursesMap(prev => ({ ...prev, [version]: (prev[version] || []).map(c => c.id === id ? { ...c, status } : c) }));
-  const handleUpdateCourseTitle = (version: string, id: number, title: string) => setCoursesMap(prev => ({ ...prev, [version]: (prev[version] || []).map(c => c.id === id ? { ...c, title } : c) }));
-  const handleAddCourseWeek = (version: string) => setCoursesMap(prev => {
+  const handleUpdateCourseContent = (version: string, id: number, content: string) => {
+    setCourseContents(prev => {
+      const updated = { ...prev, [`${version}-${id}`]: content };
+      saveGlobalConfig('course_contents', updated);
+      return updated;
+    });
+  };
+  
+  const handleUpdateCourseStatus = (version: string, id: number, status: CourseStatus) => {
+    setCoursesMap(prev => {
+      const updated = { ...prev, [version]: (prev[version] || []).map(c => c.id === id ? { ...c, status } : c) };
+      saveGlobalConfig('courses_map', updated);
+      return updated;
+    });
+  };
+  
+  const handleUpdateCourseTitle = (version: string, id: number, title: string) => {
+    setCoursesMap(prev => {
+      const updated = { ...prev, [version]: (prev[version] || []).map(c => c.id === id ? { ...c, title } : c) };
+      saveGlobalConfig('courses_map', updated);
+      return updated;
+    });
+  };
+  
+  const handleAddCourseWeek = (version: string) => {
+    setCoursesMap(prev => {
       const list = prev[version] || [];
       const nextId = list.length + 1;
-      return { ...prev, [version]: [...list, { id: nextId, title: `${version.includes('成长班') ? '成长班' : '感理班'} 第${nextId}周: (新课程)`, status: CourseStatus.NOT_STARTED }] };
-  });
-  const handleDeleteCourseWeek = (version: string, idToDelete: number) => setCoursesMap(prev => ({ ...prev, [version]: (prev[version] || []).filter(c => c.id !== idToDelete) }));
+      const updated = { ...prev, [version]: [...list, { id: nextId, title: `${version.includes('成长班') ? '成长班' : '感理班'} 第${nextId}周: (新课程)`, status: CourseStatus.NOT_STARTED }] };
+      saveGlobalConfig('courses_map', updated);
+      return updated;
+    });
+  };
+  
+  const handleDeleteCourseWeek = (version: string, idToDelete: number) => {
+    setCoursesMap(prev => {
+      const updated = { ...prev, [version]: (prev[version] || []).filter(c => c.id !== idToDelete) };
+      saveGlobalConfig('courses_map', updated);
+      return updated;
+    });
+  };
+  
+  const handleSaveGlobalConfigs = useCallback(async () => {
+    await Promise.all([
+      saveGlobalConfig('courses_map', coursesMap),
+      saveGlobalConfig('course_contents', courseContents),
+      saveGlobalConfig('splash_quotes', splashQuotes),
+      saveGlobalConfig('home_quotes', homeQuotes),
+      saveGlobalConfig('checkin_config', checkInConfig),
+      saveGlobalConfig('auth_code', authCode),
+    ]);
+  }, [coursesMap, courseContents, splashQuotes, homeQuotes, checkInConfig, authCode, saveGlobalConfig]);
   const handleUpdateUserPermission = (userId: string, updates: Partial<User>) => setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
 
   if (showSplash) return <Splash onFinish={() => setShowSplash(false)} quotes={lang === 'en' ? SPLASH_QUOTES_EN : splashQuotes} />;
@@ -503,7 +640,7 @@ const App: React.FC = () => {
         {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
         {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
         {currentView === ViewName.ADMIN && (
-          <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} />
+          <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} />
         )}
       </Layout>
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
