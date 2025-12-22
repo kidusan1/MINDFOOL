@@ -448,18 +448,31 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
           // 使用 daily_stats 表的数据
           allTotalMinutes = dailyStatsData.map((row: any) => row.total_minutes || 0);
         } else {
-          // 如果 daily_stats 表没有数据，使用全局拉取的 allUsersStats 数据
-          allTotalMinutes = Object.values(allUsersStats).map((userStats: DailyStats) => 
-            (userStats.nianfo || 0) + (userStats.baifo || 0) + (userStats.zenghui || 0) + (userStats.breath || 0)
-          );
+          // 修复排名兜底逻辑：如果 daily_stats 表没有数据，必须从 allUsersStats 中提取数据
+          if (allUsersStats && Object.keys(allUsersStats).length > 0) {
+            allTotalMinutes = Object.values(allUsersStats).map((userStats: DailyStats) => 
+              (userStats.nianfo || 0) + (userStats.baifo || 0) + (userStats.zenghui || 0) + (userStats.breath || 0)
+            );
+          }
         }
         
         // 计算当前用户当天的总时长
         const currentUserTotal = totalMinutes;
         
-        // 计算排名百分比：有多少用户的总时长小于当前用户
+        // 解决 0% 显示问题：如果数据库中只有当前用户一个人，设置为 100%
         if (allTotalMinutes.length === 0) {
-          setRankingPercentage(0);
+          // 如果没有任何数据，检查 allUsersStats 是否只有当前用户
+          if (allUsersStats && Object.keys(allUsersStats).length === 1 && allUsersStats[user.id]) {
+            setRankingPercentage(100);
+          } else {
+            setRankingPercentage(0);
+          }
+          return;
+        }
+        
+        // 如果只有当前用户一个人，显示 100%
+        if (allTotalMinutes.length === 1 && allTotalMinutes[0] === currentUserTotal) {
+          setRankingPercentage(100);
           return;
         }
         

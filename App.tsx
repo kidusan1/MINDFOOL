@@ -425,6 +425,26 @@ const App: React.FC = () => {
     loadAllUsersData();
   }, [loadAllUsers, loadGlobalConfig, loadAllUsersData]);
 
+  // 强制初始化加载：当 currentUser 存在时，立即执行一次 loadAllUsersData
+  useEffect(() => {
+    if (currentUser) {
+      // 立即加载一次，确保全班人的时长都拉取到 userStatsMap 里
+      loadAllUsersData();
+    }
+  }, [currentUser, loadAllUsersData]);
+
+  // ========== 临时测试数据：给 userStatsMap 塞进 3 个虚拟用户的时长 ==========
+  useEffect(() => {
+    // 临时测试数据：3 个虚拟用户，时长分别是 1分、5分、10分
+    setUserStatsMap(prev => ({
+      ...prev,
+      'test_user_1': { nianfo: 1, baifo: 0, zenghui: 0, breath: 0 }, // 1分钟
+      'test_user_2': { nianfo: 3, baifo: 2, zenghui: 0, breath: 0 }, // 5分钟
+      'test_user_3': { nianfo: 5, baifo: 3, zenghui: 2, breath: 0 }, // 10分钟
+    }));
+  }, []); // 只在组件挂载时执行一次
+  // ========== 临时测试数据结束 ==========
+
   // 全局数据监听：当 currentView 切换时，重新拉取所有用户数据
   useEffect(() => {
     if (currentUser) {
