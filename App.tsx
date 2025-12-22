@@ -226,6 +226,38 @@ const App: React.FC = () => {
       console.error('Error refreshing weekly states:', err);
     }
   }, []);
+
+  // 全局数据监听：从 Supabase 拉取所有用户的功课时长、打卡和请假状态
+  const loadAllUsersData = useCallback(async () => {
+    try {
+      // 拉取所有用户的 stats 数据
+      const { data: statsData, error: statsError } = await supabase
+        .from('user_data')
+        .select('user_id, content')
+        .eq('key_name', 'growth_app_stats');
+      
+      if (!statsError && statsData) {
+        const allStats: Record<string, DailyStats> = {};
+        statsData.forEach((row: any) => {
+          if (row.content && typeof row.content === 'object') {
+            allStats[row.user_id] = {
+              nianfo: row.content.nianfo || 0,
+              baifo: row.content.baifo || 0,
+              zenghui: row.content.zenghui || 0,
+              breath: row.content.breath || 0,
+            };
+          }
+        });
+        // 合并到现有的 userStatsMap
+        setUserStatsMap(prev => ({ ...prev, ...allStats }));
+      }
+
+      // 拉取所有用户的 weekly_states 数据（从全局配置）
+      await refreshWeeklyStates();
+    } catch (err) {
+      console.error('Error loading all users data:', err);
+    }
+  }, [refreshWeeklyStates]);
   
   // currentUser 需要在所有使用它的 useEffect 之前定义
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -391,7 +423,15 @@ const App: React.FC = () => {
   useEffect(() => {
     loadAllUsers();
     loadGlobalConfig();
-  }, [loadAllUsers, loadGlobalConfig]);
+    loadAllUsersData();
+  }, [loadAllUsers, loadGlobalConfig, loadAllUsersData]);
+
+  // 全局数据监听：当 currentView 切换时，重新拉取所有用户数据
+  useEffect(() => {
+    if (currentUser) {
+      loadAllUsersData();
+    }
+  }, [currentView, currentUser, loadAllUsersData]);
 
   // 初始化：检查 Supabase session 并加载用户数据
   useEffect(() => {
@@ -663,8 +703,10 @@ const App: React.FC = () => {
   };
 
   const handleLogin = async (user: User) => {
+    const isNewUser = !allUsers.find(u => u.id === user.id);
+    
     // 如果用户不在列表中，添加到列表
-    if (!allUsers.find(u => u.id === user.id)) {
+    if (isNewUser) {
       setAllUsers(prev => [...prev, user]);
       // 保存用户信息到 Supabase
       try {
@@ -682,6 +724,47 @@ const App: React.FC = () => {
           }, {
             onConflict: 'user_id,key_name'
           });
+        
+        // 为新用户创建初始化的 stats 记录
+        const initialStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+        await supabase
+          .from('user_data')
+          .upsert({
+            user_id: user.id,
+            key_name: 'growth_app_stats',
+            content: initialStats,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,key_name'
+          });
+        
+        // 为新用户创建初始化的 weekly_states 记录（通过全局配置）
+        const currentWeekRangeStr = calculateWeekRange(0, 0);
+        const initialWeeklyState: UserWeeklyState = {
+          key: `${user.id}_${currentWeekRangeStr}`,
+          userId: user.id,
+          userName: user.name,
+          weekRange: currentWeekRangeStr,
+          leaveReason: '',
+          checkInStatus: '',
+          updatedAt: new Date().toISOString(),
+        };
+        
+        setWeeklyStates(prev => {
+          const updated = {
+            ...prev,
+            [initialWeeklyState.key]: initialWeeklyState
+          };
+          // 保存到全局配置
+          saveGlobalConfig('weekly_states', updated);
+          return updated;
+        });
+        
+        // 更新本地状态
+        setUserStatsMap(prev => ({
+          ...prev,
+          [user.id]: initialStats
+        }));
       } catch (err) {
         console.error('Error saving user profile to Supabase:', err);
       }
@@ -697,6 +780,9 @@ const App: React.FC = () => {
     
     // 重新加载所有用户列表（确保包含最新注册的用户）
     await loadAllUsers();
+    
+    // 重新加载所有用户数据
+    await loadAllUsersData();
     
     // 检查是否是管理员登录（账号 管理员 和密码 010101）
     if ((user.name === '管理员' || user.isAdmin === true) && 
@@ -887,7 +973,7 @@ const App: React.FC = () => {
         {currentView === ViewName.TOOLS && <ToolsView onNavigate={navigate} setTimerType={setSelectedTimerType} lang={lang} />}
         {currentView === ViewName.BREATHING && <BreathingView onAddMinutes={(m) => handleAddMinutes(TimerType.BREATH, m)} lang={lang} />}
         {currentView === ViewName.TIMER && <TimerView type={selectedTimerType} onAddMinutes={(m) => handleAddMinutes(selectedTimerType, m)} lang={lang} />}
-        {currentView === ViewName.STATS && <StatsView stats={dailyStats} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} />}
+        {currentView === ViewName.STATS && <StatsView stats={dailyStats} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} allUsersStats={userStatsMap} />}
         {currentView === ViewName.DAILY && (
           <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
         )}

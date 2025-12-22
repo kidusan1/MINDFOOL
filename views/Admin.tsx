@@ -56,8 +56,8 @@ const Admin: React.FC<AdminProps> = ({
     // 立即同步一次
     syncData();
 
-    // 每10秒同步一次
-    const interval = setInterval(syncData, 10000);
+    // 每5秒同步一次，确保实时显示最新数据
+    const interval = setInterval(syncData, 5000);
     return () => clearInterval(interval);
   }, [onRefreshUsers, onRefreshWeeklyStates]);
 
@@ -66,18 +66,33 @@ const Admin: React.FC<AdminProps> = ({
     const currentUsersCount = allUsers.length;
     const currentWeeklyStatesCount = recordsArray.length;
 
+    // 检测新用户
     if (lastUsersCountRef.current > 0 && currentUsersCount > lastUsersCountRef.current) {
       const newCount = currentUsersCount - lastUsersCountRef.current;
       setNewUsersCount(prev => prev + newCount);
     }
     lastUsersCountRef.current = currentUsersCount;
 
-    if (lastWeeklyStatesCountRef.current > 0 && currentWeeklyStatesCount > lastWeeklyStatesCountRef.current) {
-      const newCount = currentWeeklyStatesCount - lastWeeklyStatesCountRef.current;
-      setNewCheckInsCount(prev => prev + newCount);
+    // 检测新的打卡/请假信息（包括新申请和更新）
+    if (lastWeeklyStatesCountRef.current > 0) {
+      // 检查是否有新的记录或更新的记录（通过比较 updatedAt）
+      const newRecords = recordsArray.filter(r => {
+        const lastUpdate = new Date(r.updatedAt).getTime();
+        const now = Date.now();
+        // 如果记录在最近30秒内更新，认为是新申请
+        return (now - lastUpdate) < 30000;
+      });
+      
+      if (newRecords.length > 0) {
+        setNewCheckInsCount(prev => {
+          // 只增加未读的数量
+          const unreadCount = newRecords.length;
+          return prev + unreadCount;
+        });
+      }
     }
     lastWeeklyStatesCountRef.current = currentWeeklyStatesCount;
-  }, [allUsers.length, recordsArray.length]);
+  }, [allUsers.length, recordsArray, recordsArray.length]);
 
   // 点击标签时清除对应角标
   const handleTabClick = (tab: typeof activeTab) => {

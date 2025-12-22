@@ -367,7 +367,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 };
 
 // --- 数据统计 ---
-export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, number>, lang: Language, user: User, homeQuotes: string [] }> = ({ stats, history = {}, lang, user, homeQuotes }) => {
+export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, number>, lang: Language, user: User, homeQuotes: string [], allUsersStats?: Record<string, DailyStats> }> = ({ stats, history = {}, lang, user, homeQuotes, allUsersStats = {} }) => {
   const t = TRANSLATIONS[lang].stats;
   const [showPoster, setShowPoster] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
@@ -383,26 +383,29 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
   const completedItems = listData.filter(d => d.value >= 1);
   const totalMinutes = stats.nianfo + stats.baifo + stats.zenghui + stats.breath;
 
-  // 从 Supabase 拉取当天所有用户的时长数据并计算排名
+  // 实时排名计算：使用全局拉取的所有用户数据
   useEffect(() => {
     const calculateRanking = async () => {
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // 从 daily_stats 表拉取当天的所有用户数据
+        // 首先尝试从 daily_stats 表拉取当天的所有用户数据（最准确）
         const { data: dailyStatsData, error: dailyStatsError } = await supabase
           .from('daily_stats')
-          .select('total_minutes')
+          .select('user_id, total_minutes')
           .eq('date', todayStr);
         
-        if (dailyStatsError) {
-          console.error('Error loading daily stats:', dailyStatsError);
-          setRankingPercentage(0);
-          return;
+        let allTotalMinutes: number[] = [];
+        
+        if (!dailyStatsError && dailyStatsData && dailyStatsData.length > 0) {
+          // 使用 daily_stats 表的数据
+          allTotalMinutes = dailyStatsData.map((row: any) => row.total_minutes || 0);
+        } else {
+          // 如果 daily_stats 表没有数据，使用全局拉取的 allUsersStats 数据
+          allTotalMinutes = Object.values(allUsersStats).map((userStats: DailyStats) => 
+            (userStats.nianfo || 0) + (userStats.baifo || 0) + (userStats.zenghui || 0) + (userStats.breath || 0)
+          );
         }
-
-        // 计算所有用户当天的总时长
-        const allTotalMinutes = (dailyStatsData || []).map((row: any) => row.total_minutes || 0);
         
         // 计算当前用户当天的总时长
         const currentUserTotal = totalMinutes;
@@ -413,8 +416,10 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
           return;
         }
         
-        const usersBelow = allTotalMinutes.filter(total => total < currentUserTotal).length;
-        const percentage = Math.floor((usersBelow / allTotalMinutes.length) * 100);
+        // 对总时长进行排序
+        const sortedMinutes = [...allTotalMinutes].sort((a, b) => a - b);
+        const usersBelow = sortedMinutes.filter(total => total < currentUserTotal).length;
+        const percentage = Math.floor((usersBelow / sortedMinutes.length) * 100);
         setRankingPercentage(Math.min(99, Math.max(0, percentage)));
       } catch (err) {
         console.error('Error calculating ranking:', err);
@@ -423,10 +428,10 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
     };
 
     calculateRanking();
-    // 每5秒刷新一次排名，实现实时排名效果
-    const interval = setInterval(calculateRanking, 5000);
+    // 每3秒刷新一次排名，实现实时排名效果
+    const interval = setInterval(calculateRanking, 3000);
     return () => clearInterval(interval);
-  }, [totalMinutes, user.id]);
+  }, [totalMinutes, user.id, allUsersStats]);
 
   const weeklyData = Array.from({length: 7}, (_, i) => {
      const d = new Date(); d.setDate(d.getDate() - (6 - i)); const dateKey = d.toISOString().split('T')[0]; const val = history[dateKey] || 0;
