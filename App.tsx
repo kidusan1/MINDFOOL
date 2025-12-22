@@ -90,11 +90,11 @@ const App: React.FC = () => {
         .from('user_data')
         .upsert({
           user_id: userIdStr, // TEXT 类型，支持任何字符串
-          key_name: keyName,
+          key: keyName,
           content: content,
           updated_at: new Date().toISOString(),
         }, {
-          onConflict: 'user_id,key_name'
+          onConflict: 'user_id,key'
         });
       
       if (error) {
@@ -167,7 +167,7 @@ const App: React.FC = () => {
       const { data: userData, error: userDataError } = await supabase
         .from('user_data')
         .select('user_id, content')
-        .eq('key_name', 'user_profile');
+        .eq('key', 'user_profile');
       
       if (!userDataError && userData) {
         const users: User[] = [{ id: 'admin', name: '管理员', password: '010101', classVersion: '成长班 1.0', isAdmin: true }];
@@ -254,7 +254,7 @@ const App: React.FC = () => {
       const { data: userDataStates, error: userDataError } = await supabase
         .from('user_data')
         .select('user_id, content')
-        .like('key_name', 'weekly_state_%');
+        .like('key', 'weekly_state_%');
       
       if (!userDataError && userDataStates) {
         // 合并 user_data 表中的周状态数据
@@ -619,11 +619,11 @@ const App: React.FC = () => {
               .from('user_data')
               .upsert({
                 user_id: userIdStr, // TEXT 类型，支持 "admin" 字符串
-                key_name: `weekly_state_${weekRange}`,
+                key: `weekly_state_${weekRange}`,
                 content: updatedState,
                 updated_at: new Date().toISOString(),
               }, {
-                onConflict: 'user_id,key_name'
+                onConflict: 'user_id,key'
               });
             
             if (userDataError) {
@@ -712,7 +712,7 @@ const App: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('user_data')
-        .select('key_name, content')
+        .select('key, content')
         .eq('user_id', userId);
 
       if (error) {
@@ -722,10 +722,10 @@ const App: React.FC = () => {
 
       if (data) {
         // 更新各个状态
-        data.forEach((row: { key_name: string; content: any }) => {
-          const { key_name, content } = row;
+        data.forEach((row: { key: string; content: any }) => {
+          const { key, content } = row;
           
-          switch (key_name) {
+          switch (key) {
             case 'growth_app_stats':
               setUserStatsMap(prev => ({
                 ...prev,
@@ -824,7 +824,7 @@ const App: React.FC = () => {
           .from('user_data')
           .upsert({
             user_id: user.id,
-            key_name: 'user_profile',
+            key: 'user_profile',
             content: {
               name: user.name,
               classVersion: user.classVersion,
@@ -832,7 +832,7 @@ const App: React.FC = () => {
             },
             updated_at: new Date().toISOString(),
           }, {
-            onConflict: 'user_id,key_name'
+            onConflict: 'user_id,key'
           });
         
         // 为新用户创建初始化的 stats 记录
@@ -841,11 +841,11 @@ const App: React.FC = () => {
           .from('user_data')
           .upsert({
             user_id: user.id,
-            key_name: 'growth_app_stats',
+            key: 'growth_app_stats',
             content: initialStats,
             updated_at: new Date().toISOString(),
           }, {
-            onConflict: 'user_id,key_name'
+            onConflict: 'user_id,key'
           });
         
         // 为新用户创建初始化的 weekly_states 记录（通过全局配置）
@@ -1073,7 +1073,7 @@ const App: React.FC = () => {
               .from('user_data')
               .upsert({
                 user_id: userId,
-                key_name: 'user_profile',
+                key: 'user_profile',
                 content: {
                   name: updated.name,
                   classVersion: updated.classVersion,
@@ -1081,7 +1081,7 @@ const App: React.FC = () => {
                 },
                 updated_at: new Date().toISOString(),
               }, {
-                onConflict: 'user_id,key_name'
+                onConflict: 'user_id,key'
               });
           } catch (err) {
             console.error('Error saving user profile:', err);
