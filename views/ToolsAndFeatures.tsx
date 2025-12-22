@@ -423,8 +423,8 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
     };
 
     calculateRanking();
-    // 每30秒刷新一次排名
-    const interval = setInterval(calculateRanking, 30000);
+    // 每5秒刷新一次排名，实现实时排名效果
+    const interval = setInterval(calculateRanking, 5000);
     return () => clearInterval(interval);
   }, [totalMinutes, user.id]);
 

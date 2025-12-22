@@ -209,6 +209,23 @@ const App: React.FC = () => {
       console.error('Error loading global configs from Supabase:', err);
     }
   }, []);
+
+  // 刷新 weeklyStates
+  const refreshWeeklyStates = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('global_configs')
+        .select('content')
+        .eq('key', 'weekly_states')
+        .single();
+      
+      if (!error && data && data.content) {
+        setWeeklyStates(data.content);
+      }
+    } catch (err) {
+      console.error('Error refreshing weekly states:', err);
+    }
+  }, []);
   
   // currentUser 需要在所有使用它的 useEffect 之前定义
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -681,9 +698,8 @@ const App: React.FC = () => {
     // 重新加载所有用户列表（确保包含最新注册的用户）
     await loadAllUsers();
     
-    // 检查是否是管理员登录（账号 admin 和密码 010101）
-    // 支持多种情况：name === 'admin' 或 name === '管理员'，或者 isAdmin === true
-    if ((user.name === 'admin' || user.name === '管理员' || user.isAdmin === true) && 
+    // 检查是否是管理员登录（账号 管理员 和密码 010101）
+    if ((user.name === '管理员' || user.isAdmin === true) && 
         (user.password === '010101' || user.id === 'admin')) {
       setCurrentView(ViewName.ADMIN);
     }
@@ -878,7 +894,7 @@ const App: React.FC = () => {
         {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
         {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
         {currentView === ViewName.ADMIN && (
-          <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} />
+          <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} onRefreshUsers={loadAllUsers} onRefreshWeeklyStates={refreshWeeklyStates} />
         )}
       </Layout>
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}

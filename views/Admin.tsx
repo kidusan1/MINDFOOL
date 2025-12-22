@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, CourseScheduleMap, CourseContentMap, CourseWeek, CourseStatus, UserWeeklyState, CheckInConfig, Language } from '../types';
 import { Icons } from '../components/Icons';
 import { TRANSLATIONS, playSound } from '../constants';
+import { supabase } from '../src/supabaseClient';
 
 interface AdminProps {
   allUsers: User[];
@@ -25,19 +26,69 @@ interface AdminProps {
   authCode: string;
   setAuthCode: (code: string) => void;
   onSaveGlobalConfigs: () => Promise<void>;
+  onRefreshUsers: () => Promise<void>;
+  onRefreshWeeklyStates: () => Promise<void>;
 }
 
 const Admin: React.FC<AdminProps> = ({ 
-  allUsers, onUpdateUserPermission, coursesMap, courseContents, onUpdateCourseContent, onUpdateCourseStatus, onUpdateCourseTitle, onAddCourseWeek, onDeleteCourseWeek, weeklyStates, splashQuotes, setSplashQuotes, homeQuotes, setHomeQuotes, checkInConfig, setCheckInConfig, lang, authCode, setAuthCode, onSaveGlobalConfigs
+  allUsers, onUpdateUserPermission, coursesMap, courseContents, onUpdateCourseContent, onUpdateCourseStatus, onUpdateCourseTitle, onAddCourseWeek, onDeleteCourseWeek, weeklyStates, splashQuotes, setSplashQuotes, homeQuotes, setHomeQuotes, checkInConfig, setCheckInConfig, lang, authCode, setAuthCode, onSaveGlobalConfigs, onRefreshUsers, onRefreshWeeklyStates
 }) => {
   const t = TRANSLATIONS[lang].admin;
   const [activeTab, setActiveTab] = useState<'signups' | 'courses' | 'users' | 'config'>('signups');
   const [toast, setToast] = useState<string | null>(null);
+  const [newUsersCount, setNewUsersCount] = useState(0);
+  const [newCheckInsCount, setNewCheckInsCount] = useState(0);
+  const lastUsersCountRef = useRef(0);
+  const lastWeeklyStatesCountRef = useRef(0);
 
   // Fix: Explicitly cast Object.values result to UserWeeklyState[] to fix 'unknown' type errors
   const recordsArray = Object.values(weeklyStates) as UserWeeklyState[];
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
+
+  // 实时同步用户列表和打卡/请假信息
+  useEffect(() => {
+    const syncData = async () => {
+      await onRefreshUsers();
+      await onRefreshWeeklyStates();
+    };
+
+    // 立即同步一次
+    syncData();
+
+    // 每10秒同步一次
+    const interval = setInterval(syncData, 10000);
+    return () => clearInterval(interval);
+  }, [onRefreshUsers, onRefreshWeeklyStates]);
+
+  // 检测新用户和新的打卡/请假信息
+  useEffect(() => {
+    const currentUsersCount = allUsers.length;
+    const currentWeeklyStatesCount = recordsArray.length;
+
+    if (lastUsersCountRef.current > 0 && currentUsersCount > lastUsersCountRef.current) {
+      const newCount = currentUsersCount - lastUsersCountRef.current;
+      setNewUsersCount(prev => prev + newCount);
+    }
+    lastUsersCountRef.current = currentUsersCount;
+
+    if (lastWeeklyStatesCountRef.current > 0 && currentWeeklyStatesCount > lastWeeklyStatesCountRef.current) {
+      const newCount = currentWeeklyStatesCount - lastWeeklyStatesCountRef.current;
+      setNewCheckInsCount(prev => prev + newCount);
+    }
+    lastWeeklyStatesCountRef.current = currentWeeklyStatesCount;
+  }, [allUsers.length, recordsArray.length]);
+
+  // 点击标签时清除对应角标
+  const handleTabClick = (tab: typeof activeTab) => {
+    if (tab === 'users') {
+      setNewUsersCount(0);
+    } else if (tab === 'signups') {
+      setNewCheckInsCount(0);
+    }
+    setActiveTab(tab);
+    playSound('light');
+  };
   
   const exportToCSV = () => {
     // Fix: Using the properly typed recordsArray instead of Object.values directly
@@ -63,13 +114,18 @@ const Admin: React.FC<AdminProps> = ({
 
   const currentWeek = coursesMap[selectedVer]?.[selectedWeekIdx];
 
-  const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
+  const TabButton = ({ id, label, icon: Icon, badge }: { id: typeof activeTab, label: string, icon: any, badge?: number }) => (
     <button
-      onClick={() => { playSound('light'); setActiveTab(id); }}
-      className={`flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl text-[11px] md:text-sm font-bold transition-all ${activeTab === id ? 'bg-primary text-white shadow-lg' : 'text-textSub hover:bg-gray-100'}`}
+      onClick={() => handleTabClick(id)}
+      className={`relative flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl text-[11px] md:text-sm font-bold transition-all ${activeTab === id ? 'bg-primary text-white shadow-lg' : 'text-textSub hover:bg-gray-100'}`}
     >
       <span className="hidden md:inline"><Icon size={16} /></span>
       {label}
+      {badge && badge > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </button>
   );
 
@@ -80,9 +136,9 @@ const Admin: React.FC<AdminProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-6">
         <h2 className="text-xl md:text-2xl font-bold text-textMain tracking-tight">{t.title}</h2>
         <div className="flex bg-white/60 p-1 rounded-2xl border border-white/50 shadow-sm overflow-x-auto no-scrollbar">
-            <TabButton id="signups" label={t.tabs.signups} icon={Icons.Stats} />
+            <TabButton id="signups" label={t.tabs.signups} icon={Icons.Stats} badge={newCheckInsCount} />
             <TabButton id="courses" label={t.tabs.courses} icon={Icons.Daily} />
-            <TabButton id="users" label={t.tabs.users} icon={Icons.Check} />
+            <TabButton id="users" label={t.tabs.users} icon={Icons.Check} badge={newUsersCount} />
             <TabButton id="config" label={t.tabs.settings} icon={Icons.Tools} />
         </div>
       </div>
