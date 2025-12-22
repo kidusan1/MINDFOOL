@@ -189,50 +189,55 @@ const App: React.FC = () => {
   }, []);
 
   // 从 Supabase 加载全局配置
-  const loadGlobalConfig = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('global_configs')
-        .select('key, content');
+// 从 Supabase 加载全局配置
+const loadGlobalConfig = useCallback(async () => {
+  try {
+    const { data, error } = await supabase
+      .from('global_configs')
+      .select('key, content');
 
-      if (error) {
-        console.error('Error loading global configs from Supabase:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        data.forEach((row: { key: string; content: any }) => {
-          const { key, content } = row;
-          
-          switch (key) {
-            case 'courses_map':
-              if (content) setCoursesMap(content);
-              break;
-            case 'course_contents':
-              if (content) setCourseContents(content);
-              break;
-            case 'splash_quotes':
-              if (content && Array.isArray(content)) setSplashQuotes(content);
-              break;
-            case 'home_quotes':
-              if (content && Array.isArray(content)) setHomeQuotes(content);
-              break;
-            case 'checkin_config':
-              if (content) setCheckInConfig(content);
-              break;
-            case 'auth_code':
-              if (content) setAuthCode(content);
-              break;
-            case 'weekly_states':
-              if (content) setWeeklyStates(content);
-              break;
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Error loading global configs from Supabase:', err);
+    if (error) {
+      console.error('Error loading global configs from Supabase:', error);
+      return;
     }
-  }, []);
+
+    if (data && data.length > 0) {
+      // 使用一个对象暂存，避免多次 setState 导致页面闪烁
+      data.forEach((row: { key: string; content: any }) => {
+        const { key, content } = row;
+        if (!content) return;
+
+        switch (key) {
+          case 'courses_map':
+            setCoursesMap(content);
+            break;
+          case 'course_contents':
+            setCourseContents(content);
+            break;
+          case 'splash_quotes':
+            if (Array.isArray(content)) setSplashQuotes(content);
+            break;
+          case 'home_quotes':
+            if (Array.isArray(content)) setHomeQuotes(content);
+            break;
+          case 'checkin_config':
+            setCheckInConfig(content);
+            break;
+          case 'auth_code':
+            setAuthCode(content);
+            break;
+          case 'weekly_states':
+            setWeeklyStates(content);
+            break;
+        }
+      });
+      console.log('--- 云端全局配置已同步 ---');
+    }
+  } catch (err) {
+    console.error('Error loading global configs from Supabase:', err);
+  }
+}, []);
+
 
   // 刷新 weeklyStates：从全局配置和 user_data 表加载所有用户的周状态
   const refreshWeeklyStates = useCallback(async () => {
@@ -474,7 +479,8 @@ const App: React.FC = () => {
     loadAllUsers();
     loadGlobalConfig();
     loadAllUsersData();
-  }, [loadAllUsers, loadGlobalConfig, loadAllUsersData]);
+    refreshWeeklyStates();
+  }, [loadAllUsers, loadGlobalConfig, loadAllUsersData, refreshWeeklyStates]);
 
   // 强制初始化加载：当 currentUser 存在时，立即执行一次 loadAllUsersData
   useEffect(() => {
