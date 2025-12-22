@@ -80,12 +80,16 @@ const App: React.FC = () => {
   };
 
   // 保存数据到 Supabase
+  // 保存数据到 Supabase（支持 TEXT 类型的 user_id，包括 "admin" 字符串）
   const saveToSupabase = useCallback(async (userId: string, keyName: string, content: any) => {
     try {
+      // 确保 userId 是字符串类型，支持 "admin" 等字符串
+      const userIdStr = String(userId);
+      
       const { error } = await supabase
         .from('user_data')
         .upsert({
-          user_id: userId,
+          user_id: userIdStr, // TEXT 类型，支持任何字符串
           key_name: keyName,
           content: content,
           updated_at: new Date().toISOString(),
@@ -95,6 +99,10 @@ const App: React.FC = () => {
       
       if (error) {
         console.error(`Error saving ${keyName} to Supabase:`, error);
+        // 如果是 UUID 类型错误，提示用户
+        if (error.message?.includes('UUID') || error.message?.includes('uuid')) {
+          console.error(`UUID 类型错误：请确保数据库 user_id 字段是 TEXT 类型。当前 user_id: ${userIdStr}`);
+        }
       }
     } catch (err) {
       console.error(`Error saving ${keyName} to Supabase:`, err);
@@ -226,17 +234,43 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 刷新 weeklyStates
+  // 刷新 weeklyStates：从全局配置和 user_data 表加载所有用户的周状态
   const refreshWeeklyStates = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // 首先从全局配置加载（管理员保存的汇总数据）
+      const { data: globalData, error: globalError } = await supabase
         .from('global_configs')
         .select('content')
         .eq('key', 'weekly_states')
         .single();
       
-      if (!error && data && data.content) {
-        setWeeklyStates(data.content);
+      const allStates: Record<string, UserWeeklyState> = {};
+      
+      if (!globalError && globalData && globalData.content) {
+        Object.assign(allStates, globalData.content);
+      }
+      
+      // 同时从 user_data 表加载所有用户的周状态（确保实时性）
+      const { data: userDataStates, error: userDataError } = await supabase
+        .from('user_data')
+        .select('user_id, content')
+        .like('key_name', 'weekly_state_%');
+      
+      if (!userDataError && userDataStates) {
+        // 合并 user_data 表中的周状态数据
+        userDataStates.forEach((row: any) => {
+          if (row.content && typeof row.content === 'object') {
+            const state = row.content as UserWeeklyState;
+            if (state.key) {
+              allStates[state.key] = state;
+            }
+          }
+        });
+      }
+      
+      // 更新状态
+      if (Object.keys(allStates).length > 0) {
+        setWeeklyStates(allStates);
       }
     } catch (err) {
       console.error('Error refreshing weekly states:', err);
@@ -374,12 +408,15 @@ const App: React.FC = () => {
   }, [userRecordsMap, currentUser, saveToSupabase]);
 
   useEffect(() => {
-    // 保存所有用户的周状态到全局配置表
+    // 保存所有用户的周状态到全局配置表（只有管理员才能写入）
     if (Object.keys(weeklyStates).length > 0) {
-      saveGlobalConfig('weekly_states', weeklyStates);
+      // 只有管理员才能保存全局配置
+      if (currentUser && (currentUser.isAdmin || currentUser.id === 'admin')) {
+        saveGlobalConfig('weekly_states', weeklyStates);
+      }
     }
     localStorage.setItem('growth_app_weekly_states', JSON.stringify(weeklyStates));
-  }, [weeklyStates, saveGlobalConfig]);
+  }, [weeklyStates, saveGlobalConfig, currentUser]);
 
   useEffect(() => { 
     localStorage.setItem('growth_app_courses_map', JSON.stringify(coursesMap));
@@ -561,16 +598,53 @@ const App: React.FC = () => {
             checkInStatus: '',
             updatedAt: ''
         };
+        const updatedState = {
+            ...existing,
+            ...updates,
+            updatedAt: new Date().toISOString()
+        };
         const updated = {
             ...prev,
-            [key]: {
-                ...existing,
-                ...updates,
-                updatedAt: new Date().toISOString()
-            }
+            [key]: updatedState
         };
-        // 立即保存到全局配置，确保实时同步
-        saveGlobalConfig('weekly_states', updated);
+        
+        // 同步打卡/请假：立即保存到 user_data 表，确保实时写入
+        (async () => {
+          try {
+            // 确保 user_id 是字符串类型，支持 "admin" 等字符串
+            const userIdStr = String(currentUser.id);
+            
+            // 保存当前用户的周状态到 user_data 表
+            const { error: userDataError } = await supabase
+              .from('user_data')
+              .upsert({
+                user_id: userIdStr, // TEXT 类型，支持 "admin" 字符串
+                key_name: `weekly_state_${weekRange}`,
+                content: updatedState,
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,key_name'
+              });
+            
+            if (userDataError) {
+              console.error('Error saving weekly state to user_data:', userDataError);
+              // 如果是 UUID 类型错误，提示用户
+              if (userDataError.message?.includes('UUID') || userDataError.message?.includes('uuid')) {
+                console.error(`UUID 类型错误：请确保数据库 user_id 字段是 TEXT 类型。当前 user_id: ${userIdStr}`);
+              }
+            } else {
+              console.log(`用户 ${currentUser.name} 的周状态已保存到 user_data 表`);
+            }
+            
+            // 同时保存到全局配置（用于管理员后台显示）
+            if (currentUser.isAdmin || currentUser.id === 'admin') {
+              saveGlobalConfig('weekly_states', updated);
+            }
+          } catch (err) {
+            console.error('Error saving weekly state to user_data:', err);
+          }
+        })();
+        
         return updated;
     });
   };
