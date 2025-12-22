@@ -239,11 +239,21 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const stopAlarmSound = () => {
+    // 停止音频
     if (oscillatorRef.current) {
         try { oscillatorRef.current.stop(); } catch(e) {}
         oscillatorRef.current = null;
     }
+    // 重置倒计时状态
     setIsAlarmActive(false);
+    setIsCountdownRunning(false);
+    // 重置剩余秒数到初始设定的分钟数
+    setCountdownRemaining(countdownTarget * 60);
+    // 清理计时器
+    if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+    }
   };
 
   const commitTime = (durationSec: number) => {
@@ -270,6 +280,16 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   useEffect(() => {
     if (isCountdownRunning) {
+      // 确保在开始前清理旧的计时器
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      // 确认剩余时间大于 0 秒，避免一启动就触发告警
+      if (countdownRemaining <= 0) {
+        setIsCountdownRunning(false);
+        return;
+      }
       countdownSessionStartRef.current = Date.now();
       countdownIntervalRef.current = setInterval(() => {
         setCountdownRemaining(prev => {
@@ -282,14 +302,22 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         });
       }, 1000);
     } else {
-        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
         if (countdownSessionStartRef.current > 0) {
             commitTime((Date.now() - countdownSessionStartRef.current) / 1000);
             countdownSessionStartRef.current = 0;
         }
     }
-    return () => { if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current); };
-  }, [isCountdownRunning]);
+    return () => { 
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    };
+  }, [isCountdownRunning, countdownRemaining]);
 
   useEffect(() => {
     return () => {
@@ -351,7 +379,26 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                         ) : (
                             <>
                                 <div className="h-4 flex items-center">{!isCountdownRunning && <p className="text-textSub text-xs animate-pulse">{t.tools.timer.clickStart}</p>}</div>
-                                <button onClick={() => { playSound('confirm'); setIsCountdownRunning(!isCountdownRunning); }} className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform">
+                                <button onClick={() => { 
+                                    playSound('confirm'); 
+                                    if (!isCountdownRunning) {
+                                        // 开始倒计时前，先清理旧的计时器
+                                        if (countdownIntervalRef.current) {
+                                            clearInterval(countdownIntervalRef.current);
+                                            countdownIntervalRef.current = null;
+                                        }
+                                        // 确认剩余时间大于 0 秒，避免一启动就触发告警
+                                        if (countdownRemaining > 0) {
+                                            setIsCountdownRunning(true);
+                                        } else {
+                                            // 如果剩余时间为0，重置为初始值
+                                            setCountdownRemaining(countdownTarget * 60);
+                                            setIsCountdownRunning(true);
+                                        }
+                                    } else {
+                                        setIsCountdownRunning(false);
+                                    }
+                                }} className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform">
                                     {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
                                 </button>
                             </>
