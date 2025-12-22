@@ -49,15 +49,19 @@ const Admin: React.FC<AdminProps> = ({
   // 实时同步用户列表和打卡/请假信息
   useEffect(() => {
     const syncData = async () => {
-      await onRefreshUsers();
-      await onRefreshWeeklyStates();
+      try {
+        await onRefreshUsers();
+        await onRefreshWeeklyStates();
+      } catch (err) {
+        console.error('Error syncing data in Admin:', err);
+      }
     };
 
     // 立即同步一次
     syncData();
 
-    // 每5秒同步一次，确保实时显示最新数据
-    const interval = setInterval(syncData, 5000);
+    // 每3秒同步一次，确保实时显示最新数据
+    const interval = setInterval(syncData, 3000);
     return () => clearInterval(interval);
   }, [onRefreshUsers, onRefreshWeeklyStates]);
 
