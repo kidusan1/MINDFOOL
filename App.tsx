@@ -102,7 +102,17 @@ const App: React.FC = () => {
   }, []);
 
   // 保存全局配置到 Supabase
+  // currentUser 需要在所有使用它的函数之前定义
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
   const saveGlobalConfig = useCallback(async (key: string, content: any) => {
+    // 修复保存权限报错：只有管理员才能写入全局配置
+    if (!currentUser || (!currentUser.isAdmin && currentUser.id !== 'admin')) {
+      // 普通用户禁止写入全局配置，只允许读取
+      console.log(`普通用户无权写入全局配置 ${key}，已跳过`);
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('global_configs')
@@ -120,7 +130,7 @@ const App: React.FC = () => {
     } catch (err) {
       console.error(`Error saving global config ${key} to Supabase:`, err);
     }
-  }, []);
+  }, [currentUser]);
 
   const [allUsers, setAllUsers] = useState<User[]>(() => loadState('growth_app_users', INITIAL_USERS));
   const [authCode, setAuthCode] = useState(() => loadState('growth_app_auth_code', '888888'));
@@ -258,8 +268,6 @@ const App: React.FC = () => {
     }
   }, [refreshWeeklyStates]);
   
-  // currentUser 需要在所有使用它的 useEffect 之前定义
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [currentView, setCurrentView] = useState<ViewName>(ViewName.HOME);
   const [history, setHistory] = useState<ViewName[]>([]);
