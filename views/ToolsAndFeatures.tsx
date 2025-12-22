@@ -632,7 +632,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                 
                 <button 
                     onClick={onClose} 
-                    className="absolute -top-4 right-0 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] shadow-lg border border-white/20"
+                    className="absolute -bottom-4 right-0 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] shadow-lg border border-white/20"
                 >
                     <Icons.Plus size={24} className="rotate-45" />
                 </button>
