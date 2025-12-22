@@ -54,13 +54,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [], authCode, lang, setL
       
       if (isLoginMode) {
         const trimmedName = name.trim();
-        const isAdminUser = (trimmedName === 'admin' || trimmedName === '管理员') && password === '010101';
+        const isAdminUser = trimmedName === '管理员' && password === '010101';
         
-        // 如果是 admin 用户，直接使用本地验证，不依赖 Supabase
+        // 如果是管理员用户，直接使用本地验证，不依赖 Supabase
         if (isAdminUser) {
           const user: User = {
             id: 'admin',
-            name: trimmedName === 'admin' ? 'admin' : '管理员',
+            name: '管理员',
             classVersion: '成长班 1.0',
             isAdmin: true,
             password: '010101',
