@@ -126,6 +126,12 @@ const App: React.FC = () => {
       
       if (error) {
         console.error(`Error saving global config ${key} to Supabase:`, error);
+        // 修复 404：如果表不存在或权限问题，输出详细错误信息
+        if (error.code === 'PGRST116' || error.message?.includes('404') || error.message?.includes('not found')) {
+          console.error(`表 global_configs 可能不存在或无法访问。请检查数据库配置。错误详情:`, error);
+        }
+      } else {
+        console.log(`全局配置 ${key} 已成功保存`);
       }
     } catch (err) {
       console.error(`Error saving global config ${key} to Supabase:`, err);
@@ -827,6 +833,10 @@ const App: React.FC = () => {
     if ((user.name === '管理员' || user.isAdmin === true) && 
         (user.password === '010101' || user.id === 'admin')) {
       setCurrentView(ViewName.ADMIN);
+      // 强制初始化保存：管理员登录成功后，立即保存所有全局配置到数据库
+      setTimeout(async () => {
+        await handleSaveGlobalConfigs();
+      }, 500); // 延迟500ms确保状态已更新
     }
   };
 
@@ -958,15 +968,26 @@ const App: React.FC = () => {
   };
   
   const handleSaveGlobalConfigs = useCallback(async () => {
-    await Promise.all([
-      saveGlobalConfig('courses_map', coursesMap),
-      saveGlobalConfig('course_contents', courseContents),
-      saveGlobalConfig('splash_quotes', splashQuotes),
-      saveGlobalConfig('home_quotes', homeQuotes),
-      saveGlobalConfig('checkin_config', checkInConfig),
-      saveGlobalConfig('auth_code', authCode),
-    ]);
-  }, [coursesMap, courseContents, splashQuotes, homeQuotes, checkInConfig, authCode, saveGlobalConfig]);
+    // 只有管理员才能保存全局配置
+    if (!currentUser || (!currentUser.isAdmin && currentUser.id !== 'admin')) {
+      console.log('普通用户无权保存全局配置，已跳过');
+      return;
+    }
+    
+    try {
+      await Promise.all([
+        saveGlobalConfig('courses_map', coursesMap),
+        saveGlobalConfig('course_contents', courseContents),
+        saveGlobalConfig('splash_quotes', splashQuotes),
+        saveGlobalConfig('home_quotes', homeQuotes),
+        saveGlobalConfig('checkin_config', checkInConfig),
+        saveGlobalConfig('auth_code', authCode),
+      ]);
+      console.log('全局配置已成功保存到数据库');
+    } catch (err) {
+      console.error('保存全局配置时出错:', err);
+    }
+  }, [coursesMap, courseContents, splashQuotes, homeQuotes, checkInConfig, authCode, saveGlobalConfig, currentUser]);
   const handleUpdateUserPermission = async (userId: string, updates: Partial<User>) => {
     setAllUsers(prev => prev.map(u => {
       if (u.id === userId) {
