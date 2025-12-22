@@ -53,6 +53,23 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [], authCode, lang, setL
       console.log('Converted name to email:', name.trim(), '->', email);
       
       if (isLoginMode) {
+        const trimmedName = name.trim();
+        const isAdminUser = (trimmedName === 'admin' || trimmedName === '管理员') && password === '010101';
+        
+        // 如果是 admin 用户，直接使用本地验证，不依赖 Supabase
+        if (isAdminUser) {
+          const user: User = {
+            id: 'admin',
+            name: trimmedName === 'admin' ? 'admin' : '管理员',
+            classVersion: '成长班 1.0',
+            isAdmin: true,
+            password: '010101',
+          };
+          onLogin(user);
+          setLoading(false);
+          return;
+        }
+        
         // 使用 Supabase 登录
         console.log('Attempting signIn with email:', email);
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -69,7 +86,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [], authCode, lang, setL
         if (data.user) {
           // 从 user_metadata 获取用户信息
           const metadata = data.user.user_metadata || {};
-          const trimmedName = name.trim();
           const user: User = {
             id: data.user.id,
             name: metadata.name || trimmedName,
