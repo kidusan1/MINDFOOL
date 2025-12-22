@@ -553,11 +553,29 @@ export const RecordView: React.FC<RecordViewProps> = ({ onOpenInput, records, on
       return b.id - a.id;
   });
 
+  const isMaxRecords = records.length >= 50;
+
   return (
     <div className="h-full overflow-y-auto no-scrollbar p-4 pb-24 md:pb-6 relative">
+       {isMaxRecords && (
+         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+           {lang === 'zh' ? '记录数量已达到上限（50条），请先删除一些记录后再添加。' : 'Record limit reached (50). Please delete some records before adding new ones.'}
+         </div>
+       )}
        <button 
-         onClick={() => { playSound('confirm'); onOpenInput(); }}
-         className="fixed bottom-28 md:bottom-12 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center z-40 active:scale-95 transition-transform hover:bg-primary/90"
+         onClick={() => { 
+           if (isMaxRecords) {
+             alert(lang === 'zh' ? '记录数量已达到上限（50条），请先删除一些记录后再添加。' : 'Record limit reached (50). Please delete some records before adding new ones.');
+             return;
+           }
+           playSound('confirm'); 
+           onOpenInput(); 
+         }}
+         className={`fixed bottom-28 md:bottom-12 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-40 active:scale-95 transition-transform ${
+           isMaxRecords 
+             ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+             : 'bg-primary text-white hover:bg-primary/90'
+         }`}
        >
          <Icons.Plus size={32} />
        </button>

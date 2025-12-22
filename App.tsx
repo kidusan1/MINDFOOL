@@ -28,10 +28,6 @@ const DEFAULT_HOME_QUOTES = [
 ];
 
 const INITIAL_USERS: User[] = [
-  { id: 'u1', name: '张三', password: '111111', classVersion: '成长班 1.0', isAdmin: false },
-  { id: 'u2', name: '李四', password: '111111', classVersion: '成长班 1.0', isAdmin: false },
-  { id: 'u3', name: '王五', password: '111111', classVersion: '感理班 2.0', isAdmin: false },
-  { id: 'u4', name: '周六', password: '111111', classVersion: '感理班 2.0', isAdmin: false },
   { id: 'admin', name: '管理员', password: '010101', classVersion: '成长班 1.0', isAdmin: true },
 ];
 
@@ -140,6 +136,34 @@ const App: React.FC = () => {
   const [checkInConfig, setCheckInConfig] = useState<CheckInConfig>(() => loadState('growth_app_checkin_config', INITIAL_CHECKIN_CONFIG));
   const [lang, setLang] = useState<Language>(() => loadState('growth_app_lang', 'zh'));
   
+  // 从 Supabase 加载所有用户
+  const loadAllUsers = useCallback(async () => {
+    try {
+      // 从 user_data 表获取所有用户的 profile 信息
+      const { data: userData, error: userDataError } = await supabase
+        .from('user_data')
+        .select('user_id, content')
+        .eq('key_name', 'user_profile');
+      
+      if (!userDataError && userData) {
+        const users: User[] = [{ id: 'admin', name: '管理员', password: '010101', classVersion: '成长班 1.0', isAdmin: true }];
+        userData.forEach((row: any) => {
+          if (row.content && row.user_id !== 'admin') {
+            users.push({
+              id: row.user_id,
+              name: row.content.name || '',
+              classVersion: row.content.classVersion || '成长班 1.0',
+              isAdmin: row.content.isAdmin || false,
+            });
+          }
+        });
+        setAllUsers(users);
+      }
+    } catch (err) {
+      console.error('Error loading all users from Supabase:', err);
+    }
+  }, []);
+
   // 从 Supabase 加载全局配置
   const loadGlobalConfig = useCallback(async () => {
     try {
@@ -174,6 +198,9 @@ const App: React.FC = () => {
               break;
             case 'auth_code':
               if (content) setAuthCode(content);
+              break;
+            case 'weekly_states':
+              if (content) setWeeklyStates(content);
               break;
           }
         });
@@ -213,38 +240,84 @@ const App: React.FC = () => {
     if (currentUser?.id) {
       const userHistory = userHistoryMap[currentUser.id];
       if (userHistory) {
-        saveToSupabase(currentUser.id, 'growth_app_user_history', userHistory);
+        // 只保留最近7天的数据
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const filteredHistory: Record<string, number> = {};
+        Object.entries(userHistory).forEach(([date, minutes]) => {
+          const dateObj = new Date(date);
+          if (dateObj >= sevenDaysAgo) {
+            filteredHistory[date] = minutes;
+          }
+        });
+        
+        // 更新本地状态，移除超过7天的数据
+        if (Object.keys(filteredHistory).length < Object.keys(userHistory).length) {
+          setUserHistoryMap(prev => ({
+            ...prev,
+            [currentUser.id]: filteredHistory
+          }));
+        }
+        
+        saveToSupabase(currentUser.id, 'growth_app_user_history', filteredHistory);
       }
     }
     localStorage.setItem('growth_app_user_history', JSON.stringify(userHistoryMap));
   }, [userHistoryMap, currentUser, saveToSupabase]);
 
+  // 清理超过7天的 daily_stats 数据
+  useEffect(() => {
+    const cleanupOldData = async () => {
+      try {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+        
+        const { error } = await supabase
+          .from('daily_stats')
+          .delete()
+          .lt('date', sevenDaysAgoStr);
+        
+        if (error) {
+          console.error('Error cleaning up old daily stats:', error);
+        }
+      } catch (err) {
+        console.error('Error cleaning up old daily stats:', err);
+      }
+    };
+    
+    // 每天清理一次
+    cleanupOldData();
+    const interval = setInterval(cleanupOldData, 24 * 60 * 60 * 1000); // 24小时
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (currentUser?.id) {
       const userRecords = userRecordsMap[currentUser.id];
       if (userRecords) {
-        saveToSupabase(currentUser.id, 'growth_app_records', userRecords);
+        // 只保存最多50条记录
+        const limitedRecords = userRecords.slice(0, 50);
+        saveToSupabase(currentUser.id, 'growth_app_records', limitedRecords);
+        // 如果超过50条，更新本地状态
+        if (userRecords.length > 50) {
+          setUserRecordsMap(prev => ({
+            ...prev,
+            [currentUser.id]: limitedRecords
+          }));
+        }
       }
     }
     localStorage.setItem('growth_app_records', JSON.stringify(userRecordsMap));
   }, [userRecordsMap, currentUser, saveToSupabase]);
 
   useEffect(() => {
-    if (currentUser?.id) {
-      // 过滤出当前用户的周状态
-      const userWeeklyStates = Object.entries(weeklyStates)
-        .filter(([key]) => key.startsWith(`${currentUser.id}_`))
-        .reduce((acc, [key, value]) => {
-          acc[key] = value;
-          return acc;
-        }, {} as Record<string, UserWeeklyState>);
-      
-      if (Object.keys(userWeeklyStates).length > 0) {
-        saveToSupabase(currentUser.id, 'growth_app_weekly_states', userWeeklyStates);
-      }
+    // 保存所有用户的周状态到全局配置表
+    if (Object.keys(weeklyStates).length > 0) {
+      saveGlobalConfig('weekly_states', weeklyStates);
     }
     localStorage.setItem('growth_app_weekly_states', JSON.stringify(weeklyStates));
-  }, [weeklyStates, currentUser, saveToSupabase]);
+  }, [weeklyStates, saveGlobalConfig]);
 
   useEffect(() => { 
     localStorage.setItem('growth_app_courses_map', JSON.stringify(coursesMap));
@@ -297,10 +370,11 @@ const App: React.FC = () => {
     }
   }, [allUsers, currentUser]);
 
-  // 初始化：加载全局配置
+  // 初始化：加载所有用户和全局配置
   useEffect(() => {
+    loadAllUsers();
     loadGlobalConfig();
-  }, [loadGlobalConfig]);
+  }, [loadAllUsers, loadGlobalConfig]);
 
   // 初始化：检查 Supabase session 并加载用户数据
   useEffect(() => {
@@ -408,23 +482,51 @@ const App: React.FC = () => {
     });
   };
 
-  const handleAddMinutes = (type: TimerType, minutes: number) => {
+  const handleAddMinutes = async (type: TimerType, minutes: number) => {
     if (minutes <= 0 || !currentUser) return;
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // 更新本地状态
     setUserStatsMap(prev => {
         const currentStats = prev[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
         const key = type === TimerType.NIANFO ? 'nianfo' 
                   : type === TimerType.BAIFO ? 'baifo'
                   : type === TimerType.ZENGHUI ? 'zenghui'
                   : 'breath';
+        const updatedStats = {
+            ...currentStats,
+            [key]: currentStats[key] + minutes
+        };
+        
+        // 保存当天数据到 daily_stats 表
+        (async () => {
+          try {
+            await supabase
+              .from('daily_stats')
+              .upsert({
+                user_id: currentUser.id,
+                date: todayStr,
+                nianfo: updatedStats.nianfo,
+                baifo: updatedStats.baifo,
+                zenghui: updatedStats.zenghui,
+                breath: updatedStats.breath,
+                total_minutes: updatedStats.nianfo + updatedStats.baifo + updatedStats.zenghui + updatedStats.breath,
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,date'
+              });
+          } catch (err) {
+            console.error('Error saving daily stats:', err);
+          }
+        })();
+        
         return {
             ...prev,
-            [currentUser.id]: {
-                ...currentStats,
-                [key]: currentStats[key] + minutes
-            }
+            [currentUser.id]: updatedStats
         };
     });
-    const todayStr = new Date().toISOString().split('T')[0];
+    
     setUserHistoryMap(prev => {
         const userHist = prev[currentUser.id] || {};
         const oldVal = userHist[todayStr] || 0;
@@ -464,25 +566,79 @@ const App: React.FC = () => {
               }));
               break;
             case 'growth_app_user_history':
+              // 只保留最近7天的数据
+              const sevenDaysAgo = new Date();
+              sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+              const filteredHistory: Record<string, number> = {};
+              if (content && typeof content === 'object') {
+                Object.entries(content).forEach(([date, minutes]) => {
+                  const dateObj = new Date(date);
+                  if (dateObj >= sevenDaysAgo) {
+                    filteredHistory[date] = minutes as number;
+                  }
+                });
+              }
               setUserHistoryMap(prev => ({
                 ...prev,
-                [userId]: content
+                [userId]: filteredHistory
               }));
               break;
             case 'growth_app_records':
+              // 只保留最多50条记录
+              const recordsArray = Array.isArray(content) ? content : [];
+              const limitedRecords = recordsArray.slice(0, 50);
               setUserRecordsMap(prev => ({
                 ...prev,
-                [userId]: content
+                [userId]: limitedRecords
               }));
               break;
-            case 'growth_app_weekly_states':
-              setWeeklyStates(prev => ({
-                ...prev,
-                ...content
-              }));
-              break;
+            // weekly_states 现在从全局配置加载，不再从用户数据加载
           }
         });
+      }
+      
+      // 从 daily_stats 加载当天的数据，更新到 userStatsMap
+      const todayStr = new Date().toISOString().split('T')[0];
+      const { data: dailyData, error: dailyError } = await supabase
+        .from('daily_stats')
+        .select('nianfo, baifo, zenghui, breath')
+        .eq('user_id', userId)
+        .eq('date', todayStr)
+        .single();
+      
+      if (!dailyError && dailyData) {
+        setUserStatsMap(prev => ({
+          ...prev,
+          [userId]: {
+            nianfo: dailyData.nianfo || 0,
+            baifo: dailyData.baifo || 0,
+            zenghui: dailyData.zenghui || 0,
+            breath: dailyData.breath || 0,
+          }
+        }));
+      }
+      
+      // 从 daily_stats 加载最近7天的数据，更新到 userHistoryMap
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+      
+      const { data: historyData, error: historyError } = await supabase
+        .from('daily_stats')
+        .select('date, total_minutes')
+        .eq('user_id', userId)
+        .gte('date', sevenDaysAgoStr)
+        .order('date', { ascending: true });
+      
+      if (!historyError && historyData) {
+        const historyMap: Record<string, number> = {};
+        historyData.forEach((row: any) => {
+          historyMap[row.date] = row.total_minutes || 0;
+        });
+        setUserHistoryMap(prev => ({
+          ...prev,
+          [userId]: historyMap
+        }));
       }
     } catch (err) {
       console.error('Error loading user data from Supabase:', err);
@@ -490,13 +646,40 @@ const App: React.FC = () => {
   };
 
   const handleLogin = async (user: User) => {
-    if (!allUsers.find(u => u.id === user.id)) setAllUsers(prev => [...prev, user]);
-    else setAllUsers(prev => prev.map(u => u.id === user.id ? user : u));
+    // 如果用户不在列表中，添加到列表
+    if (!allUsers.find(u => u.id === user.id)) {
+      setAllUsers(prev => [...prev, user]);
+      // 保存用户信息到 Supabase
+      try {
+        await supabase
+          .from('user_data')
+          .upsert({
+            user_id: user.id,
+            key_name: 'user_profile',
+            content: {
+              name: user.name,
+              classVersion: user.classVersion,
+              isAdmin: user.isAdmin || false,
+            },
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id,key_name'
+          });
+      } catch (err) {
+        console.error('Error saving user profile to Supabase:', err);
+      }
+    } else {
+      setAllUsers(prev => prev.map(u => u.id === user.id ? user : u));
+    }
+    
     setCurrentUser(user);
     localStorage.setItem('growth_app_current_user_id', user.id);
     
     // 从 Supabase 加载用户数据
     await loadUserDataFromSupabase(user.id);
+    
+    // 重新加载所有用户列表（确保包含最新注册的用户）
+    await loadAllUsers();
     
     // 检查是否是管理员登录（账号 admin 和密码 010101）
     // 支持多种情况：name === 'admin' 或 name === '管理员'，或者 isAdmin === true
@@ -533,16 +716,32 @@ const App: React.FC = () => {
 
   const handleSaveRecord = (type: string, content: string, colors: any) => {
     if (!currentUser) return;
-    setUserRecordsMap(prev => {
-        const userRecs = prev[currentUser.id] || [];
-        let updatedRecs;
-        if (editingRecord) {
-            updatedRecs = userRecs.map(r => r.id === editingRecord.id ? { ...r, type, content, color: colors.color, bgColor: colors.bgColor, textColor: colors.textColor } : r);
-        } else {
-            const newRecord: GrowthRecord = { id: Date.now(), type, content, time: '刚刚', color: colors.color, bgColor: colors.bgColor, textColor: colors.textColor, isPinned: false };
-            updatedRecs = [newRecord, ...userRecs];
-        }
+    
+    const userRecs = userRecordsMap[currentUser.id] || [];
+    
+    // 如果是编辑记录，直接保存
+    if (editingRecord) {
+      setUserRecordsMap(prev => {
+        const updatedRecs = userRecs.map(r => r.id === editingRecord.id ? { ...r, type, content, color: colors.color, bgColor: colors.bgColor, textColor: colors.textColor } : r);
         return { ...prev, [currentUser.id]: updatedRecs };
+      });
+      setEditingRecord(null);
+      goBack();
+      if (currentView !== ViewName.RECORD) navigate(ViewName.RECORD);
+      return;
+    }
+    
+    // 如果是新记录，检查是否超过50条
+    if (userRecs.length >= 50) {
+      alert('记录数量已达到上限（50条），请先删除一些记录后再添加。');
+      return;
+    }
+    
+    // 添加新记录
+    setUserRecordsMap(prev => {
+      const newRecord: GrowthRecord = { id: Date.now(), type, content, time: '刚刚', color: colors.color, bgColor: colors.bgColor, textColor: colors.textColor, isPinned: false };
+      const updatedRecs = [newRecord, ...userRecs];
+      return { ...prev, [currentUser.id]: updatedRecs };
     });
     setEditingRecord(null);
     goBack();
@@ -563,7 +762,17 @@ const App: React.FC = () => {
   };
 
   const openEditModal = (rec: GrowthRecord) => { setEditingRecord(rec); setHistory(prev => [...prev, ViewName.RECORD]); setCurrentView(ViewName.RECORD_INPUT); };
-  const openNewRecordModal = () => { setEditingRecord(null); setHistory(prev => [...prev, ViewName.RECORD]); setCurrentView(ViewName.RECORD_INPUT); };
+  const openNewRecordModal = () => {
+    if (!currentUser) return;
+    const userRecs = userRecordsMap[currentUser.id] || [];
+    if (userRecs.length >= 50) {
+      alert('记录数量已达到上限（50条），请先删除一些记录后再添加。');
+      return;
+    }
+    setEditingRecord(null);
+    setHistory(prev => [...prev, ViewName.RECORD]);
+    setCurrentView(ViewName.RECORD_INPUT);
+  };
   
   const handleUpdateCourseContent = (version: string, id: number, content: string) => {
     setCourseContents(prev => {
@@ -617,7 +826,36 @@ const App: React.FC = () => {
       saveGlobalConfig('auth_code', authCode),
     ]);
   }, [coursesMap, courseContents, splashQuotes, homeQuotes, checkInConfig, authCode, saveGlobalConfig]);
-  const handleUpdateUserPermission = (userId: string, updates: Partial<User>) => setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+  const handleUpdateUserPermission = async (userId: string, updates: Partial<User>) => {
+    setAllUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const updated = { ...u, ...updates };
+        // 保存用户信息到 Supabase
+        (async () => {
+          try {
+            await supabase
+              .from('user_data')
+              .upsert({
+                user_id: userId,
+                key_name: 'user_profile',
+                content: {
+                  name: updated.name,
+                  classVersion: updated.classVersion,
+                  isAdmin: updated.isAdmin || false,
+                },
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,key_name'
+              });
+          } catch (err) {
+            console.error('Error saving user profile:', err);
+          }
+        })();
+        return updated;
+      }
+      return u;
+    }));
+  };
 
   if (showSplash) return <Splash onFinish={() => setShowSplash(false)} quotes={lang === 'en' ? SPLASH_QUOTES_EN : splashQuotes} />;
   if (!currentUser) return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;

@@ -383,49 +383,28 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
   const completedItems = listData.filter(d => d.value >= 1);
   const totalMinutes = stats.nianfo + stats.baifo + stats.zenghui + stats.breath;
 
-  // 从 Supabase 拉取所有用户的时长数据并计算排名
+  // 从 Supabase 拉取当天所有用户的时长数据并计算排名
   useEffect(() => {
     const calculateRanking = async () => {
       try {
-        // 首先尝试从 weekly_stats 表拉取数据
-        let allUserStats: DailyStats[] = [];
+        const todayStr = new Date().toISOString().split('T')[0];
         
-        const { data: weeklyStatsData, error: weeklyStatsError } = await supabase
-          .from('weekly_stats')
-          .select('*');
+        // 从 daily_stats 表拉取当天的所有用户数据
+        const { data: dailyStatsData, error: dailyStatsError } = await supabase
+          .from('daily_stats')
+          .select('total_minutes')
+          .eq('date', todayStr);
         
-        if (!weeklyStatsError && weeklyStatsData && weeklyStatsData.length > 0) {
-          // 如果 weekly_stats 表存在且有数据，使用它
-          allUserStats = weeklyStatsData.map((row: any) => ({
-            nianfo: row.nianfo || 0,
-            baifo: row.baifo || 0,
-            zenghui: row.zenghui || 0,
-            breath: row.breath || 0,
-          }));
-        } else {
-          // 如果 weekly_stats 表不存在或为空，从 user_data 表拉取所有用户的 stats
-          const { data: userData, error: userDataError } = await supabase
-            .from('user_data')
-            .select('content')
-            .eq('key_name', 'growth_app_stats');
-          
-          if (!userDataError && userData) {
-            allUserStats = userData
-              .map((row: any) => row.content)
-              .filter((stat: any) => stat && typeof stat === 'object')
-              .map((stat: any) => ({
-                nianfo: stat.nianfo || 0,
-                baifo: stat.baifo || 0,
-                zenghui: stat.zenghui || 0,
-                breath: stat.breath || 0,
-              }));
-          }
+        if (dailyStatsError) {
+          console.error('Error loading daily stats:', dailyStatsError);
+          setRankingPercentage(0);
+          return;
         }
 
-        // 计算所有用户的总时长
-        const allTotalMinutes = allUserStats.map(s => s.nianfo + s.baifo + s.zenghui + s.breath);
+        // 计算所有用户当天的总时长
+        const allTotalMinutes = (dailyStatsData || []).map((row: any) => row.total_minutes || 0);
         
-        // 计算当前用户的总时长
+        // 计算当前用户当天的总时长
         const currentUserTotal = totalMinutes;
         
         // 计算排名百分比：有多少用户的总时长小于当前用户
@@ -439,12 +418,14 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
         setRankingPercentage(Math.min(99, Math.max(0, percentage)));
       } catch (err) {
         console.error('Error calculating ranking:', err);
-        // 如果出错，使用默认值
-        setRankingPercentage(Math.min(99, Math.floor((totalMinutes / 120) * 99) + (totalMinutes > 0 ? 1 : 0)));
+        setRankingPercentage(0);
       }
     };
 
     calculateRanking();
+    // 每30秒刷新一次排名
+    const interval = setInterval(calculateRanking, 30000);
+    return () => clearInterval(interval);
   }, [totalMinutes, user.id]);
 
   const weeklyData = Array.from({length: 7}, (_, i) => {
