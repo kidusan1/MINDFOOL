@@ -403,6 +403,13 @@ const App: React.FC = () => {
     
     // 从 Supabase 加载用户数据
     await loadUserDataFromSupabase(user.id);
+    
+    // 检查是否是管理员登录（账号 admin 和密码 010101）
+    // 支持多种情况：name === 'admin' 或 name === '管理员'，或者 isAdmin === true
+    if ((user.name === 'admin' || user.name === '管理员' || user.isAdmin === true) && 
+        (user.password === '010101' || user.id === 'admin')) {
+      setCurrentView(ViewName.ADMIN);
+    }
   };
 
   const handleLogout = async () => {
