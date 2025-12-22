@@ -69,11 +69,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, users = [], authCode, lang, setL
         if (data.user) {
           // 从 user_metadata 获取用户信息
           const metadata = data.user.user_metadata || {};
+          const trimmedName = name.trim();
           const user: User = {
             id: data.user.id,
-            name: metadata.name || name.trim(),
+            name: metadata.name || trimmedName,
             classVersion: metadata.classVersion || '成长班 1.0',
-            isAdmin: metadata.isAdmin || name.trim() === '管理员',
+            isAdmin: metadata.isAdmin || trimmedName === '管理员' || trimmedName === 'admin',
+            password: password, // 保存密码以便 handleLogin 检查
           };
           onLogin(user);
         }
