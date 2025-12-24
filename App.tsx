@@ -534,7 +534,7 @@ const loadGlobalConfig = useCallback(async () => {
           };
           
           setCurrentUser(user);
-          localStorage.setItem('growth_app_current_user_id', user.id);
+          localStorage.setItem('growth_app_current_user', JSON.stringify(user));
           
           // 从 Supabase 加载用户数据
           await loadUserDataFromSupabase(user.id);
@@ -897,7 +897,7 @@ const loadGlobalConfig = useCallback(async () => {
     }
     
     setCurrentUser(user);
-    localStorage.setItem('growth_app_current_user_id', user.id);
+    localStorage.setItem('growth_app_current_user', JSON.stringify(user));
     
     // 从 Supabase 加载用户数据
     await loadUserDataFromSupabase(user.id);
@@ -1107,8 +1107,12 @@ const loadGlobalConfig = useCallback(async () => {
     }));
   };
 
-  if (showSplash) return <Splash onFinish={() => setShowSplash(false)} quotes={lang === 'en' ? SPLASH_QUOTES_EN : splashQuotes} />;
-  if (!currentUser) return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
+  if (showSplash) {
+    return <Splash onFinish={() => setShowSplash(false)} quotes={splashQuotes} />;
+  }
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
+  }
 
   const currentContentKey = selectedCourseId ? `${currentUser.classVersion}-${selectedCourseId}` : '';
 
