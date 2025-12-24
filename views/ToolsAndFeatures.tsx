@@ -684,22 +684,24 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                           ref={posterRef}
                           className="bg-[#F9F8F6] flex flex-col overflow-hidden border-[15px] border-white h-auto relative"
                       >
-                          {/* 书法底纹层 */}
-                          <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.08] z-0 overflow-hidden">
-                              <div 
-                                  style={{ 
-                                      fontFamily: "'Liu Jian Mao Cao', cursive", 
-                                      writingMode: 'vertical-rl', 
-                                      fontSize: '280px', 
-                                      letterSpacing: '-1.5rem', 
-                                      lineHeight: 1,
-                                      whiteSpace: 'nowrap',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                  }}
-                              >
-                                  {zenText}
+                         {/* 书法底纹层 (恢复旧版隶书位移) */}
+                         <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.035] z-0 px-2 overflow-hidden font-lisu">
+                              <div className="flex flex-col items-center justify-center leading-none tracking-tighter -space-y-32">
+                                  {zenText.length === 3 ? (
+                                      zenText.split('').map((char, i) => (
+                                          <span 
+                                            key={i} 
+                                            className="text-[25rem] font-[1000] inline-block"
+                                            style={{ transform: `translateX(${i === 1 ? '4.2rem' : '-4.2rem'})` }}
+                                          >
+                                              {char}
+                                          </span>
+                                      ))
+                                  ) : (
+                                      zenText.split('').map((char, i) => (
+                                          <span key={i} className="text-[25rem] font-[1000]">{char}</span>
+                                      ))
+                                  )}
                               </div>
                           </div>
 
