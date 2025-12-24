@@ -17,14 +17,16 @@ import { supabase } from './src/supabaseClient';
 const getBeijingDateString = () => {
   const now = new Date();
   // 计算北京时间 (UTC+8)
-  // getTimezoneOffset() 返回当前设备与 UTC 的分钟差，北京是 -480
   const beijingTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
   
   const y = beijingTime.getFullYear();
   const m = String(beijingTime.getMonth() + 1).padStart(2, '0');
   const d = String(beijingTime.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  
+  // 关键修正：这里要把 ${day} 改成 ${d}
+  return `${y}-${m}-${d}`; 
 };
+
 const DEFAULT_HOME_QUOTES = [
   "诸菩萨摩诃萨应如是生清净心，不应住色生心，不应住声、香、味、触、法生心，应无所住而生其心。—— 《金刚经》",
   "假使经百劫，所作业不亡；因缘会遇时，果报还自受。—— 《大宝积经》",
@@ -793,35 +795,38 @@ const loadGlobalConfig = useCallback(async () => {
           }
         }));
       }
-      
-  // --- 使用统一的北京时间计算 7 天前 ---
-  const todayStr = getBeijingDateString(); 
-  const todayObj = new Date(todayStr); 
+     // --- 这里的逻辑：只获取北京时间“昨天”及以前的 7 天数据 ---
+  const currentDate = getBeijingDateString(); 
+  const todayObj = new Date(currentDate); 
   
-  const sevenDaysAgoObj = new Date(todayObj);
-  sevenDaysAgoObj.setDate(todayObj.getDate() - 7);
+  // 1. 计算北京时间的“昨天” (作为查询的终点)
+  const yesterdayObj = new Date(todayObj);
+  yesterdayObj.setDate(todayObj.getDate() - 1);
+  const yesterdayStr = `${yesterdayObj.getFullYear()}-${String(yesterdayObj.getMonth() + 1).padStart(2, '0')}-${String(yesterdayObj.getDate()).padStart(2, '0')}`;
   
-  const y = sevenDaysAgoObj.getFullYear();
-  const m = String(sevenDaysAgoObj.getMonth() + 1).padStart(2, '0');
-  const d = String(sevenDaysAgoObj.getDate()).padStart(2, '0');
-  const sevenDaysAgoStr = `${y}-${m}-${d}`;
-      const { data: historyData, error: historyError } = await supabase
-        .from('daily_stats')
-        .select('date, total_minutes')
-        .eq('user_id', userId)
-        .gte('date', sevenDaysAgoStr)
-        .order('date', { ascending: true });
-      
-      if (!historyError && historyData) {
-        const historyMap: Record<string, number> = {};
-        historyData.forEach((row: any) => {
-          historyMap[row.date] = row.total_minutes || 0;
-        });
-        setUserHistoryMap(prev => ({
-          ...prev,
-          [userId]: historyMap
-        }));
-      }
+  // 2. 计算“昨天的 6 天前” (作为查询的起点，共 7 天)
+  const startDateObj = new Date(yesterdayObj);
+  startDateObj.setDate(yesterdayObj.getDate() - 6); 
+  const startDateStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`;
+
+  const { data: historyData, error: historyError } = await supabase
+    .from('daily_stats')
+    .select('date, total_minutes')
+    .eq('user_id', userId)
+    .gte('date', startDateStr) // 大于等于起点
+    .lte('date', yesterdayStr) // 小于等于昨天（彻底排除今天，解决长高问题）
+    .order('date', { ascending: true });
+  
+  if (!historyError && historyData) {
+    const historyMap: Record<string, number> = {};
+    historyData.forEach((row: any) => {
+      historyMap[row.date] = row.total_minutes || 0;
+    });
+    setUserHistoryMap(prev => ({
+      ...prev,
+      [userId]: historyMap
+    }));
+  }
     } catch (err) {
       console.error('Error loading user data from Supabase:', err);
     }
