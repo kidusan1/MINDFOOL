@@ -1088,15 +1088,7 @@ const loadGlobalConfig = useCallback(async () => {
     }));
   };
 
- // 只有在“还没关闭海报”且“还没认出用户”时，才显示海报
- if (showSplash && !currentUser) {
-  return (
-    <Splash 
-      onFinish={() => setShowSplash(false)} 
-      quotes={splashQuotes} 
-    />
-  );
-}
+
   if (!currentUser) {
     return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
   }
