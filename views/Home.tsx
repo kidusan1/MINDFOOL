@@ -39,21 +39,36 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   return (
     <div className="h-full flex flex-col items-center justify-center px-6 md:px-12 animate-fade-in overflow-y-auto no-scrollbar py-6 md:py-12">
  {/* 1. 佛法名句区域 */}
-<div 
-  className="w-full max-w-[480px] px-4 flex flex-col items-center mb-10 opacity-0 translate-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-forwards" 
-  style={{ animationDelay: '300ms' }}
->
->
-  {/* ... 内部代码保持不变 ... */}
+ <div 
+        className="w-full max-w-[480px] px-4 flex flex-col items-center mb-10" 
+        style={{ 
+          opacity: 0,
+          animation: 'fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards'
+        }}
+      >
+        <style>{`
+          @keyframes fadeInUp {
+            0% {
+              opacity: 0;
+              transform: translateY(40px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+        
+        {/* 上分隔线 */}
         <div className="w-24 h-[1px] bg-black/[0.05] mb-6"></div>
         
         <div className="w-full flex flex-col">
-          {/* 名句内容 - 颜色调整为 text-textMain/80 以增强辨识度 */}
+          {/* 名句内容 */}
           <p className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.5] tracking-[0.3em] text-justify font-light">
             {text}
           </p>
           
-          {/* 出处 - 使用 font-extralight 将破折号调细，并增加负间距以确保其连续无断点且颜色与正文一致 */}
+          {/* 出处 */}
           {source && (
             <p className="text-textMain/80 text-[13px] md:text-[15px] text-right mt-4 tracking-[0.2em] font-light">
               <span className="mr-1 tracking-[-0.15em] font-extralight inline-block">——</span> {source}
@@ -64,7 +79,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
         {/* 下分隔线 */}
         <div className="w-24 h-[1px] bg-black/[0.05] mt-6"></div>
       </div>
-
       {/* 2. 今日功课时长卡片 (原本在上方，现在调换到下方) */}
       <div 
         onClick={() => onNavigate(ViewName.TOOLS)}
