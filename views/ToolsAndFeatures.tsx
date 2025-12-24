@@ -596,7 +596,7 @@ const weeklyData = Array.from({length: 7}, (_, i) => {
 };
 
 const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyStats, user: User, homeQuotes: string[], showDetails: boolean }> = ({ onClose, lang, stats, user, homeQuotes, showDetails }) => {
-    const t = TRANSLATIONS[lang].stats;
+    //const t = TRANSLATIONS[lang].stats;
     const [imageUri, setImageUri] = useState<string | null>(null);
     const posterRef = useRef<HTMLDivElement>(null);
 
@@ -713,20 +713,29 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                                       </p>
                                   )}
                               </div>
-
+                            
                               <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-2">
                                   <span className="text-[15px] tracking-[0.4em] font-medium text-textMain mb-1 opacity-80 uppercase whitespace-nowrap">
                                       慢心障道
                                   </span>
                                   <div className="flex justify-center w-full text-[13px] tracking-[0.15em] font-bold text-gray-400 uppercase">
                                       <span>{dateStr}</span>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-  );
+                                      </div>
+                                  <div className="flex flex-col gap-8 mt-4">
+                                  {completedItems.map((item, idx) => ( 
+                                    <div key={idx} className="flex justify-between items-baseline border-b border-black/5 pb-1"> <span className="text-xs uppercase opacity-60">{item.name}</span><span className="text-2xl font-light">{item.val}</span> </div>
+                                     ))}
+                                  <div className="bg-primary/90 p-4 text-white rounded-xl"> <p className="text-sm leading-relaxed">{blueBoxText}</p> </div>
+                                  <div className="mt-4 pt-4 border-t border-black/10"></div>
+                                  <h3 className="text-xl font-medium">{user.name}</h3>
+                                  <p className="text-[10px] opacity-40 uppercase">{user.classVersion}</p>
+                                  </div> {/* 1. 闭合 flex-col gap-8 (分数和名字容器) */}
+                              </div> {/* 2. 闭合 bg-white/5 (包含日期的那个灰色背景块) */}
+                          </div> {/* 3. 闭合 p-10 (内容展示层) */}
+                      </div> {/* 4. 闭合 posterRef (白底海报主体) */}
+                  </div> {/* 5. 闭合 absolute -z-50 (隐藏生成区) */}
+              </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
+          </div> {/* 7. 闭合 relative w-full max-w-sm (居中容器) */}
+      </div> 
+);
 };
