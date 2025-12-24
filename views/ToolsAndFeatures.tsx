@@ -746,6 +746,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                               </div>
 
                               {/* C. 功课数据 + 回向文字区域 */}
+                              {showDetails && (
                               <div className="flex flex-col justify-center gap-8">
                                   {/* 功课详情：横向平铺布局 */}
                                   <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
@@ -766,6 +767,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                                       <p className="text-base leading-relaxed font-medium">{blueBoxText}</p> 
                                   </div>
                               </div>
+                              )}
 
                               {/* D. 底部签名区域 (紧凑对齐) */}
                               <div className="flex justify-between items-end pb-3 border-b border-black/[0.05] mt-auto">
