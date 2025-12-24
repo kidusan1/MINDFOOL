@@ -13,7 +13,7 @@ if (typeof document !== 'undefined') {
     style.id = styleId;
     style.textContent = `
       @font-face {
-        font-family: 'MyXingKai';
+        font-family: 'xingkai';
         src: url('/fonts/xingkai.ttf') format('truetype');
         font-weight: normal;
         font-style: normal;
@@ -729,7 +729,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                               <div className="pt-2">
                                   <p className="text-lg text-textMain/80 leading-loose text-left font-light tracking-wide">{quoteText}</p>
                                   {quoteSource && (
-                                      <p className="text-base text-textMain/80 text-right mt-3 font-light">
+                                      <p className="text-base text-textMain/80 text-right mt-1 font-light">
                                           <span className="tracking-[-0.15em] font-thin inline-block mr-1">——</span> {quoteSource.replace('—— ', '')}
                                       </p>
                                   )}
