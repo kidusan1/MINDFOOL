@@ -5,6 +5,24 @@ import { Icons } from '../components/Icons';
 import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import { toPng } from 'html-to-image';
 import { supabase } from '../src/supabaseClient';
+// 直接注入行楷字体样式
+if (typeof document !== 'undefined') {
+  const styleId = 'poster-font-style';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @font-face {
+        font-family: 'MyXingKai';
+        src: url('/fonts/xingkai.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
 const getBeijingDateString = () => {
   const now = new Date();
   // 计算北京时间 (UTC+8)
@@ -625,7 +643,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const zenText = useMemo(() => {
-        const phrasesZh = ["真心", "喫茶去", "一食頃", "莫妄想", "止觀", "觀自在", "不二"];
+        const phrasesZh = ["真心", "吃茶去", "一食頃", "莫妄想", "止觀", "觀自在", "不二"];
         const hash = user.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return phrasesZh[(hash + new Date().getDate()) % phrasesZh.length];
     }, [user.name]);
@@ -705,8 +723,9 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                               </div>
                           </div>
 
-                          {/* 内容展示层 */}
-                          <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden">
+          {/* 内容展示层 */}
+          <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden h-full">
+                              {/* A. 引用名句区域 */}
                               <div className="pt-2">
                                   <p className="text-lg text-textMain/80 leading-loose text-left font-light tracking-wide">{quoteText}</p>
                                   {quoteSource && (
@@ -716,37 +735,56 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                                   )}
                               </div>
                             
-                              <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-2">
+                              {/* B. 慢心障道装饰栏 */}
+                              <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-3">
                                   <span className="text-[15px] tracking-[0.4em] font-medium text-textMain mb-1 opacity-80 uppercase whitespace-nowrap">
                                       慢心障道
                                   </span>
                                   <div className="flex justify-center w-full text-[13px] tracking-[0.15em] font-bold text-gray-400 uppercase">
                                       <span>{dateStr}</span>
-                                      </div>
-                                  <div className="flex flex-col gap-8 mt-4">
-                                  {completedItems.map((item, idx) => ( 
-                                 <div key={idx} className="flex flex-col items-center">
-                                    {/* A. 功课名称在上 */}
-                                    <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
-                                    {/* B. 数字在下 */}
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-light text-black tracking-tighter leading-none">{item.val}</span>
-                                        <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
-                                            {lang === 'zh' ? '分' : 'MINS'}
-                                        </span>
-                                    </div>
-                                  </div> 
-                                  ))}
-                                  <div className="bg-primary/90 p-4 text-white rounded-xl"> <p className="text-sm leading-relaxed">{blueBoxText}</p> </div>
-                                  <div className="mt-4 pt-4 border-t border-black/10"></div>
-                                  <h3 className="text-2xl font-light text-textMain/80 tracking-tighter whitespace-nowrap">{user.name}</h3>
-                                  <span className="text-[10px] text-gray-400 mt-0.5 uppercase whitespace-nowrap">{user.classVersion}</span>
-                                  <div className="flex justify-center py-2 opacity-20 shrink-0">
-                                      <span className="text-[16px] font-bold tracking-[0.6em] text-textMain">MINDFOOL</span>
                                   </div>
-                                  </div> {/* 1. 闭合 flex-col gap-8 (分数和名字容器) */}
-                              </div> {/* 2. 闭合 bg-white/5 (包含日期的那个灰色背景块) */}
-                          </div> {/* 3. 闭合 p-10 (内容展示层) */}
+                              </div>
+
+                              {/* C. 功课数据 + 回向文字区域 */}
+                              <div className="flex flex-col justify-center gap-8">
+                                  {/* 功课详情：横向平铺布局 */}
+                                  <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
+                                      {completedItems.map((item, idx) => ( 
+                                          <div key={idx} className="flex flex-col items-center">
+                                              <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
+                                              <div className="flex items-baseline gap-1">
+                                                  <span className="text-4xl font-light text-black tracking-tighter leading-none">{item.val}</span>
+                                                  <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
+                                                      {lang === 'zh' ? '分' : 'MINS'}
+                                                  </span>
+                                              </div>
+                                          </div> 
+                                      ))}
+                                  </div>
+                                  {/* 蓝色回向框 */}
+                                  <div className="bg-primary/90 p-5 text-white rounded-2xl shadow-lg"> 
+                                      <p className="text-base leading-relaxed font-medium">{blueBoxText}</p> 
+                                  </div>
+                              </div>
+
+                              {/* D. 底部签名区域 (紧凑对齐) */}
+                              <div className="flex justify-between items-end pb-3 border-b border-black/[0.05] mt-auto">
+                                  <div className="flex flex-col items-start">
+                                      <h3 className="text-2xl font-light text-textMain/80 tracking-tighter leading-none">
+                                          {user.name}
+                                      </h3>
+                                      <span className="text-[10px] text-gray-400 mt-1 uppercase whitespace-nowrap leading-none">
+                                          {user.classVersion}
+                                      </span>
+                                  </div>
+                                  <div className="w-12 h-px bg-black/20 mb-2"></div>
+                              </div>
+
+                              {/* E. 底部 Logo */}
+                              <div className="flex justify-center py-2 opacity-20 shrink-0">
+                                  <span className="text-[16px] font-bold tracking-[0.6em] text-textMain">MINDFOOL</span>
+                              </div>
+                          </div> {/* 结束 p-10 内容展示层 */}
                       </div> {/* 4. 闭合 posterRef (白底海报主体) */}
                   </div> {/* 5. 闭合 absolute -z-50 (隐藏生成区) */}
               </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
