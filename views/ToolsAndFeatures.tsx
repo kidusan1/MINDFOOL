@@ -645,91 +645,88 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     }, [showDetails, lang]);
 
     const blueBoxText = useMemo(() => {
-        const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
-        if (lang === 'zh') {
-            return `今天我已完成 ${items}，回向大家色身康泰、福慧增长、道业增上，随喜赞叹各位伙伴！`;
-        } else {
-            return `I have completed ${items} today. Dedicating this to everyone's health, wisdom, and spiritual progress. Rejoicing in everyone's practice!`;
-        }
-    }, [completedItems, lang]);
+      const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
+      if (lang === 'zh') {
+          return `今天我已完成 ${items}，回向大家色身康泰、福慧增长、道业增上，随喜赞叹各位伙伴！`;
+      } else {
+          return `I have completed ${items} today. Dedicating this to everyone's health, wisdom, and spiritual progress. Rejoicing in everyone's practice!`;
+      }
+  }, [completedItems, lang]);
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
-            <div className="relative w-full max-w-sm flex flex-col gap-4 py-8">
-                
-                <button 
-                    onClick={onClose} 
-                    className="absolute -bottom-4 right-0 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] shadow-lg border border-white/20"
-                >
-                    <Icons.Plus size={24} className="rotate-45" />
-                </button>
+  return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-sm flex flex-col gap-4 py-8">
+              
+              <button 
+                  onClick={onClose} 
+                  className="absolute -bottom-4 right-0 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] shadow-lg border border-white/20"
+              >
+                  <Icons.Plus size={24} className="rotate-45" />
+              </button>
 
-                <div className="relative w-full overflow-hidden rounded-lg shadow-2xl">
-                    {imageUri ? (
-                        <img 
-                            src={imageUri} 
-                            alt="Practice Summary Poster" 
-                            className="w-full h-auto select-all"
-                            style={{ pointerEvents: 'auto' }}
-                        />
-                    ) : (
-                        <div className="w-full aspect-[9/12] bg-[#F9F8F6] flex items-center justify-center">
-                            <span className="text-primary text-xs animate-bounce font-medium uppercase tracking-widest">Generating Poster...</span>
-                        </div>
-                    )}
+              <div className="relative w-full overflow-hidden rounded-lg shadow-2xl">
+                  {imageUri ? (
+                      <img 
+                          src={imageUri} 
+                          alt="Practice Summary Poster" 
+                          className="w-full h-auto select-all"
+                          style={{ pointerEvents: 'auto' }}
+                      />
+                  ) : (
+                      <div className="w-full aspect-[9/12] bg-[#F9F8F6] flex items-center justify-center">
+                          <span className="text-primary text-xs animate-bounce font-medium uppercase tracking-widest">Generating Poster...</span>
+                      </div>
+                  )}
 
-<div 
-    ref={posterRef}
-    className="bg-[#F9F8F6] flex flex-col overflow-hidden border-[15px] border-white h-auto relative"
->
-    {/* --- 替换开始 --- */}
-    <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.08] z-0 overflow-hidden">
-        <div 
-            style={{ 
-                fontFamily: "'Liu Jian Mao Cao', cursive", 
-                writingMode: 'vertical-rl', 
-                fontSize: '280px', 
-                letterSpacing: '-1.5rem', 
-                lineHeight: 1,
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}
-        >
-            {zenText}
-        </div>
-    </div>
-    {/* --- 替换结束 --- */}
+                  {/* --- 这里是生成的实际海报节点 --- */}
+                  <div className="absolute top-0 left-0 -z-50 opacity-0 pointer-events-none" style={{ width: '450px' }}>
+                      <div 
+                          ref={posterRef}
+                          className="bg-[#F9F8F6] flex flex-col overflow-hidden border-[15px] border-white h-auto relative"
+                      >
+                          {/* 书法底纹层 */}
+                          <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.08] z-0 overflow-hidden">
+                              <div 
+                                  style={{ 
+                                      fontFamily: "'Liu Jian Mao Cao', cursive", 
+                                      writingMode: 'vertical-rl', 
+                                      fontSize: '280px', 
+                                      letterSpacing: '-1.5rem', 
+                                      lineHeight: 1,
+                                      whiteSpace: 'nowrap',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                  }}
+                              >
+                                  {zenText}
+                              </div>
+                          </div>
 
-    {/* 下面应该接着是你海报的其他内容，如文字、日期等 */}
+                          {/* 内容展示层 */}
+                          <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden">
+                              <div className="pt-2">
+                                  <p className="text-lg text-textMain/80 leading-loose text-left font-light tracking-wide">{quoteText}</p>
+                                  {quoteSource && (
+                                      <p className="text-base text-textMain/80 text-right mt-3 font-light">
+                                          <span className="tracking-[-0.15em] font-thin inline-block mr-1">——</span> {quoteSource.replace('—— ', '')}
+                                      </p>
+                                  )}
+                              </div>
 
-
-                            <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden">
-                                
-                                <div className="pt-2">
-                                    <p className="text-lg text-textMain/80 leading-loose text-left font-light tracking-wide">{quoteText}</p>
-                                    {quoteSource && (
-                                        <p className="text-base text-textMain/80 text-right mt-3 font-light">
-                                            <span className="tracking-[-0.15em] font-thin inline-block mr-1">——</span> {quoteSource.replace('—— ', '')}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-2">
-                                    <span className="text-[15px] tracking-[0.4em] font-medium text-textMain mb-1 opacity-80 uppercase whitespace-nowrap">
-                                        慢心障道
-                                    </span>
-                                    <div className="flex justify-center w-full text-[13px] tracking-[0.15em] font-bold text-gray-400 uppercase">
-                                       
-                                        <span>{dateStr}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> {/* 闭合 posterRef 的内容层 */}
-                    </div> {/* 闭合 posterRef 的容器层 */}
-                </div> {/* 闭合最外层隐藏容器 -z-50 */}
-            </div> {/* 闭合白色卡片 max-w-sm 容器 */}
-        </div> /* 闭合黑色半透明背景 fixed inset-0 容器 */
-    );
+                              <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-2">
+                                  <span className="text-[15px] tracking-[0.4em] font-medium text-textMain mb-1 opacity-80 uppercase whitespace-nowrap">
+                                      慢心障道
+                                  </span>
+                                  <div className="flex justify-center w-full text-[13px] tracking-[0.15em] font-bold text-gray-400 uppercase">
+                                      <span>{dateStr}</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  );
 };
