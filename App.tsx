@@ -1087,7 +1087,13 @@ const loadGlobalConfig = useCallback(async () => {
       return u;
     }));
   };
-
+  if (!allUsers || allUsers.length <= 1) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#F0EEE9] text-[#6D8D9D]">
+        正在同步云端数据...
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
