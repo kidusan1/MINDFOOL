@@ -15,31 +15,34 @@ const Splash: React.FC<SplashProps> = ({ onFinish, quotes = [] }) => {
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // 【小白说明】如果记事本上写着“已运行”，就直接停止，不再重复选词。
+    // 如果已经初始化过，直接返回
     if (hasInitialized.current) return;
 
-    // 1. 选词逻辑：优先看管理员后台有没有改过，没有就用代码里的默认词。
+    // 1. 选词
     const list = (quotes && quotes.length > 0) ? quotes : DEFAULT_QUOTES;
     const randomIndex = Math.floor(Math.random() * list.length);
-    const text = list[randomIndex];
+    const text = list[randomIndex] || "吉祥如意"; // 增加一个保底词
 
-    if (text) {
-      // 2. 将文字按空格拆分成竖排显示的列
-      const lines = text.split(' ').filter(Boolean);
-      setQuoteLines(lines);
-      // 【小白说明】运行完后，在记事本上写下“已运行”。
-      hasInitialized.current = true; 
-    }
+    // 2. 拆分文字
+    const lines = text.split(' ').filter(Boolean);
+    setQuoteLines(lines);
+    
+    // 【关键】无论有没有词，都标记为已初始化，确保计时器一定运行
+    hasInitialized.current = true; 
 
-    // 3. 计时器：4.5秒后开始变透明，5.3秒后彻底消失
+    // 3. 核心计时器：确保 4.5 秒后一定触发消失
     const timer = setTimeout(() => {
-      setIsVisible(false); // 开始淡出动画
-      setTimeout(onFinish, 800); // 动画结束后通知父组件关闭我
+      setIsVisible(false); // 先变透明
+      
+      // 800毫秒动画结束后，执行交接
+      setTimeout(() => {
+        onFinish(); 
+      }, 800);
     }, 4500); 
 
     return () => clearTimeout(timer);
-  }, [onFinish, quotes]);
-
+  }, [onFinish]); // 注意：这里去掉了 quotes，防止它反复干扰
+  
   return (
     <div 
       className={`fixed inset-0 z-[100] bg-[#F0EEE9] flex items-center justify-center transition-opacity duration-1000 ${
