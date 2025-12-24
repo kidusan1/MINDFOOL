@@ -723,12 +723,25 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                                       </div>
                                   <div className="flex flex-col gap-8 mt-4">
                                   {completedItems.map((item, idx) => ( 
-                                    <div key={idx} className="flex justify-between items-baseline border-b border-black/5 pb-1"> <span className="text-xs uppercase opacity-60">{item.name}</span><span className="text-2xl font-light">{item.val}</span> </div>
-                                     ))}
+                                 <div key={idx} className="flex flex-col items-center">
+                                    {/* A. 功课名称在上 */}
+                                    <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
+                                    {/* B. 数字在下 */}
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl font-light text-black tracking-tighter leading-none">{item.val}</span>
+                                        <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
+                                            {lang === 'zh' ? '分' : 'MINS'}
+                                        </span>
+                                    </div>
+                                  </div> 
+                                  ))}
                                   <div className="bg-primary/90 p-4 text-white rounded-xl"> <p className="text-sm leading-relaxed">{blueBoxText}</p> </div>
                                   <div className="mt-4 pt-4 border-t border-black/10"></div>
-                                  <h3 className="text-xl font-medium">{user.name}</h3>
-                                  <p className="text-[10px] opacity-40 uppercase">{user.classVersion}</p>
+                                  <h3 className="text-2xl font-light text-textMain/80 tracking-tighter whitespace-nowrap">{user.name}</h3>
+                                  <span className="text-[10px] text-gray-400 mt-0.5 uppercase whitespace-nowrap">{user.classVersion}</span>
+                                  <div className="flex justify-center py-2 opacity-20 shrink-0">
+                                      <span className="text-[16px] font-bold tracking-[0.6em] text-textMain">MINDFOOL</span>
+                                  </div>
                                   </div> {/* 1. 闭合 flex-col gap-8 (分数和名字容器) */}
                               </div> {/* 2. 闭合 bg-white/5 (包含日期的那个灰色背景块) */}
                           </div> {/* 3. 闭合 p-10 (内容展示层) */}
