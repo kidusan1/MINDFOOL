@@ -10,7 +10,21 @@ import CourseDetail from './views/CourseDetail';
 import Splash from './views/Splash';
 import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES, SPLASH_QUOTES_EN } from './constants';
 import { supabase } from './src/supabaseClient';
-
+/**
+ * 核心工具：获取当前北京时间的 YYYY-MM-DD 字符串
+ * 确保全球用户无论在哪里，统计周期都以北京为准
+ */
+const getBeijingDateString = () => {
+  const now = new Date();
+  // 计算北京时间 (UTC+8)
+  // getTimezoneOffset() 返回当前设备与 UTC 的分钟差，北京是 -480
+  const beijingTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+  
+  const y = beijingTime.getFullYear();
+  const m = String(beijingTime.getMonth() + 1).padStart(2, '0');
+  const d = String(beijingTime.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 const DEFAULT_HOME_QUOTES = [
   "诸菩萨摩诃萨应如是生清净心，不应住色生心，不应住声、香、味、触、法生心，应无所住而生其心。—— 《金刚经》",
   "假使经百劫，所作业不亡；因缘会遇时，果报还自受。—— 《大宝积经》",
@@ -780,11 +794,17 @@ const loadGlobalConfig = useCallback(async () => {
         }));
       }
       
-      // 从 daily_stats 加载最近7天的数据，更新到 userHistoryMap
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-      
+  // --- 使用统一的北京时间计算 7 天前 ---
+  const todayStr = getBeijingDateString(); 
+  const todayObj = new Date(todayStr); 
+  
+  const sevenDaysAgoObj = new Date(todayObj);
+  sevenDaysAgoObj.setDate(todayObj.getDate() - 7);
+  
+  const y = sevenDaysAgoObj.getFullYear();
+  const m = String(sevenDaysAgoObj.getMonth() + 1).padStart(2, '0');
+  const d = String(sevenDaysAgoObj.getDate()).padStart(2, '0');
+  const sevenDaysAgoStr = `${y}-${m}-${d}`;
       const { data: historyData, error: historyError } = await supabase
         .from('daily_stats')
         .select('date, total_minutes')
