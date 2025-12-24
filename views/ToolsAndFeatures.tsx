@@ -5,7 +5,18 @@ import { Icons } from '../components/Icons';
 import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import { toPng } from 'html-to-image';
 import { supabase } from '../src/supabaseClient';
-
+const getBeijingDateString = () => {
+  const now = new Date();
+  // 计算北京时间 (UTC+8)
+  const beijingTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+  
+  const y = beijingTime.getFullYear();
+  const m = String(beijingTime.getMonth() + 1).padStart(2, '0');
+  const d = String(beijingTime.getDate()).padStart(2, '0');
+  
+  // 关键修正：这里要把 ${day} 改成 ${d}
+  return `${y}-${m}-${d}`; 
+};
 // --- 每日功课入口列表 ---
 interface ToolsProps {
   onNavigate: (view: ViewName, params?: any) => void;
@@ -493,12 +504,28 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
     return () => clearInterval(interval);
   }, [totalMinutes, user.id, allUsersStats]);
 
-  const weeklyData = Array.from({length: 7}, (_, i) => {
-     const d = new Date(); d.setDate(d.getDate() - (6 - i)); const dateKey = d.toISOString().split('T')[0]; const val = history[dateKey] || 0;
-     const dayMap = lang === 'en' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-     const label = (i === 6) ? t.today : dayMap[d.getDay()];
-     return { name: label, min: val };
-  });
+// --- 修改后的逻辑：从“昨天”起倒推 7 天 ---
+const weeklyData = Array.from({length: 7}, (_, i) => {
+  // 1. 获取北京时间字符串
+  const todayStr = getBeijingDateString(); 
+  const baseDate = new Date(todayStr); 
+  
+  // 2. 偏移量修改：i=6 时偏移 -1 天（昨天），i=0 时偏移 -7 天
+  // 计算公式：-(7 - i)，即从 -7 到 -1
+  const d = new Date(baseDate);
+  d.setDate(baseDate.getDate() - (7 - i)); 
+  
+  const dateKey = d.toISOString().split('T')[0]; 
+  const val = history[dateKey] || 0;
+  
+  const dayMap = lang === 'en' 
+    ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] 
+    : ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  
+  // 3. 标签逻辑：不再使用 t.today，全部使用周几
+  const label = dayMap[d.getDay()];
+  return { name: label, min: val };
+});
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar p-4 space-y-4 pb-24 md:pb-0 relative">
