@@ -518,57 +518,38 @@ const loadGlobalConfig = useCallback(async () => {
   }, [currentView, currentUser, loadAllUsersData]);
 
   // 初始化：检查 Supabase session 并加载用户数据
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        // 检查 Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          const metadata = session.user.user_metadata || {};
-          const user: User = {
-            id: session.user.id,
-            name: metadata.name || '',
-            classVersion: metadata.classVersion || '成长班 1.0',
-            isAdmin: metadata.isAdmin || false,
-          };
-          
-          setCurrentUser(user);
-          localStorage.setItem('growth_app_current_user', JSON.stringify(user));
-          
-          // 从 Supabase 加载用户数据
-          await loadUserDataFromSupabase(user.id);
-        } else {
-          // 如果没有 session，尝试从 localStorage 恢复（兼容旧版本）
-          const savedUserId = localStorage.getItem('growth_app_current_user_id');
-          if (savedUserId) {
-            const u = allUsers.find(user => user.id === savedUserId);
-            if (u) {
-              setCurrentUser(u);
-              if (!userStatsMap[u.id]) {
-                setUserStatsMap(prev => ({ ...prev, [u.id]: { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 } }));
-              }
-              if (!userRecordsMap[u.id]) {
-                setUserRecordsMap(prev => ({ ...prev, [u.id]: [] }));
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error initializing auth:', err);
-        // 失败时回退到 localStorage
-        const savedUserId = localStorage.getItem('growth_app_current_user_id');
-        if (savedUserId) {
-          const u = allUsers.find(user => user.id === savedUserId);
+ // 初始化：检查 Supabase session 并加载用户数据
+ useEffect(() => {
+  const initAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // ... 保持你原来的 session 处理逻辑 ...
+      } else {
+        // 【核心修复点】：这里要用 'growth_app_current_user' 才能读到你存的整个人
+        const savedUserJson = localStorage.getItem('growth_app_current_user');
+        if (savedUserJson) {
+          const u = JSON.parse(savedUserJson);
           if (u) {
             setCurrentUser(u);
+            await loadUserDataFromSupabase(u.id);
+          }
+        }
+        if (savedUserJson) {
+          const u = JSON.parse(savedUserJson);
+          if (u && u.id) {
+            setCurrentUser(u);
+            await loadUserDataFromSupabase(u.id);
           }
         }
       }
-    };
-    
-    initAuth();
-  }, []);
+    } catch (err) {
+      console.error('Error initializing auth:', err);
+    }
+  };
+  initAuth();
+}, []);
 
   const currentWeekRangeStr = calculateWeekRange(weekShift, 0);
 
@@ -1108,7 +1089,17 @@ const loadGlobalConfig = useCallback(async () => {
   };
 
   if (showSplash) {
-    return <Splash onFinish={() => setShowSplash(false)} quotes={splashQuotes} />;
+    if (showSplash) {
+      return (
+        <Splash 
+          onFinish={() => {
+            console.log("海报广播：演出结束，执行关闭逻辑");
+            setShowSplash(false);
+          }} 
+          quotes={splashQuotes} 
+        />
+      );
+    }
   }
   if (!currentUser) {
     return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
