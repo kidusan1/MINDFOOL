@@ -643,7 +643,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const zenText = useMemo(() => {
-        const phrasesZh = ["真心", "吃茶去", "一食頃", "莫妄想", "止觀", "觀自在", "不二"];
+        const phrasesZh = ["真心", "吃茶去", "一食頃", "莫妄想", "止观", "观自在", "不二"];
         const hash = user.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return phrasesZh[(hash + new Date().getDate()) % phrasesZh.length];
     }, [user.name]);
