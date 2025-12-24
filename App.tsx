@@ -111,7 +111,15 @@ const App: React.FC = () => {
 
   // 保存全局配置到 Supabase
   // currentUser 需要在所有使用它的函数之前定义
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    // 【小白说明】这行代码的意思是：启动时先看一眼浏览器有没有存过用户信息
+    const saved = localStorage.getItem('growth_app_current_user');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   
   const saveGlobalConfig = useCallback(async (key: string, content: any) => {
     // 修复保存权限报错：只有管理员才能写入全局配置
