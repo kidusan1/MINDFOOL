@@ -703,7 +703,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                           className="bg-[#F9F8F6] flex flex-col overflow-hidden border-[15px] border-white h-auto relative"
                       >
                          {/* 书法底纹层 (恢复旧版隶书位移) */}
-                         <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.035] z-0 px-2 overflow-hidden font-lisu">
+                         <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.035] z-0 px-2 overflow-hidden"style={{ fontFamily: "'xingkai', serif" }}>
                               <div className="flex flex-col items-center justify-center leading-none tracking-tighter -space-y-32">
                                   {zenText.length === 3 ? (
                                       zenText.split('').map((char, i) => (
