@@ -703,7 +703,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     {/* --- 替换结束 --- */}
 
     {/* 下面应该接着是你海报的其他内容，如文字、日期等 */}
-    
+
 
                             <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden">
                                 
@@ -721,58 +721,15 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                                         慢心障道
                                     </span>
                                     <div className="flex justify-center w-full text-[13px] tracking-[0.15em] font-bold text-gray-400 uppercase">
+                                       
                                         <span>{dateStr}</span>
                                     </div>
                                 </div>
-
-                                <div className="flex flex-col justify-center gap-8">
-                                    {showDetails && completedItems.length > 0 && (
-                                        <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
-                                            {completedItems.map((item, idx) => (
-                                                <div key={idx} className="flex flex-col items-center">
-                                                    <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
-                                                    <div className="flex items-baseline gap-1">
-                                                        <span className="text-4xl font-light text-black tracking-tighter leading-none">{item.val}</span>
-                                                        <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
-                                                            {lang === 'zh' ? '分' : 'MINS'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className="bg-primary/90 backdrop-blur-sm p-5 text-white rounded-2xl shadow-lg shadow-primary/10">
-                                        <p className="text-base font-medium leading-relaxed tracking-wider">
-                                            {blueBoxText}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-end pb-4 border-b border-black/[0.05]">
-                                    <div className="flex flex-col">
-                                        <h3 className="text-2xl font-light text-black tracking-tighter whitespace-nowrap">{user.name}</h3>
-                                        <span className="text-[10px] text-gray-400 mt-1 uppercase whitespace-nowrap">{user.classVersion}</span>
-                                    </div>
-                                    <div className="w-12 h-px bg-black/20 mb-2"></div>
-                                </div>
-
-                                <div className="flex justify-center py-2 opacity-20 shrink-0">
-                                    <span className="text-[16px] font-bold tracking-[0.6em] text-textMain">MINDFOOL</span>
-                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <p className="text-white/60 text-[11px] text-center px-10 animate-pulse tracking-widest uppercase">
-                    <span className="md:hidden">
-                        {lang === 'zh' ? '可长按保存/分享' : 'Long press to save/share'}
-                    </span>
-                    <span className="hidden md:inline">
-                        {lang === 'zh' ? '可右键保存/分享' : 'Right-click to save/share'}
-                    </span>
-                </p>
-            </div>
-        </div>
+                        </div> {/* 闭合 posterRef 的内容层 */}
+                    </div> {/* 闭合 posterRef 的容器层 */}
+                </div> {/* 闭合最外层隐藏容器 -z-50 */}
+            </div> {/* 闭合白色卡片 max-w-sm 容器 */}
+        </div> /* 闭合黑色半透明背景 fixed inset-0 容器 */
     );
 };
