@@ -38,10 +38,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
 
   return (
     <div className="h-full flex flex-col items-center justify-center px-6 md:px-12 animate-fade-in overflow-y-auto no-scrollbar py-6 md:py-12">
-      
-      {/* 1. 佛法名句区域 (原本在下方，现在调换到上方) */}
-      <div className="w-full max-w-[480px] px-4 animate-fade-in-up flex flex-col items-center mb-10" style={{ animationDelay: '0.2s' }}>
-        {/* 上分隔线 */}
+ {/* 1. 佛法名句区域 */}
+<div 
+  className="w-full max-w-[480px] px-4 flex flex-col items-center mb-10 opacity-0 translate-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-forwards" 
+  style={{ animationDelay: '300ms' }}
+>
+>
+  {/* ... 内部代码保持不变 ... */}
         <div className="w-24 h-[1px] bg-black/[0.05] mb-6"></div>
         
         <div className="w-full flex flex-col">
