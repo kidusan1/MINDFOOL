@@ -15,33 +15,33 @@ const Splash: React.FC<SplashProps> = ({ onFinish, quotes = [] }) => {
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // 如果已经初始化过，直接返回
+    // 1. 防止重复执行逻辑
     if (hasInitialized.current) return;
-
-    // 1. 选词
-    const list = (quotes && quotes.length > 0) ? quotes : DEFAULT_QUOTES;
-    const randomIndex = Math.floor(Math.random() * list.length);
-    const text = list[randomIndex] || "吉祥如意"; // 增加一个保底词
-
-    // 2. 拆分文字
-    const lines = text.split(' ').filter(Boolean);
-    setQuoteLines(lines);
-    
-    // 【关键】无论有没有词，都标记为已初始化，确保计时器一定运行
     hasInitialized.current = true; 
 
-    // 3. 核心计时器：确保 4.5 秒后一定触发消失
+    // 2. 选词与文字拆分
+    const list = (quotes && quotes.length > 0) ? quotes : DEFAULT_QUOTES;
+    const randomIndex = Math.floor(Math.random() * list.length);
+    const text = list[randomIndex] || "吉祥如意";
+    const lines = text.split(' ').filter(Boolean);
+    setQuoteLines(lines);
+
+    // 3. 设定 4.5 秒后的自动关闭逻辑
     const timer = setTimeout(() => {
-      setIsVisible(false); // 先变透明
+      setIsVisible(false); // 启动淡出动画
       
-      // 800毫秒动画结束后，执行交接
+      // 等待 800ms 淡出动画完成后，彻底交回控制权给 App.tsx
       setTimeout(() => {
         onFinish(); 
       }, 800);
     }, 4500); 
 
+    // 4. 组件销毁时清理计时器
     return () => clearTimeout(timer);
-  }, [onFinish]); // 注意：这里去掉了 quotes，防止它反复干扰
+    
+    // 【最关键的改动】：这里保持为空数组 []
+    // 这确保了海报组件一旦挂载，倒计时就会独立运行，不受 App.tsx 任何状态加载的影响
+  }, []);
   
   return (
     <div 
