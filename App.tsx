@@ -1087,6 +1087,17 @@ const loadGlobalConfig = useCallback(async () => {
       return u;
     }));
   };
+  // 1. 如果还没有用户信息，显示海报作为开场
+  if (showSplash && !currentUser) {
+    return (
+      <Splash 
+        onFinish={() => setShowSplash(false)} 
+        quotes={splashQuotes} 
+      />
+    );
+  }
+
+  // 2. 如果海报放完了，但云端数据还没同步好，显示加载中
   if (!allUsers || allUsers.length <= 1) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#F0EEE9] text-[#6D8D9D]">
