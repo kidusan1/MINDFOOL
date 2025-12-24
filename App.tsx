@@ -1087,23 +1087,32 @@ const loadGlobalConfig = useCallback(async () => {
       return u;
     }));
   };
-  // 1. 如果还没有用户信息，显示海报作为开场
-  if (showSplash && !currentUser) {
+  // 1. 强制显示海报：只要 showSplash 是 true，就先看海报
+  // 不管有没有登录，都先展示仪式感
+  if (showSplash) {
     return (
       <Splash 
-        onFinish={() => setShowSplash(false)} 
+        onFinish={() => {
+          console.log("海报播放完毕，切换状态");
+          setShowSplash(false);
+        }} 
         quotes={splashQuotes} 
       />
     );
   }
 
-  // 2. 如果海报放完了，但云端数据还没同步好，显示加载中
+  // 2. 海报消失后，如果数据还没同步完，等一下
   if (!allUsers || allUsers.length <= 1) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#F0EEE9] text-[#6D8D9D]">
         正在同步云端数据...
       </div>
     );
+  }
+
+  // 3. 登录判断
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
   }
 
   if (!currentUser) {
