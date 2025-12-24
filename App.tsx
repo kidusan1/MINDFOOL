@@ -1088,19 +1088,15 @@ const loadGlobalConfig = useCallback(async () => {
     }));
   };
 
-  if (showSplash) {
-    if (showSplash) {
-      return (
-        <Splash 
-          onFinish={() => {
-            console.log("海报广播：演出结束，执行关闭逻辑");
-            setShowSplash(false);
-          }} 
-          quotes={splashQuotes} 
-        />
-      );
-    }
-  }
+ // 只有在“还没关闭海报”且“还没认出用户”时，才显示海报
+ if (showSplash && !currentUser) {
+  return (
+    <Splash 
+      onFinish={() => setShowSplash(false)} 
+      quotes={splashQuotes} 
+    />
+  );
+}
   if (!currentUser) {
     return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
   }
