@@ -530,7 +530,7 @@ const loadGlobalConfig = useCallback(async () => {
     }
   }, [currentView, currentUser, loadAllUsersData]);
 
-  // 初始化：检查 Supabase session 并加载用户数据
+  
  // 初始化：检查 Supabase session 并加载用户数据
  useEffect(() => {
   const initAuth = async () => {
@@ -540,51 +540,53 @@ const loadGlobalConfig = useCallback(async () => {
       if (session?.user) {
         // ... 保持你原来的 session 处理逻辑 ...
       } else {
-        // 【核心修复点】：这里要用 'growth_app_current_user' 才能读到你存的整个人
+        // 1. 获取本地缓存的用户信息
         const savedUserJson = localStorage.getItem('growth_app_current_user');
         if (savedUserJson) {
           const u = JSON.parse(savedUserJson);
-          if (u) {
-            setCurrentUser(u);
-            // --- 新增：跨天归零逻辑 ---
-const todayStr = getBeijingDateString(); // 获取北京时间今天
-const lastDate = localStorage.getItem('last_active_date');
-
-if (lastDate && lastDate !== todayStr) {
-  // 1. 日期变了，说明过 0 点了。
-  // 先把旧的 stats 备份到 history（如果 history 里还没存这一天的话）
-  const oldStats = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-  const currentUserStats = oldStats[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-  // 1.5 在清空前，把昨天的总时长存入历史记录，这样 7 天趋势图才会更新
-  const totalMins = currentUserStats.nianfo + currentUserStats.baifo + currentUserStats.zenghui + currentUserStats.breath;
-  if (totalMins > 0) {
-    setUserHistoryMap(prev => ({
-      ...prev,
-      [u.id]: {
-        ...(prev[u.id] || {}),
-        [lastDate]: totalMins // 使用旧日期作为 key
-      }
-    }));
-  }
-  // 2. 重置当天的功课时长为 0
-  setUserStatsMap(prev => ({
-    ...prev,
-    [u.id]: { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }
-  }));
-}
-// 3. 更新最后的活跃日期为今天
-localStorage.setItem('last_active_date', todayStr);
-            await loadUserDataFromSupabase(u.id);
-          }
-        }
-        if (savedUserJson) {
-          const u = JSON.parse(savedUserJson);
           if (u && u.id) {
+            // 2. 先设置当前用户
             setCurrentUser(u);
+
+            // 3. --- 核心逻辑：北京时间跨天检测与归零 ---
+            const todayStr = getBeijingDateString(); 
+            const lastDate = localStorage.getItem('last_active_date');
+
+            // 如果上次活跃日期不是今天，说明过 0 点了，执行结转
+            if (lastDate && lastDate !== todayStr) {
+              const oldStatsMap = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+              const yesterdayStats = oldStatsMap[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+              
+              const totalMins = yesterdayStats.nianfo + yesterdayStats.baifo + yesterdayStats.zenghui + yesterdayStats.breath;
+              
+              // 将昨天的总时长存入 HistoryMap，确保柱状图显示
+              if (totalMins > 0) {
+                setUserHistoryMap(prev => ({
+                  ...prev,
+                  [u.id]: {
+                    ...(prev[u.id] || {}),
+                    [lastDate]: totalMins 
+                  }
+                }));
+              }
+
+              // 重置今日时长
+              setUserStatsMap(prev => ({
+                ...prev,
+                [u.id]: { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }
+              }));
+            }
+            // 更新最后活跃日期标记
+            localStorage.setItem('last_active_date', todayStr);
+            // --- 归零逻辑结束 ---
+
+            // 4. 继续执行原有的数据库加载逻辑（不会破坏已有功能）
             await loadUserDataFromSupabase(u.id);
           }
         }
       }
+           
+
     } catch (err) {
       console.error('Error initializing auth:', err);
     }
