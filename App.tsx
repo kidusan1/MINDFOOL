@@ -10,21 +10,27 @@ import CourseDetail from './views/CourseDetail';
 import Splash from './views/Splash';
 import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES, SPLASH_QUOTES_EN } from './constants';
 import { supabase } from './src/supabaseClient';
+const getBeijingDateString = () => {
+  // 强制获取北京时间（东八区）的日期字符串 YYYY-MM-DD
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date()).replace(/\//g, '-');
+};
 /**
  * 核心工具：获取当前北京时间的 YYYY-MM-DD 字符串
  * 确保全球用户无论在哪里，统计周期都以北京为准
  */
-const getBeijingDateString = () => {
-  const now = new Date();
-  // 计算北京时间 (UTC+8)
-  const beijingTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
-  
-  const y = beijingTime.getFullYear();
-  const m = String(beijingTime.getMonth() + 1).padStart(2, '0');
-  const d = String(beijingTime.getDate()).padStart(2, '0');
-  
-  // 关键修正：这里要把 ${day} 改成 ${d}
-  return `${y}-${m}-${d}`; 
+const getBeijingDateString = (date = new Date()) => {
+  // 强制获取北京时间（东八区）的日期字符串 YYYY-MM-DD
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date).replace(/\//g, '-');
 };
 
 const DEFAULT_HOME_QUOTES = [
@@ -549,6 +555,34 @@ const loadGlobalConfig = useCallback(async () => {
           const u = JSON.parse(savedUserJson);
           if (u) {
             setCurrentUser(u);
+            // --- 新增：跨天归零逻辑 ---
+const todayStr = getBeijingDateString(); // 获取北京时间今天
+const lastDate = localStorage.getItem('last_active_date');
+
+if (lastDate && lastDate !== todayStr) {
+  // 1. 日期变了，说明过 0 点了。
+  // 先把旧的 stats 备份到 history（如果 history 里还没存这一天的话）
+  const oldStats = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+  const currentUserStats = oldStats[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+  // 1.5 在清空前，把昨天的总时长存入历史记录，这样 7 天趋势图才会更新
+  const totalMins = currentUserStats.nianfo + currentUserStats.baifo + currentUserStats.zenghui + currentUserStats.breath;
+  if (totalMins > 0) {
+    setUserHistoryMap(prev => ({
+      ...prev,
+      [u.id]: {
+        ...(prev[u.id] || {}),
+        [lastDate]: totalMins // 使用旧日期作为 key
+      }
+    }));
+  }
+  // 2. 重置当天的功课时长为 0
+  setUserStatsMap(prev => ({
+    ...prev,
+    [u.id]: { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }
+  }));
+}
+// 3. 更新最后的活跃日期为今天
+localStorage.setItem('last_active_date', todayStr);
             await loadUserDataFromSupabase(u.id);
           }
         }
@@ -663,7 +697,7 @@ const loadGlobalConfig = useCallback(async () => {
   const handleAddMinutes = async (type: TimerType, minutes: number) => {
     if (minutes <= 0 || !currentUser) return;
     
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getBeijingDateString();
     
     // 更新本地状态
     setUserStatsMap(prev => {
