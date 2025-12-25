@@ -244,16 +244,17 @@ export const DailyView: React.FC<DailyProps> = ({
         {courses.length === 0 && <p className="text-center text-xs text-textSub py-8">暂无课程</p>}
         {courses.map((course) => {
             let statusText = course.status || CourseStatus.NOT_STARTED;
-            let statusColor = 'text-gray-300';
-            let titleColor = 'text-textMain';
+         // 1. 设置默认颜色：让“未开始”和“已结束”默认都显示为浅灰色
+let statusColor = 'text-gray-300'; 
+let titleColor = 'text-gray-300'; 
 
-            if (course.status === CourseStatus.ENDED) {
-                statusColor = 'text-textSub';
-                titleColor = 'text-textSub';
-            } else if (course.status === CourseStatus.IN_PROGRESS) {
-                statusColor = 'text-primary font-bold';
-                titleColor = 'text-primary font-medium';
-            }
+// 2. 只有“进行中”的时候，才点亮颜色
+if (course.status === CourseStatus.IN_PROGRESS) {
+    statusColor = 'text-primary font-bold';
+    titleColor = 'text-primary font-medium';
+} 
+// 注意：这里删除了原有的 CourseStatus.ENDED 判断，
+// 这样“已结束”和“未开始”就会统一使用上面定义的 text-gray-300 颜色。
 
             return (
                 <div 
