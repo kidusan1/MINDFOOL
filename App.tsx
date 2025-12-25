@@ -306,12 +306,13 @@ const loadGlobalConfig = useCallback(async () => {
   // 全局数据监听：从 Supabase 拉取所有用户的功课时长、打卡和请假状态
   const loadAllUsersData = useCallback(async () => {
     try {
-      // 从 daily_stats 表拉取当天所有用户的数据（最准确和实时）
       const todayStr = getBeijingDateString();
       const { data: dailyStatsData, error: dailyStatsError } = await supabase
         .from('daily_stats')
         .select('user_id, nianfo, baifo, zenghui, breath, total_minutes')
-        .eq('date', todayStr);
+        .eq('date', todayStr); // 确认这里只有 .eq('date', ...)
+      
+      // ... 后续逻辑
       
       if (!dailyStatsError && dailyStatsData) {
         const allStats: Record<string, DailyStats> = {};
