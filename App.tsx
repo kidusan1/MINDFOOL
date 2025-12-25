@@ -307,10 +307,10 @@ const loadGlobalConfig = useCallback(async () => {
   const loadAllUsersData = useCallback(async () => {
     try {
       // 从 daily_stats 表拉取当天所有用户的数据（最准确和实时）
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getBeijingDateString();
       const { data: dailyStatsData, error: dailyStatsError } = await supabase
         .from('daily_stats')
-        .select('user_id, nianfo, baifo, zenghui, breath')
+        .select('user_id, nianfo, baifo, zenghui, breath, total_minutes')
         .eq('date', todayStr);
       
       if (!dailyStatsError && dailyStatsData) {
@@ -530,7 +530,6 @@ const loadGlobalConfig = useCallback(async () => {
     }
   }, [currentView, currentUser, loadAllUsersData]);
 
-  
  // 初始化：检查 Supabase session 并加载用户数据
  useEffect(() => {
   const initAuth = async () => {
