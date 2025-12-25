@@ -10,15 +10,6 @@ import CourseDetail from './views/CourseDetail';
 import Splash from './views/Splash';
 import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES, SPLASH_QUOTES_EN } from './constants';
 import { supabase } from './src/supabaseClient';
-const getBeijingDateString = () => {
-  // 强制获取北京时间（东八区）的日期字符串 YYYY-MM-DD
-  return new Intl.DateTimeFormat('zh-CN', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date()).replace(/\//g, '-');
-};
 /**
  * 核心工具：获取当前北京时间的 YYYY-MM-DD 字符串
  * 确保全球用户无论在哪里，统计周期都以北京为准
