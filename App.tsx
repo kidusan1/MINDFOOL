@@ -125,7 +125,6 @@ const App: React.FC = () => {
   // 保存全局配置到 Supabase
   // currentUser 需要在所有使用它的函数之前定义
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    // 【小白说明】这行代码的意思是：启动时先看一眼浏览器有没有存过用户信息
     const saved = localStorage.getItem('growth_app_current_user');
     try {
       return saved ? JSON.parse(saved) : null;
@@ -133,11 +132,16 @@ const App: React.FC = () => {
       return null;
     }
   });
-  
+  const isManager = currentUser?.id === 'admin' || currentUser?.isAdmin === true;
+  // --- 3. 这里就是【第三步】的位置：紧跟在 isManager 后面 ---
+  useEffect(() => {
+    if (currentUser?.id === 'admin' && !currentUser.isAdmin) {
+      setCurrentUser(prev => prev ? { ...prev, isAdmin: true } : null);
+    }
+  }, [currentUser]);
   const saveGlobalConfig = useCallback(async (key: string, content: any) => {
     // 修复保存权限报错：只有管理员才能写入全局配置
-    if (!currentUser || (!currentUser.isAdmin && currentUser.id !== 'admin')) {
-      // 普通用户禁止写入全局配置，只允许读取
+    if (!isManager) {
       console.log(`普通用户无权写入全局配置 ${key}，已跳过`);
       return;
     }
@@ -314,7 +318,7 @@ const loadGlobalConfig = useCallback(async () => {
         .eq('date', todayStr);
       
       if (!dailyStatsError && dailyStatsData) {
-        const allStats: Record<string, DailyStats> = {};
+        const allStats: Record<string, any> = {};
         dailyStatsData.forEach((row: any) => {
           allStats[row.user_id] = {
             nianfo: row.nianfo || 0,
