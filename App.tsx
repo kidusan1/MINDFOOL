@@ -749,6 +749,7 @@ const loadGlobalConfig = useCallback(async () => {
   // 从 Supabase 加载用户数据
   const loadUserDataFromSupabase = async (userId: string) => {
     try {
+      if (!userId || userId === 'admin') return;
       const { data, error } = await supabase
         .from('user_data')
         .select('key, content')
@@ -833,6 +834,7 @@ const loadGlobalConfig = useCallback(async () => {
   const yesterdayStr = `${yesterdayObj.getFullYear()}-${String(yesterdayObj.getMonth() + 1).padStart(2, '0')}-${String(yesterdayObj.getDate()).padStart(2, '0')}`;
   
   // 2. 计算“昨天的 6 天前” (作为查询的起点，共 7 天)
+  
   const startDateObj = new Date(yesterdayObj);
   startDateObj.setDate(yesterdayObj.getDate() - 6); 
   const startDateStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`;
@@ -868,6 +870,7 @@ const loadGlobalConfig = useCallback(async () => {
       setAllUsers(prev => [...prev, user]);
       // 保存用户信息到 Supabase
       try {
+        
         await supabase
           .from('user_data')
           .upsert({
