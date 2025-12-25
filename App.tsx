@@ -307,12 +307,11 @@ const loadGlobalConfig = useCallback(async () => {
   const loadAllUsersData = useCallback(async () => {
     try {
       const todayStr = getBeijingDateString();
+      // 使用星号查询当天所有人的数据，不针对单个 user_id 过滤
       const { data: dailyStatsData, error: dailyStatsError } = await supabase
         .from('daily_stats')
-        .select('*')
-        .eq('date', todayStr); // 确认这里只有 .eq('date', ...)
-      
-      // ... 后续逻辑
+        .select('*') 
+        .eq('date', todayStr);
       
       if (!dailyStatsError && dailyStatsData) {
         const allStats: Record<string, DailyStats> = {};
@@ -322,13 +321,11 @@ const loadGlobalConfig = useCallback(async () => {
             baifo: row.baifo || 0,
             zenghui: row.zenghui || 0,
             breath: row.breath || 0,
+            total_minutes: row.total_minutes || 0
           };
         });
-        // 合并到现有的 userStatsMap
         setUserStatsMap(prev => ({ ...prev, ...allStats }));
       }
-
-      // 拉取所有用户的 weekly_states 数据（从全局配置）
       await refreshWeeklyStates();
     } catch (err) {
       console.error('Error loading all users data:', err);
