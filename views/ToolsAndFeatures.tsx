@@ -789,8 +789,20 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                           </div> {/* 结束 p-10 内容展示层 */}
                       </div> {/* 4. 闭合 posterRef (白底海报主体) */}
                   </div> {/* 5. 闭合 absolute -z-50 (隐藏生成区) */}
-              </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
+            </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
+
+              {/* --- 在这里插入你刚才发给我的这段文字 --- */}
+              <p className="text-white/60 text-[11px] text-center px-10 animate-pulse tracking-widest uppercase">
+                  <span className="md:hidden">
+                      {lang === 'zh' ? '可长按保存/分享' : 'Long press to save/share'}
+                  </span>
+                  <span className="hidden md:inline">
+                      {lang === 'zh' ? '可右键保存/分享' : 'Right-click to save/share'}
+                  </span>
+              </p>
+              {/* --- 插入结束 --- */}
+
           </div> {/* 7. 闭合 relative w-full max-w-sm (居中容器) */}
       </div> 
-);
+   );
 };
