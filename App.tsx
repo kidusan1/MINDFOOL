@@ -309,7 +309,7 @@ const loadGlobalConfig = useCallback(async () => {
       const todayStr = getBeijingDateString();
       const { data: dailyStatsData, error: dailyStatsError } = await supabase
         .from('daily_stats')
-        .select('user_id, nianfo, baifo, zenghui, breath, total_minutes')
+        .select('*')
         .eq('date', todayStr); // 确认这里只有 .eq('date', ...)
       
       // ... 后续逻辑
