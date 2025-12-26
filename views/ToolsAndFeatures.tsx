@@ -643,7 +643,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const zenText = useMemo(() => {
-        const phrasesZh = ["真心", "吃茶去", "一食頃", "莫妄想", "止观", "观自在", "不二"];
+        const phrasesZh = ["真心", "吃茶去", "一食顷", "莫妄想", "止观", "观自在", "不二"];
         const hash = user.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return phrasesZh[(hash + new Date().getDate()) % phrasesZh.length];
     }, [user.name]);
@@ -791,16 +791,20 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
                   </div> {/* 5. 闭合 absolute -z-50 (隐藏生成区) */}
             </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
 
-              {/* --- 在这里插入你刚才发给我的这段文字 --- */}
-              <p className="text-white/60 text-[11px] text-center px-10 animate-pulse tracking-widest uppercase">
-                  <span className="md:hidden">
-                      {lang === 'zh' ? '可长按保存/分享' : 'Long press to save/share'}
-                  </span>
-                  <span className="hidden md:inline">
-                      {lang === 'zh' ? '可右键保存/分享' : 'Right-click to save/share'}
-                  </span>
-              </p>
-              {/* --- 插入结束 --- */}
+            {/* 在 PosterModal 组件返回的 JSX 中 */}
+<div className="relative w-full overflow-hidden rounded-lg shadow-2xl">
+    {/* ... 图片显示逻辑 ... */}
+</div> 
+
+{/* 文字提示贴在这里 */}
+<p className="text-white/60 text-[11px] text-center px-10 animate-pulse tracking-widest uppercase mt-4">
+    <span className="block md:hidden">
+        {lang === 'zh' ? '可长按保存/分享' : 'Long press to save/share'}
+    </span>
+    <span className="hidden md:block">
+        {lang === 'zh' ? '可右键保存/分享' : 'Right-click to save/share'}
+    </span>
+</p>
 
           </div> {/* 7. 闭合 relative w-full max-w-sm (居中容器) */}
       </div> 
