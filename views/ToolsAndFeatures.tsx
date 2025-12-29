@@ -447,7 +447,7 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
   const t = TRANSLATIONS[lang].stats;
   const [showPoster, setShowPoster] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
-  const [rankingPercentage, setRankingPercentage] = useState(0);
+  const [rankPercentage, setRankPercentage] = useState(0);
 
   const listData = [
     { name: TRANSLATIONS[lang].home.nianfo, value: stats.nianfo, color: '#6D8D9D' },
@@ -492,16 +492,16 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
         if (allTotalMinutes.length === 0) {
           // 如果没有任何数据，检查 allUsersStats 是否只有当前用户
           if (allUsersStats && Object.keys(allUsersStats).length === 1 && allUsersStats[user.id]) {
-            setRankingPercentage(100);
+            setRankPercentage(100);
           } else {
-            setRankingPercentage(0);
+            setRankPercentage(0);
           }
           return;
         }
         
         // 如果只有当前用户一个人，显示 100%
         if (allTotalMinutes.length === 1 && allTotalMinutes[0] === currentUserTotal) {
-          setRankingPercentage(100);
+          setRankPercentage(100);
           return;
         }
         
@@ -509,10 +509,10 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
         const sortedMinutes = [...allTotalMinutes].sort((a, b) => a - b);
         const usersBelow = sortedMinutes.filter(total => total < currentUserTotal).length;
         const percentage = Math.floor((usersBelow / sortedMinutes.length) * 100);
-        setRankingPercentage(Math.min(99, Math.max(0, percentage)));
+        setRankPercentage(Math.min(99, Math.max(0, percentage)));
       } catch (err) {
         console.error('Error calculating ranking:', err);
-        setRankingPercentage(0);
+        setRankPercentage(0);
       }
     };
 
@@ -566,7 +566,7 @@ const weeklyData = Array.from({length: 7}, (_, i) => {
         </div>
         <div className="mt-4 pt-4 border-t border-white text-center">
             <div className="inline-block text-left max-w-full">
-                <p className="text-xs text-textSub leading-relaxed">{t.ranking.replace('%s', rankingPercentage.toString())}</p>
+                <p className="text-xs text-textSub leading-relaxed">{t.ranking.replace('%s', rankPercentage.toString())}</p>
             </div>
         </div>
       </div>

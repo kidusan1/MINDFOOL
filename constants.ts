@@ -96,6 +96,7 @@ export const TRANSLATIONS = {
       encouragement_suffix: '，不要松懈，继续加油！',
       encouragement_empty: '今天还没有开始练习，不要懈怠，快些行动起来吧！',
       ranking: '用功时长已经超过 %s% 的同学啦，叫上你的伙伴一起精进呦!',
+      ranking_empty: '今天还没有开始练习，不要懈怠，快些行动起来吧！',
       trend: '过去七天趋势',
       today: '今天',
       share: '分享',
