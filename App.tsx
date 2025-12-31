@@ -689,75 +689,30 @@ const App: React.FC = () => {
   const records = currentUser ? (userRecordsMap[currentUser.id] || []) : [];
   const historyStats = currentUser ? (userHistoryMap[currentUser.id] || {}) : {};
 
-  // --- 实时计算排名百分比 ---
-  const rankPercentage = useMemo(() => {
-    if (!currentUser || !userStatsMap) return 0;
+  // 在父组件内部替换掉你刚才发给我的那一段
+const rankPercentage = useMemo(() => {
+  // 1. 基础判断：如果没有用户或统计图，显示0
+  if (!currentUser || !userStatsMap || Object.keys(userStatsMap).length === 0) return 0;
 
-    const myToday = (dailyStats.nianfo || 0) + (dailyStats.baifo || 0) + 
-                    (dailyStats.zenghui || 0) + (dailyStats.breath || 0);
+  // 2. 计算当前用户的总分 (对应你父组件里的 dailyStats)
+  const myToday = (dailyStats.nianfo || 0) + (dailyStats.baifo || 0) + 
+                  (dailyStats.zenghui || 0) + (dailyStats.breath || 0);
 
-    const allTotals = Object.values(userStatsMap).map((stats: any) => 
-      (stats.nianfo || 0) + (stats.baifo || 0) + (stats.zenghui || 0) + (stats.breath || 0)
-    );
+  // 3. 获取所有人的分数列表
+  const allTotals = Object.values(userStatsMap).map((s: any) => 
+    (s.nianfo || 0) + (s.baifo || 0) + (s.zenghui || 0) + (s.breath || 0)
+  );
 
-    if (allTotals.length <= 1) return 100;
+  // 4. 如果全班只有我一个人在用，显示 100%
+  if (allTotals.length <= 1) return 100;
 
-    const lowerThanMe = allTotals.filter(t => t < myToday).length;
-    return Math.floor((lowerThanMe / allTotals.length) * 100);
-  }, [currentUser, userStatsMap, dailyStats]);
-
-  const handleUpdateWeeklyState = (weekRange: string, updates: Partial<UserWeeklyState>) => {
-    if (!currentUser) return;
-    const key = `${currentUser.id}_${weekRange}`;
-    setWeeklyStates(prev => {
-        const existing = prev[key] || {
-            key,
-            userId: currentUser.id,
-            userName: currentUser.name,
-            weekRange,
-            leaveReason: '',
-            checkInStatus: '',
-            updatedAt: ''
-        };
-        const updatedState = {
-            ...existing,
-            ...updates,
-            updatedAt: new Date().toISOString()
-        };
-        const updated = {
-            ...prev,
-            [key]: updatedState
-        };
-        
-        (async () => {
-          try {
-            const userIdStr = String(currentUser.id);
-            const { error: userDataError } = await supabase
-              .from('user_data')
-              .upsert({
-                user_id: userIdStr,
-                key: `weekly_state_${weekRange}`,
-                content: updatedState,
-                updated_at: new Date().toISOString(),
-              }, {
-                onConflict: 'user_id,key'
-              });
-            
-            if (userDataError) {
-              console.error('Error saving weekly state to user_data:', userDataError);
-            }
-            
-            if (currentUser.isAdmin || currentUser.id === 'admin') {
-              saveGlobalConfig('weekly_states', updated);
-            }
-          } catch (err) {
-            console.error('Error saving weekly state to user_data:', err);
-          }
-        })();
-        
-        return updated;
-    });
-  };
+  // 5. 计算百分数
+  const lowerThanMe = allTotals.filter(t => t < myToday).length;
+  let percentage = Math.floor((lowerThanMe / allTotals.length) * 100);
+  
+  // 限制最高为 99% (留有一点余地)，除非所有人分数都比你低很多
+  return Math.min(99, Math.max(0, percentage));
+}, [userStatsMap, dailyStats, currentUser]);
 
   const handleAddMinutes = async (type: TimerType, minutes: number) => {
     if (minutes <= 0 || !currentUser) return;
@@ -901,6 +856,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    
     await supabase.auth.signOut();
     localStorage.removeItem('growth_app_current_user_id');
     setCurrentUser(null);
@@ -908,7 +864,18 @@ const App: React.FC = () => {
     setHistory([]);
   };
 
+  const handleUpdateWeeklyState = (weekRange: string, updates:
+    Partial<UserWeeklyState>) => { if (!currentUser) return; const key =
+      `{currentUser.id}_{weekRange}`; const existing = weeklyStates[key] || { key, userId:
+        currentUser.id, userName: currentUser.name, weekRange, leaveReason: '',
+        checkInStatus: '', updatedAt: new Date().toISOString() }; const updatedState = {
+          ...existing, ...updates, updatedAt: new Date().toISOString() }; setWeeklyStates(prev => ({
+            ...prev, [key]: updatedState })); saveToSupabase(currentUser.id,
+              `weekly_state_${weekRange}`, updatedState); if (currentUser.isAdmin || currentUser.id
+                === 'admin') { saveGlobalConfig('weekly_states', { ...weeklyStates, [key]: updatedState }); } };
+
   const navigate = (view: ViewName) => {
+
     if (view === currentView) return;
     if ([ViewName.HOME, ViewName.TOOLS, ViewName.DAILY, ViewName.RECORD].includes(view)) setHistory([]);
     else setHistory(prev => [...prev, currentView]);
@@ -1109,7 +1076,8 @@ const App: React.FC = () => {
         {currentView === ViewName.TOOLS && <ToolsView onNavigate={navigate} setTimerType={setSelectedTimerType} lang={lang} />}
         {currentView === ViewName.BREATHING && <BreathingView onAddMinutes={(m) => handleAddMinutes(TimerType.BREATH, m)} lang={lang} />}
         {currentView === ViewName.TIMER && <TimerView type={selectedTimerType} onAddMinutes={(m) => handleAddMinutes(selectedTimerType, m)} lang={lang} />}
-        {currentView === ViewName.STATS && <StatsView stats={dailyStats} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} allUsersStats={userStatsMap} />}
+        {currentView === ViewName.STATS && <StatsView stats={dailyStats} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} allUsersStats={userStatsMap} rankPercentage={rankPercentage}/>}
+        
         {currentView === ViewName.DAILY && (
           <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
         )}
