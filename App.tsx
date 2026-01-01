@@ -154,27 +154,17 @@ const App: React.FC = () => {
 
   // 保存全局配置到 Supabase
   const saveGlobalConfig = useCallback(async (key: string, content: any) => {
-    if (!isManager) {
-      console.log(`普通用户无权写入全局配置 ${key}，已跳过`);
-      return;
-    }
-    
+    if (!isManager) return;
     try {
-      const { error } = await supabase
+      await supabase
         .from('global_configs')
         .upsert({
           key: key,
           content: content,
           updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'key'
-        });
-      
-      if (error) {
-        console.error(`Error saving global config ${key} to Supabase:`, error);
-      }
+        }, { onConflict: 'key' });
     } catch (err) {
-      console.error(`Error saving global config ${key} to Supabase:`, err);
+      console.error(`Error saving config ${key}:`, err);
     }
   }, [isManager]);
 
@@ -726,7 +716,9 @@ const rankPercentage = useMemo(() => {
 }, [userStatsMap, currentUser]);
 
 // 2. 核心功课保存函数 (已彻底修复嵌套问题)
-const handleAddMinutes = async (type: TimerType, minutes: number) => {
+// --- 核心功课保存函数 (小白直接替换版) ---
+const handleAddMinutes = useCallback(async (type: TimerType, minutes: number) => {
+  // 1. 基础检查：没分钟数或没登录就不干活
   if (minutes <= 0 || !currentUser) return;
   
   const todayStr = getBeijingDateString();
@@ -735,26 +727,28 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
             : type === TimerType.BAIFO ? 'baifo'
             : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
 
+  // 定义响铃函数
   const playAlarm = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
-    audio.play().catch(e => console.log("等待交互后播放声音"));
+    audio.play().catch(e => console.log("浏览器拦截了自动播放，需点击页面"));
   };
 
-  // 获取当前分数并计算新分数
+  // 2. 计算新数据
   const currentStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
   const updatedStats = {
     ...currentStats,
     [key]: (currentStats[key] || 0) + minutes
   };
-  
   const newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
 
-  // 同步更新本地两个状态
+  // 3. 更新本地 UI (立即生效)
+  // 更新今日数字
   setUserStatsMap(prev => ({ 
     ...prev, 
     [userId]: { ...updatedStats, total_minutes: newTotal } 
   }));
-
+  
+  // 更新趋势图（柱状图）
   setUserHistoryMap(prev => {
     const userHist = prev[userId] || {};
     return {
@@ -763,7 +757,7 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
     };
   });
 
-  // 执行数据库保存
+  // 4. 同步到云端数据库
   try {
     const { error } = await supabase
       .from('daily_stats')
@@ -779,13 +773,15 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
       }, { onConflict: 'user_id,date' });
 
     if (error) throw error;
-    console.log("✅ 同步成功:", updatedStats);
-    playAlarm(); 
+    
+    console.log("✅ 功课已保存并响铃");
+    playAlarm(); // 成功后响铃
 
   } catch (err) {
-    console.error('数据库保存失败:', err);
+    console.error('❌ 数据库保存失败:', err);
   }
-};
+}, [currentUser, userStatsMap]);
+
   const handleLogin = async (user: User) => {
     const isNewUser = !allUsers.find(u => u.id === user.id);
     
@@ -880,8 +876,8 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
   };
 
   const handleUpdateWeeklyState = (weekRange: string, updates:
-    Partial<UserWeeklyState>) => { if (!currentUser) return; const key =
-      `{currentUser.id}_{weekRange}`; const existing = weeklyStates[key] || { key, userId:
+    Partial<UserWeeklyState>) => { if (!currentUser) return; 
+      const key =`${currentUser.id}_${weekRange}`; const existing = weeklyStates[key] || { key, userId:
         currentUser.id, userName: currentUser.name, weekRange, leaveReason: '',
         checkInStatus: '', updatedAt: new Date().toISOString() }; const updatedState = {
           ...existing, ...updates, updatedAt: new Date().toISOString() }; setWeeklyStates(prev => ({
