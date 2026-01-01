@@ -282,14 +282,14 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const commitTime = (durationSec: number) => {
-    // 只有当实际秒数大于等于 60 秒时，才进行结算
-    if (onAddMinutes && durationSec >= 60) {
-        const mins = Math.floor(durationSec / 60); // 使用 Math.floor 确保只有满一分钟才计 1
-        if (mins >= 1) {
-            onAddMinutes(mins);
-        }
+    // 只有当实际秒数大于等于 59 秒时，才进行结算
+    if (onAddMinutes && durationSec >= 59) {
+      let mins = Math.round(durationSec / 60);
+      if (mins < 1) mins = 1; 
+      onAddMinutes(mins);
+        console.log(`✅ 计时有效：${durationSec.toFixed(1)}秒，计入 ${mins} 分钟`);
     } else {
-        console.log("⏱️ 计时不足 60 秒，不予计入时长");
+        console.log("⏱️ 计时不足 59 秒，不予计入时长");
     }
 };
 
