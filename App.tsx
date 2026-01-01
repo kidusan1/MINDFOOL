@@ -716,14 +716,14 @@ const rankPercentage = useMemo(() => {
 const handleAddMinutes = async (type: TimerType, minutes: number) => {
   if (minutes <= 0 || !currentUser) return;
   
-  // 保持使用你熟悉的变量名 todayStr
+  // 强制获取执行瞬间的北京日期，确保跨天准确性
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
   
-  // 闹钟补救逻辑：直接播放
+  // 闹钟补救：使用可靠的外部链接或本地路径
   const playAlarm = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
-    audio.play().catch(e => console.log("等待交互后播放"));
+    audio.play().catch(e => console.log("等待交互后播放声音"));
   };
 
   setUserStatsMap(prev => {
@@ -739,11 +739,12 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
       
       (async () => {
         try {
+          // 关键：upsert 使用 todayStr，如果跨天会自动创建新日期的行
           const { error } = await supabase
             .from('daily_stats')
             .upsert({
               user_id: userId,
-              date: todayStr, // 使用此时此刻生成的日期
+              date: todayStr, 
               nianfo: updatedStats.nianfo,
               baifo: updatedStats.baifo,
               zenghui: updatedStats.zenghui,
@@ -754,7 +755,7 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
 
           if (error) throw error;
           
-          // 只有保存成功后才响铃，确保数据和声音同步
+          // 数据确认保存成功后立即响铃
           playAlarm();
 
         } catch (err) {
@@ -765,7 +766,7 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
       return { ...prev, [userId]: updatedStats };
   });
 
-  // 更新历史统计图表
+  // 更新历史记录，确保趋势图同步
   setUserHistoryMap(prev => {
       const userHist = prev[userId] || {};
       return {
@@ -774,7 +775,6 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
       };
   });
 };
-
   const handleLogin = async (user: User) => {
     const isNewUser = !allUsers.find(u => u.id === user.id);
     
