@@ -713,63 +713,67 @@ const rankPercentage = useMemo(() => {
   // 限制最高为 99% (留有一点余地)，除非所有人分数都比你低很多
   return Math.min(99, Math.max(0, percentage));
 }, [userStatsMap, dailyStats, currentUser]);
-
-  const handleAddMinutes = async (type: TimerType, minutes: number) => {
-    if (minutes <= 0 || !currentUser) return;
-    
-    const todayStr = getBeijingDateString();
-    
-    // 更新本地状态
-    setUserStatsMap(prev => {
-        const currentStats = prev[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-        const key = type === TimerType.NIANFO ? 'nianfo' 
-                  : type === TimerType.BAIFO ? 'baifo'
-                  : type === TimerType.ZENGHUI ? 'zenghui'
-                  : 'breath';
-        const updatedStats = {
-            ...currentStats,
-            [key]: currentStats[key] + minutes
-        };
-        
-        (async () => {
-          try {
-            await supabase
-              .from('daily_stats')
-              .upsert({
-                user_id: currentUser.id,
-                date: todayStr,
-                nianfo: updatedStats.nianfo,
-                baifo: updatedStats.baifo,
-                zenghui: updatedStats.zenghui,
-                breath: updatedStats.breath,
-                total_minutes: updatedStats.nianfo + updatedStats.baifo + updatedStats.zenghui + updatedStats.breath,
-                updated_at: new Date().toISOString(),
-              }, {
-                onConflict: 'user_id,date'
-              });
-          } catch (err) {
-            console.error('Error saving daily stats:', err);
-          }
-        })();
-        
-        return {
-            ...prev,
-            [currentUser.id]: updatedStats
-        };
-    });
-    
-    setUserHistoryMap(prev => {
-        const userHist = prev[currentUser.id] || {};
-        const oldVal = userHist[todayStr] || 0;
-        return {
-            ...prev,
-            [currentUser.id]: {
-                ...userHist,
-                [todayStr]: oldVal + minutes
-            }
-        };
-    });
+const handleAddMinutes = async (type: TimerType, minutes: number) => {
+  if (minutes <= 0 || !currentUser) return;
+  
+  // 保持使用你熟悉的变量名 todayStr
+  const todayStr = getBeijingDateString();
+  const userId = currentUser.id;
+  
+  // 闹钟补救逻辑：直接播放
+  const playAlarm = () => {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+    audio.play().catch(e => console.log("等待交互后播放"));
   };
+
+  setUserStatsMap(prev => {
+      const currentStats = prev[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+      const key = type === TimerType.NIANFO ? 'nianfo' 
+                : type === TimerType.BAIFO ? 'baifo'
+                : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
+      
+      const updatedStats = {
+          ...currentStats,
+          [key]: (currentStats[key] || 0) + minutes
+      };
+      
+      (async () => {
+        try {
+          const { error } = await supabase
+            .from('daily_stats')
+            .upsert({
+              user_id: userId,
+              date: todayStr, // 使用此时此刻生成的日期
+              nianfo: updatedStats.nianfo,
+              baifo: updatedStats.baifo,
+              zenghui: updatedStats.zenghui,
+              breath: updatedStats.breath,
+              total_minutes: (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0),
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,date' });
+
+          if (error) throw error;
+          
+          // 只有保存成功后才响铃，确保数据和声音同步
+          playAlarm();
+
+        } catch (err) {
+          console.error('数据库保存失败:', err);
+        }
+      })();
+      
+      return { ...prev, [userId]: updatedStats };
+  });
+
+  // 更新历史统计图表
+  setUserHistoryMap(prev => {
+      const userHist = prev[userId] || {};
+      return {
+          ...prev,
+          [userId]: { ...userHist, [todayStr]: (userHist[todayStr] || 0) + minutes }
+      };
+  });
+};
 
   const handleLogin = async (user: User) => {
     const isNewUser = !allUsers.find(u => u.id === user.id);
