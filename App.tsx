@@ -732,13 +732,15 @@ const rankPercentage = useMemo(() => {
 // 2. 核心功课保存函数 (已彻底修复嵌套问题)
 // --- 核心功课保存函数 (小白直接替换版) ---
 const handleAddMinutes = useCallback(async (type: TimerType, minutes: number, shouldPlayAlarm: boolean = false) => {
-  // 1. 基础检查：没分钟数或没登录就不干活
-  if (minutes < 1 || !currentUser) {
-    if (minutes > 0 && minutes < 1) {
-      console.log("收到分钟数：", minutes, "，不计入统计");
-    }
-    return;
+// 1. 基础检查：调整为允许 1 分钟（及通过进位达到的 1 分钟）通过
+if (!currentUser || minutes < 1) {
+  // 只有当分钟数真的非常小（比如 0.5 以下）时才真正拦截
+  if (currentUser && minutes > 0 && minutes < 1) {
+     console.log("收到分钟数：", minutes, "，确实不足 1 分钟，不计入统计");
   }
+  // 如果 minutes 已经是 1 了，这里就不应该 return
+  if (minutes < 1) return;
+}
   
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
@@ -752,7 +754,7 @@ const handleAddMinutes = useCallback(async (type: TimerType, minutes: number, sh
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
     audio.play().catch(e => console.log("浏览器拦截了自动播放，需点击页面"));
   };
-  if (shouldPlayAlarm) {
+ if (shouldPlayAlarm) {
     playAlarm();
   }
   // 2. 计算新数据
