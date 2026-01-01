@@ -282,12 +282,16 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const commitTime = (durationSec: number) => {
-    if (onAddMinutes && durationSec > 5) {
-        let mins = Math.round(durationSec / 60);
-        if (mins < 1) mins = 1; 
-        onAddMinutes(mins);
+    // 只有当实际秒数大于等于 60 秒时，才进行结算
+    if (onAddMinutes && durationSec >= 60) {
+        const mins = Math.floor(durationSec / 60); // 使用 Math.floor 确保只有满一分钟才计 1
+        if (mins >= 1) {
+            onAddMinutes(mins);
+        }
+    } else {
+        console.log("⏱️ 计时不足 60 秒，不予计入时长");
     }
-  };
+};
 
   useEffect(() => {
     let interval: any;
@@ -482,25 +486,20 @@ export const StatsView: React.FC<{
 
 // --- 修改后的逻辑：从“昨天”起倒推 7 天 ---
 const weeklyData = Array.from({length: 7}, (_, i) => {
-  // 1. 获取北京时间字符串
-  const todayStr = getBeijingDateString(); 
-  const baseDate = new Date(todayStr); 
+  const today = new Date();
+  // 基于本地时间创建日期对象，避免时区偏移
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  d.setDate(d.getDate() - (7 - i)); 
   
-  // 2. 偏移量修改：i=6 时偏移 -1 天（昨天），i=0 时偏移 -7 天
-  // 计算公式：-(7 - i)，即从 -7 到 -1
-  const d = new Date(baseDate);
-  d.setDate(baseDate.getDate() - (7 - i)); 
+  // 生成 YYYY-MM-DD 格式，确保与 App.tsx 的 getBeijingDateString 匹配
+  const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   
-  const dateKey = d.toISOString().split('T')[0]; 
   const val = history[dateKey] || 0;
-  
   const dayMap = lang === 'en' 
     ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] 
     : ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
   
-  // 3. 标签逻辑：不再使用 t.today，全部使用周几
-  const label = dayMap[d.getDay()];
-  return { name: label, min: val };
+  return { name: dayMap[d.getDay()], min: val };
 });
 
   return (
