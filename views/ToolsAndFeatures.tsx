@@ -23,17 +23,13 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style);
   }
 }
-const getBeijingDateString = () => {
-  const now = new Date();
-  // 计算北京时间 (UTC+8)
-  const beijingTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
-  
-  const y = beijingTime.getFullYear();
-  const m = String(beijingTime.getMonth() + 1).padStart(2, '0');
-  const d = String(beijingTime.getDate()).padStart(2, '0');
-  
-  // 关键修正：这里要把 ${day} 改成 ${d}
-  return `${y}-${m}-${d}`; 
+const getBeijingDateString = (date = new Date()) => {
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date).replace(/\//g, '-');
 };
 // --- 每日功课入口列表 ---
 interface ToolsProps {
@@ -323,6 +319,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       countdownIntervalRef.current = setInterval(() => {
         setCountdownRemaining(prev => {
             if (prev <= 1) {
+              // --- 修复点：自然结束时立即结算时间 ---
+              if (countdownSessionStartRef.current > 0) {
+                commitTime((Date.now() - countdownSessionStartRef.current) / 1000);
+                countdownSessionStartRef.current = 0; // 结算完归零防止重复计算
+              }
                 setIsCountdownRunning(false);
                 startAlarmSound();
                 return 0;
@@ -443,11 +444,27 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 };
 
 // --- 数据统计 ---
-export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, number>, lang: Language, user: User, homeQuotes: string [], allUsersStats?: Record<string, DailyStats> }> = ({ stats, history = {}, lang, user, homeQuotes, allUsersStats = {} }) => {
+export const StatsView: React.FC<{ 
+  stats: DailyStats, 
+  history?: Record<string, number>, 
+  lang: Language, 
+  user: User | null, 
+  homeQuotes: string[], 
+  allUsersStats?: Record<string, DailyStats>, 
+  rankPercentage: number 
+}> = ({ 
+  stats, 
+  history = {}, 
+  lang, 
+  user, 
+  homeQuotes, 
+  allUsersStats = {}, 
+  rankPercentage 
+}) => {
   const t = TRANSLATIONS[lang].stats;
+  
   const [showPoster, setShowPoster] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
-  const [rankPercentage, setRankPercentage] = useState(0);
 
   const listData = [
     { name: TRANSLATIONS[lang].home.nianfo, value: stats.nianfo, color: '#6D8D9D' },
@@ -459,68 +476,9 @@ export const StatsView: React.FC<{ stats: DailyStats, history?: Record<string, n
   const completedItems = listData.filter(d => d.value >= 1);
   const totalMinutes = stats.nianfo + stats.baifo + stats.zenghui + stats.breath;
 
-  // 实时排名计算：使用全局拉取的所有用户数据
-  useEffect(() => {
-    const calculateRanking = async () => {
-      try {
-        const todayStr = new Date().toISOString().split('T')[0];
-        
-        // 首先尝试从 daily_stats 表拉取当天的所有用户数据（最准确）
-        const { data: dailyStatsData, error: dailyStatsError } = await supabase
-          .from('daily_stats')
-          .select('user_id, total_minutes')
-          .eq('date', todayStr);
-        
-        let allTotalMinutes: number[] = [];
-        
-        if (!dailyStatsError && dailyStatsData && dailyStatsData.length > 0) {
-          // 使用 daily_stats 表的数据
-          allTotalMinutes = dailyStatsData.map((row: any) => row.total_minutes || 0);
-        } else {
-          // 修复排名兜底逻辑：如果 daily_stats 表没有数据，必须从 allUsersStats 中提取数据
-          if (allUsersStats && Object.keys(allUsersStats).length > 0) {
-            allTotalMinutes = Object.values(allUsersStats).map((userStats: DailyStats) => 
-              (userStats.nianfo || 0) + (userStats.baifo || 0) + (userStats.zenghui || 0) + (userStats.breath || 0)
-            );
-          }
-        }
-        
-        // 计算当前用户当天的总时长
-        const currentUserTotal = totalMinutes;
-        
-        // 解决 0% 显示问题：如果数据库中只有当前用户一个人，设置为 100%
-        if (allTotalMinutes.length === 0) {
-          // 如果没有任何数据，检查 allUsersStats 是否只有当前用户
-          if (allUsersStats && Object.keys(allUsersStats).length === 1 && allUsersStats[user.id]) {
-            setRankPercentage(100);
-          } else {
-            setRankPercentage(0);
-          }
-          return;
-        }
-        
-        // 如果只有当前用户一个人，显示 100%
-        if (allTotalMinutes.length === 1 && allTotalMinutes[0] === currentUserTotal) {
-          setRankPercentage(100);
-          return;
-        }
-        
-        // 对总时长进行排序
-        const sortedMinutes = [...allTotalMinutes].sort((a, b) => a - b);
-        const usersBelow = sortedMinutes.filter(total => total < currentUserTotal).length;
-        const percentage = Math.floor((usersBelow / sortedMinutes.length) * 100);
-        setRankPercentage(Math.min(99, Math.max(0, percentage)));
-      } catch (err) {
-        console.error('Error calculating ranking:', err);
-        setRankPercentage(0);
-      }
-    };
+  // 实时排名计算：使用全局拉取的所有用户数据 删掉了
 
-    calculateRanking();
-    // 每3秒刷新一次排名，实现实时排名效果
-    const interval = setInterval(calculateRanking, 3000);
-    return () => clearInterval(interval);
-  }, [totalMinutes, user.id, allUsersStats]);
+
 
 // --- 修改后的逻辑：从“昨天”起倒推 7 天 ---
 const weeklyData = Array.from({length: 7}, (_, i) => {
