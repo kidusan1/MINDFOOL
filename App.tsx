@@ -347,7 +347,7 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
       .select('nianfo,baifo,zenghui,breath,total_minutes') 
       .eq('user_id', userId)
       .eq('date', todayStr)
-      .single();
+      .maybeSingle(); // <--- 换成了 .maybeSingle()，允许数据为空
     
     if (!dailyError && dailyData) {
       setUserStatsMap(prev => ({
