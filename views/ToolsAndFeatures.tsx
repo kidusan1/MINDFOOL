@@ -369,7 +369,31 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const adjustCountdown = (delta: number) => {
     if (isCountdownRunning || isAlarmActive) return;
-    const next = Math.min(120, Math.max(5, countdownTarget + delta));
+
+    let next;
+    if (delta < 0) {
+      // 当点击“减号”时
+      if (countdownTarget <= 5 && countdownTarget > 1) {
+        // 如果当前是 5 分钟，直接降到 1 分钟
+        next = 1;
+      } else if (countdownTarget === 1) {
+        // 如果已经是 1 分钟，保持不变
+        next = 1;
+      } else {
+        // 其他情况按 5 分钟递减
+        next = countdownTarget + delta;
+      }
+    } else {
+      // 当点击“加号”时
+      if (countdownTarget === 1) {
+        // 如果当前是 1 分钟，直接升到 5 分钟
+        next = 5;
+      } else {
+        // 其他情况按 5 分钟递增，最高 120 分钟
+        next = Math.min(120, countdownTarget + delta);
+      }
+    }
+
     setCountdownTarget(next);
     setCountdownRemaining(next * 60);
   };
