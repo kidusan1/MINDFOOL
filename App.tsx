@@ -735,12 +735,12 @@ const handleAddMinutes = useCallback(async (type: TimerType, minutes: number, sh
 // 1. 基础检查：调整为允许 1 分钟（及通过进位达到的 1 分钟）通过
 if (!currentUser || minutes < 1) {
   // 只有当分钟数真的非常小（比如 0.5 以下）时才真正拦截
-  if (currentUser && minutes > 0 && minutes < 1) {
-     console.log("收到分钟数：", minutes, "，确实不足 1 分钟，不计入统计");
+  if (currentUser && minutes > 0 ) {
+     console.log("收到分钟数：", minutes, "，不足 1 分钟，不计入统计");
   }
-  // 如果 minutes 已经是 1 了，这里就不应该 return
-  if (minutes < 1) return;
+  return; // 这里必须要 return，否则逻辑会穿透
 }
+  // 检查结束
   
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
@@ -799,7 +799,6 @@ if (!currentUser || minutes < 1) {
     if (error) throw error;
     
     console.log("✅ 功课已保存并响铃");
-    playAlarm(); // 成功后响铃
 
   } catch (err) {
     console.error('❌ 数据库保存失败:', err);
