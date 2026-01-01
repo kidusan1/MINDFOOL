@@ -555,31 +555,37 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
   // 1. 独立的 0 点跨天监听器 (每 30 秒检查一次)
   useEffect(() => {
     const checkMidnight = () => {
+      const myId = currentUser?.id; // 先拿到当前用户ID
+      if (!myId) return; // 如果还没登录，直接返回，什么都不做
+
       const todayStr = getBeijingDateString(); 
-      const lastDate = localStorage.getItem('last_active_date');
+      const dateKey = `last_active_date_${myId}`;
+      const lastDate = localStorage.getItem(dateKey);
 
       if (lastDate && lastDate !== todayStr) {
         console.log('检测到跨天，正在结算昨天数据并归零今日...');
 
-        const allStats = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-        const myId = currentUser?.id;
+        const userStats = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
 
-        if (myId && allStats[myId]) {
-          const yStats = allStats[myId];
+        if (userStats[myId]) {
+          const yStats = userStats[myId];
           const total = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
 
           if (total > 0) {
+            // --- 核心修复：双重保险存储 ---
+            // 1. 更新当前状态
             setUserHistoryMap(prev => {
               const newHistory = {
                 ...prev,
                 [myId]: { ...(prev[myId] || {}), [lastDate]: total }
               };
-              localStorage.setItem('growth_app_history', JSON.stringify(newHistory));
+              // 2. 存入 localStorage (注意 key 名与初始化逻辑保持一致)
+              localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
               return newHistory;
             });
           }
 
-          // 强制清空今日数据 (统一使用 resetStats 变量名)
+          // 重置今日数据
           const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
           setUserStatsMap(prev => {
             const newMap = { ...prev, [myId]: resetStats };
@@ -587,8 +593,16 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
             return newMap;
           });
         }
+
+        // 更新最后活跃日期
         localStorage.setItem('last_active_date', todayStr);
-        window.location.reload(); 
+        
+        // --- 核心修复：延迟刷新 ---
+        // 给存储留出 500ms 的写入时间，然后再刷新页面
+        console.log('结算完毕，即将自动重载页面...');
+        setTimeout(() => {
+          window.location.reload(); 
+        }, 500);
       }
     };
 
@@ -630,7 +644,7 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
                   ...prev,
                   [u.id]: { ...(prev[u.id] || {}), [lastDate]: totalMins }
                 };
-                localStorage.setItem('growth_app_history', JSON.stringify(newHistory));
+                localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
                 return newHistory;
               });
             }
@@ -719,7 +733,12 @@ const rankPercentage = useMemo(() => {
 // --- 核心功课保存函数 (小白直接替换版) ---
 const handleAddMinutes = useCallback(async (type: TimerType, minutes: number) => {
   // 1. 基础检查：没分钟数或没登录就不干活
-  if (minutes <= 0 || !currentUser) return;
+  if (minutes < 1 || !currentUser) {
+    if (minutes > 0 && minutes < 1) {
+      console.log("收到分钟数：", minutes, "，不计入统计");
+    }
+    return;
+  }
   
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
@@ -857,14 +876,14 @@ const handleAddMinutes = useCallback(async (type: TimerType, minutes: number) =>
       }, 1000);
     }
     
-    if ((user.name === '管理员' || user.isAdmin === true) && 
-        (user.password === '010101' || user.id === 'admin')) {
-      setCurrentView(ViewName.ADMIN);
-      setTimeout(async () => {
-        await handleSaveGlobalConfigs();
-      }, 500); 
-    }
-  };
+   // 只要名字是管理员，或者后台勾选了 isAdmin，或者是 admin 账号
+   if (user.isAdmin || user.id === 'admin' || user.name === '管理员') {
+    setCurrentView(ViewName.ADMIN);
+    setTimeout(async () => {
+      await handleSaveGlobalConfigs();
+    }, 500); 
+  }
+};
 
   const handleLogout = async () => {
     
