@@ -245,7 +245,7 @@ const App: React.FC = () => {
         .from('global_configs')
         .select('content')
         .eq('key', 'weekly_states')
-        .single();
+        .maybeSingle();
       
       const allStates: Record<string, UserWeeklyState> = {};
       if (!globalError && globalData && globalData.content) {
@@ -361,7 +361,7 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
           total_minutes: dailyData.total_minutes || 0
         }
       }));
-    }
+   }
 
     // 历史数据加载逻辑保持不变...
     const currentDate = getBeijingDateString(); 
@@ -703,93 +703,88 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
   const records = currentUser ? (userRecordsMap[currentUser.id] || []) : [];
   const historyStats = currentUser ? (userHistoryMap[currentUser.id] || {}) : {};
 
-  // 在父组件内部替换掉你刚才发给我的那一段
+ 
+// 1. 计算排名百分比 (已整合最新逻辑)
 const rankPercentage = useMemo(() => {
-  // 1. 基础判断：如果没有用户或统计图，显示0
   if (!currentUser || !userStatsMap || Object.keys(userStatsMap).length === 0) return 0;
 
-  // 2. 计算当前用户的总分 (对应你父组件里的 dailyStats)
-  const myToday = (dailyStats.nianfo || 0) + (dailyStats.baifo || 0) + 
-                  (dailyStats.zenghui || 0) + (dailyStats.breath || 0);
+  // 计算当前用户的今日总分
+  const userId = currentUser.id;
+  const myStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+  const myToday = (myStats.nianfo || 0) + (myStats.baifo || 0) + (myStats.zenghui || 0) + (myStats.breath || 0);
 
-  // 3. 获取所有人的分数列表
   const allTotals = Object.values(userStatsMap).map((s: any) => 
     (s.nianfo || 0) + (s.baifo || 0) + (s.zenghui || 0) + (s.breath || 0)
   );
 
-  // 4. 如果全班只有我一个人在用，显示 100%
   if (allTotals.length <= 1) return 100;
 
-  // 5. 计算百分数
   const lowerThanMe = allTotals.filter(t => t < myToday).length;
   let percentage = Math.floor((lowerThanMe / allTotals.length) * 100);
   
-  // 限制最高为 99% (留有一点余地)，除非所有人分数都比你低很多
   return Math.min(99, Math.max(0, percentage));
-}, [userStatsMap, dailyStats, currentUser]);
+}, [userStatsMap, currentUser]);
+
+// 2. 核心功课保存函数 (已彻底修复嵌套问题)
 const handleAddMinutes = async (type: TimerType, minutes: number) => {
   if (minutes <= 0 || !currentUser) return;
   
-  // 强制获取执行瞬间的北京日期，确保跨天准确性
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
-  
-  // 闹钟补救：使用可靠的外部链接或本地路径
+  const key = type === TimerType.NIANFO ? 'nianfo' 
+            : type === TimerType.BAIFO ? 'baifo'
+            : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
+
   const playAlarm = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
     audio.play().catch(e => console.log("等待交互后播放声音"));
   };
 
-  setUserStatsMap(prev => {
-      const currentStats = prev[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-      const key = type === TimerType.NIANFO ? 'nianfo' 
-                : type === TimerType.BAIFO ? 'baifo'
-                : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
-      
-      const updatedStats = {
-          ...currentStats,
-          [key]: (currentStats[key] || 0) + minutes
-      };
-      // 算出新的总时间
-      const newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
-      
-      (async () => {
-        try {
-          // 关键：upsert 使用 todayStr，如果跨天会自动创建新日期的行
-          const { error } = await supabase
-            .from('daily_stats')
-            .upsert({
-              user_id: userId,
-              date: todayStr, 
-              nianfo: updatedStats.nianfo,
-              baifo: updatedStats.baifo,
-              zenghui: updatedStats.zenghui,
-              breath: updatedStats.breath,
-              total_minutes: newTotal, // 显式写入总时间
-              updated_at: new Date().toISOString(),
-            }, { onConflict: 'user_id,date' });
+  // 获取当前分数并计算新分数
+  const currentStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+  const updatedStats = {
+    ...currentStats,
+    [key]: (currentStats[key] || 0) + minutes
+  };
+  
+  const newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
 
-          if (error) throw error;
-          
-          // 数据确认保存成功后立即响铃
-          playAlarm();
+  // 同步更新本地两个状态
+  setUserStatsMap(prev => ({ 
+    ...prev, 
+    [userId]: { ...updatedStats, total_minutes: newTotal } 
+  }));
 
-        } catch (err) {
-          console.error('数据库保存失败:', err);
-        }
-      })();
-      
-      return { ...prev, [userId]: { ...updatedStats, total_minutes: newTotal } };
-    });
-
-  // 更新历史记录，确保趋势图同步
   setUserHistoryMap(prev => {
-      const userHist = prev[userId] || {};
-      return {
-          ...prev,
-          [userId]: { ...userHist, [todayStr]: (userHist[todayStr] || 0) + minutes }
-      };
+    const userHist = prev[userId] || {};
+    return {
+      ...prev,
+      [userId]: { ...userHist, [todayStr]: (userHist[todayStr] || 0) + minutes }
+    };
   });
+
+  // 执行数据库保存
+  try {
+    const { error } = await supabase
+      .from('daily_stats')
+      .upsert({
+        user_id: userId,
+        date: todayStr, 
+        nianfo: updatedStats.nianfo,
+        baifo: updatedStats.baifo,
+        zenghui: updatedStats.zenghui,
+        breath: updatedStats.breath,
+        total_minutes: newTotal,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,date' });
+
+    if (error) throw error;
+    console.log("✅ 同步成功:", updatedStats);
+    playAlarm(); 
+
+  } catch (err) {
+    console.error('数据库保存失败:', err);
+  }
 };
   const handleLogin = async (user: User) => {
     const isNewUser = !allUsers.find(u => u.id === user.id);
