@@ -731,7 +731,7 @@ const rankPercentage = useMemo(() => {
 
 // 2. 核心功课保存函数 (已彻底修复嵌套问题)
 // --- 核心功课保存函数 (小白直接替换版) ---
-const handleAddMinutes = useCallback(async (type: TimerType, minutes: number) => {
+const handleAddMinutes = useCallback(async (type: TimerType, minutes: number, shouldPlayAlarm: boolean = false) => {
   // 1. 基础检查：没分钟数或没登录就不干活
   if (minutes < 1 || !currentUser) {
     if (minutes > 0 && minutes < 1) {
@@ -747,11 +747,14 @@ const handleAddMinutes = useCallback(async (type: TimerType, minutes: number) =>
             : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
 
   // 定义响铃函数
+ 
   const playAlarm = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
     audio.play().catch(e => console.log("浏览器拦截了自动播放，需点击页面"));
   };
-
+  if (shouldPlayAlarm) {
+    playAlarm();
+  }
   // 2. 计算新数据
   const currentStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
   const updatedStats = {
