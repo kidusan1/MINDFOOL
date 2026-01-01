@@ -685,7 +685,15 @@ const App: React.FC = () => {
     }
   }, [currentUser, weeklyStates, weekShift, currentWeekRangeStr]);
 
-  const dailyStats = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+  const dailyStats = useMemo(() => {
+    const stats = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+    return {
+      ...stats,
+      // 这里主动算好总和，方便 UI 和排名逻辑直接调用
+      total_minutes: (stats.nianfo || 0) + (stats.baifo || 0) + (stats.zenghui || 0) + (stats.breath || 0)
+    };
+  }, [currentUser, userStatsMap]);
+  
   const records = currentUser ? (userRecordsMap[currentUser.id] || []) : [];
   const historyStats = currentUser ? (userHistoryMap[currentUser.id] || {}) : {};
 
