@@ -282,17 +282,20 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const commitTime = (durationSec: number) => {
-    console.log("DEBUG: 收到原始秒数 =", durationSec); // [新增] 这行能告诉我们系统到底抓到了多少秒
-   
-    if (onAddMinutes && durationSec >= 55) { // 55秒门槛
-      const minsToSave = Math.max(1, Math.round(durationSec / 60));
+    // 因为 durationSec 实际是分钟(1.001)，所以我们要判断它是否大于 0.9 分钟
+    console.log("DEBUG: 收到原始数据 =", durationSec);
+  
+    if (onAddMinutes && durationSec >= 0.9) { 
+      // 直接取整，不要再除以 60 了
+      const minsToSave = Math.max(1, Math.round(durationSec));
+      
       console.log("DEBUG: 发送给数据库的分钟数 =", minsToSave);
-      onAddMinutes(minsToSave);
-
+      onAddMinutes(minsToSave); 
     } else {
-        console.log("⏱️ 计时不足55秒，不予计入时长");
+      // 修改这里的文字，避免误导
+      console.log("⏱️ 计时不足 1 分钟，不予计入");
     }
-};
+  };
 
   useEffect(() => {
     let interval: any;
