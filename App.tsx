@@ -298,97 +298,103 @@ const App: React.FC = () => {
     }
   }, [refreshWeeklyStates]);
   
-  // 从 Supabase 加载单个用户数据
-  const loadUserDataFromSupabase = useCallback(async (userId: string) => {
-    try {
-      if (!userId || userId === 'admin') return;
-      const { data, error } = await supabase
-        .from('user_data')
-        .select('key, content')
-        .eq('user_id', userId);
+// 从 Supabase 加载单个用户数据
+const loadUserDataFromSupabase = useCallback(async (userId: string) => {
+  try {
+    if (!userId || userId === 'admin') return;
+    const { data, error } = await supabase
+      .from('user_data')
+      .select('key, content')
+      .eq('user_id', userId);
 
-      if (error) {
-        console.error('Error loading user data from Supabase:', error);
-        return;
-      }
-
-      if (data) {
-        data.forEach((row: { key: string; content: any }) => {
-          const { key, content } = row;
-          switch (key) {
-            case 'growth_app_stats':
-              setUserStatsMap(prev => ({ ...prev, [userId]: content }));
-              break;
-            case 'growth_app_user_history':
-              const sevenDaysAgo = new Date();
-              sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-              const filteredHistory: Record<string, number> = {};
-              if (content && typeof content === 'object') {
-                Object.entries(content).forEach(([date, minutes]) => {
-                  const dateObj = new Date(date);
-                  if (dateObj >= sevenDaysAgo) filteredHistory[date] = minutes as number;
-                });
-              }
-              setUserHistoryMap(prev => ({ ...prev, [userId]: filteredHistory }));
-              break;
-            case 'growth_app_records':
-              const recordsArray = Array.isArray(content) ? content : [];
-              setUserRecordsMap(prev => ({ ...prev, [userId]: recordsArray.slice(0, 50) }));
-              break;
-          }
-        });
-      }
-      
-      const todayStr = new Date().toISOString().split('T')[0];
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('daily_stats')
-        .select('nianfo, baifo, zenghui, breath')
-        .eq('user_id', userId)
-        .eq('date', todayStr)
-        .single();
-      
-      if (!dailyError && dailyData) {
-        setUserStatsMap(prev => ({
-          ...prev,
-          [userId]: {
-            nianfo: dailyData.nianfo || 0,
-            baifo: dailyData.baifo || 0,
-            zenghui: dailyData.zenghui || 0,
-            breath: dailyData.breath || 0,
-          }
-        }));
-      }
-
-      // 历史数据加载
-      const currentDate = getBeijingDateString(); 
-      const todayObj = new Date(currentDate); 
-      const yesterdayObj = new Date(todayObj);
-      yesterdayObj.setDate(todayObj.getDate() - 1);
-      const yesterdayStr = `${yesterdayObj.getFullYear()}-${String(yesterdayObj.getMonth() + 1).padStart(2, '0')}-${String(yesterdayObj.getDate()).padStart(2, '0')}`;
-      
-      const startDateObj = new Date(yesterdayObj);
-      startDateObj.setDate(yesterdayObj.getDate() - 6); 
-      const startDateStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`;
-
-      const { data: historyData, error: historyError } = await supabase
-        .from('daily_stats')
-        .select('date, total_minutes')
-        .eq('user_id', userId)
-        .gte('date', startDateStr)
-        .lte('date', yesterdayStr)
-        .order('date', { ascending: true });
-      
-      if (!historyError && historyData) {
-        const historyMap: Record<string, number> = {};
-        historyData.forEach((row: any) => {
-          historyMap[row.date] = row.total_minutes || 0;
-        });
-        setUserHistoryMap(prev => ({ ...prev, [userId]: historyMap }));
-      }
-    } catch (err) {
-      console.error('Error loading user data from Supabase:', err);
+    if (error) {
+      console.error('Error loading user data:', error);
+      return;
     }
-  }, []);
+
+    if (data) {
+      data.forEach((row: { key: string; content: any }) => {
+        const { key, content } = row;
+        switch (key) {
+          case 'growth_app_stats':
+            setUserStatsMap(prev => ({ ...prev, [userId]: content }));
+            break;
+          case 'growth_app_user_history':
+            // 过滤掉超过7天的历史数据
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const filteredHistory: Record<string, number> = {};
+            if (content && typeof content === 'object') {
+              Object.entries(content).forEach(([date, minutes]) => {
+                const dateObj = new Date(date);
+                if (dateObj >= sevenDaysAgo) filteredHistory[date] = minutes as number;
+              });
+            }
+            setUserHistoryMap(prev => ({ ...prev, [userId]: filteredHistory }));
+            break;
+          case 'growth_app_records':
+            const recordsArray = Array.isArray(content) ? content : [];
+            setUserRecordsMap(prev => ({ ...prev, [userId]: recordsArray.slice(0, 50) }));
+            break;
+        }
+      });
+    }
+    
+    const todayStr = getBeijingDateString();
+    // 【这里修复了 406 报错】：去掉了字符串里的空格，并确保能读到 total_minutes
+    const { data: dailyData, error: dailyError } = await supabase
+      .from('daily_stats')
+      .select('nianfo,baifo,zenghui,breath,total_minutes') 
+      .eq('user_id', userId)
+      .eq('date', todayStr)
+      .single();
+    
+    if (!dailyError && dailyData) {
+      setUserStatsMap(prev => ({
+        ...prev,
+        [userId]: {
+          nianfo: dailyData.nianfo || 0,
+          baifo: dailyData.baifo || 0,
+          zenghui: dailyData.zenghui || 0,
+          breath: dailyData.breath || 0,
+          // 确保同步下来的数据也有总时间
+          total_minutes: dailyData.total_minutes || 0
+        }
+      }));
+    }
+
+    // 历史数据加载逻辑保持不变...
+    const currentDate = getBeijingDateString(); 
+    const todayObj = new Date(currentDate); 
+    const yesterdayObj = new Date(todayObj);
+    yesterdayObj.setDate(todayObj.getDate() - 1);
+    const yesterdayStr = `${yesterdayObj.getFullYear()}-${String(yesterdayObj.getMonth() + 1).padStart(2, '0')}-${String(yesterdayObj.getDate()).padStart(2, '0')}`;
+    
+    const startDateObj = new Date(yesterdayObj);
+    startDateObj.setDate(yesterdayObj.getDate() - 6); 
+    const startDateStr = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`;
+
+    const { data: historyData, error: historyError } = await supabase
+      .from('daily_stats')
+      .select('date,total_minutes')
+      .eq('user_id', userId)
+      .gte('date', startDateStr)
+      .lte('date', yesterdayStr)
+      .order('date', { ascending: true });
+    
+    if (!historyError && historyData) {
+      const historyMap: Record<string, number> = {};
+      historyData.forEach((row: any) => {
+        historyMap[row.date] = row.total_minutes || 0;
+      });
+      setUserHistoryMap(prev => ({ ...prev, [userId]: historyMap }));
+    }
+  } catch (err) {
+    console.error('Error loading user data from Supabase:', err);
+  }
+}, []);
+
+
 
   // --- Effect Hooks ---
 
@@ -693,7 +699,7 @@ const App: React.FC = () => {
       total_minutes: (stats.nianfo || 0) + (stats.baifo || 0) + (stats.zenghui || 0) + (stats.breath || 0)
     };
   }, [currentUser, userStatsMap]);
-  
+
   const records = currentUser ? (userRecordsMap[currentUser.id] || []) : [];
   const historyStats = currentUser ? (userHistoryMap[currentUser.id] || {}) : {};
 
@@ -744,6 +750,8 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
           ...currentStats,
           [key]: (currentStats[key] || 0) + minutes
       };
+      // 算出新的总时间
+      const newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
       
       (async () => {
         try {
@@ -757,7 +765,7 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
               baifo: updatedStats.baifo,
               zenghui: updatedStats.zenghui,
               breath: updatedStats.breath,
-              total_minutes: (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0),
+              total_minutes: newTotal, // 显式写入总时间
               updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,date' });
 
@@ -771,8 +779,8 @@ const handleAddMinutes = async (type: TimerType, minutes: number) => {
         }
       })();
       
-      return { ...prev, [userId]: updatedStats };
-  });
+      return { ...prev, [userId]: { ...updatedStats, total_minutes: newTotal } };
+    });
 
   // 更新历史记录，确保趋势图同步
   setUserHistoryMap(prev => {
