@@ -283,7 +283,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const commitTime = (durationSec: number) => {
     // 只有当实际秒数大于等于 59 秒时，才进行结算
-    if (onAddMinutes && durationSec >= 59) {
+    if (onAddMinutes && durationSec >= 55) {
       let mins = Math.round(durationSec / 60);
       if (mins < 1) mins = 1; 
       onAddMinutes(mins);
