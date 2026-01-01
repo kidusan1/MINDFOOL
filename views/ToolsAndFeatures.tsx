@@ -289,7 +289,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       onAddMinutes(mins);
         console.log(`✅ 计时有效：${durationSec.toFixed(1)}秒，计入 ${mins} 分钟`);
     } else {
-        console.log("⏱️ 计时不足 59 秒，不予计入时长");
+        console.log("⏱️ 计时不足 1 分钟，不予计入时长");
     }
 };
 
