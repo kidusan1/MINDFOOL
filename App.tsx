@@ -310,14 +310,14 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
             setUserStatsMap(prev => ({ ...prev, [userId]: content }));
             break;
           case 'growth_app_user_history':
-            // 过滤掉超过7天的历史数据
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            // 过滤掉超过14天的历史数据
+            const fourteenDaysAgo = new Date();
+            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
             const filteredHistory: Record<string, number> = {};
             if (content && typeof content === 'object') {
               Object.entries(content).forEach(([date, minutes]) => {
                 const dateObj = new Date(date);
-                if (dateObj >= sevenDaysAgo) filteredHistory[date] = minutes as number;
+                if (dateObj >= fourteenDaysAgo) filteredHistory[date] = minutes as number;
               });
             }
             setUserHistoryMap(prev => ({ ...prev, [userId]: filteredHistory }));
@@ -410,12 +410,12 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
     if (currentUser?.id) {
       const userHistory = userHistoryMap[currentUser.id];
       if (userHistory) {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
         const filteredHistory: Record<string, number> = {};
         Object.entries(userHistory).forEach(([date, minutes]) => {
           const dateObj = new Date(date);
-          if (dateObj >= sevenDaysAgo) filteredHistory[date] = minutes;
+          if (dateObj >= fourteenDaysAgo) filteredHistory[date] = minutes;
         });
         
         if (Object.keys(filteredHistory).length < Object.keys(userHistory).length) {
@@ -431,10 +431,10 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
   useEffect(() => {
     const cleanupOldData = async () => {
       try {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-        const { error } = await supabase.from('daily_stats').delete().lt('date', sevenDaysAgoStr);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const fourteenDaysAgoStr = fourteenDaysAgo.toISOString().split('T')[0];
+        const { error } = await supabase.from('daily_stats').delete().lt('date', fourteenDaysAgoStr);
         if (error) console.error('Error cleaning up old daily stats:', error);
       } catch (err) {
         console.error('Error cleaning up old daily stats:', err);
