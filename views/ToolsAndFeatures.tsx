@@ -281,19 +281,20 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     }
   };
 
-  const commitTime = (durationSec: number) => {
-    // 因为 durationSec 实际是分钟(1.001)，所以我们要判断它是否大于 0.9 分钟
-    console.log("DEBUG: 收到原始数据 =", durationSec);
+  const commitTime = (durationVal: number) => { // 建议改名为 durationVal 以免混淆
+    console.log("DEBUG: 收到原始数值 =", durationVal);
   
-    if (onAddMinutes && durationSec >= 0.9) { 
-      // 直接取整，不要再除以 60 了
-      const minsToSave = Math.max(1, Math.round(durationSec));
+    // 此时 durationVal 实际上是分钟（例如 1.001）
+    // 逻辑修改：只要大于等于 0.9 分钟（约 54 秒）就视为有效的一分钟
+    if (onAddMinutes && durationVal >= 0.9) { 
       
-      console.log("DEBUG: 发送给数据库的分钟数 =", minsToSave);
+      // 既然已经是分钟，直接四舍五入即可，不要再除以 60
+      const minsToSave = Math.max(1, Math.round(durationVal));
+      
+      console.log("DEBUG: 发送给数据库的整数分钟 =", minsToSave);
       onAddMinutes(minsToSave); 
     } else {
-      // 修改这里的文字，避免误导
-      console.log("⏱️ 计时不足 1 分钟，不予计入");
+      console.log("⏱️ 计时太短（不足 1 分钟），不予计入");
     }
   };
 
