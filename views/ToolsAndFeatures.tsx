@@ -145,14 +145,20 @@ export const BreathingView: React.FC<BreathingViewProps> = ({ onAddMinutes, lang
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setPhase('In');
       setText(lang === 'en' ? 'Ready' : '准备');
+      
+      // --- 修复开始：确保不报错且逻辑准确 ---
       if (startTimeRef.current && onAddMinutes) {
           const durationSec = (Date.now() - startTimeRef.current) / 1000;
-          if (durationSec > 5) {
-             const mins = Math.max(0, Math.round(durationSec / 60));
-             if (mins > 0) onAddMinutes(mins);
+          // 只要超过 55 秒，就计入功课
+          if (durationSec >= 55) {
+             const mins = Math.max(1, Math.round(durationSec / 60));
+             onAddMinutes(mins);
+          } else {
+             console.log("⏱️ 呼吸时间不足 1 分钟，不予计入");
           }
           startTimeRef.current = null;
       }
+      // --- 修复结束 ---
     }
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -200,6 +206,13 @@ interface TimerViewProps {
   lang: Language;
 }
 
+// --- 功课计时 ---
+interface TimerViewProps {
+  type: TimerType;
+  onAddMinutes?: (minutes: number) => void;
+  lang: Language;
+}
+
 export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }) => {
   const t = TRANSLATIONS[lang];
   const isBaifo = type === TimerType.BAIFO;
@@ -227,12 +240,18 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
 
+  // 1. 修复闹铃逻辑：增加 resume 防止无声
   const startAlarmSound = () => {
     try {
         if (!audioCtxRef.current) {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         const ctx = audioCtxRef.current;
+        // 关键修复：如果状态是挂起，必须恢复
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         
@@ -264,40 +283,35 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const stopAlarmSound = () => {
-    // 停止音频
     if (oscillatorRef.current) {
         try { oscillatorRef.current.stop(); } catch(e) {}
         oscillatorRef.current = null;
     }
-    // 重置倒计时状态
     setIsAlarmActive(false);
     setIsCountdownRunning(false);
-    // 重置剩余秒数到初始设定的分钟数
     setCountdownRemaining(countdownTarget * 60);
-    // 清理计时器
     if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
         countdownIntervalRef.current = null;
     }
   };
 
-  const commitTime = (durationVal: number) => { // 建议改名为 durationVal 以免混淆
-    console.log("DEBUG: 收到原始数值 =", durationVal);
+  const commitTime = (durationSec: number) => { 
+    // 此时 durationSec 是总秒数
+    console.log("DEBUG: 收到原始秒数 =", durationSec);
   
-    // 此时 durationVal 实际上是分钟（例如 1.001）
-    // 逻辑修改：只要大于等于 0.9 分钟（约 54 秒）就视为有效的一分钟
-    if (onAddMinutes && durationVal >= 0.9) { 
-      
-      // 既然已经是分钟，直接四舍五入即可，不要再除以 60
-      const minsToSave = Math.max(1, Math.round(durationVal));
-      
+    // 1. 门槛：55 秒
+    if (onAddMinutes && durationSec >= 55) { 
+      // 2. 核心计算：秒转分钟
+      const minsToSave = Math.max(1, Math.round(durationSec / 60));
       console.log("DEBUG: 发送给数据库的整数分钟 =", minsToSave);
       onAddMinutes(minsToSave); 
     } else {
-      console.log("⏱️ 计时太短（不足 1 分钟），不予计入");
+      console.log("⏱️ 计时太短，不予计入");
     }
   };
 
+  // 正计时逻辑
   useEffect(() => {
     let interval: any;
     if (isRunning) {
@@ -312,26 +326,28 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     return () => clearInterval(interval);
   }, [isRunning]);
 
+  // 2. 修复倒计时逻辑：解决 5 分钟变 1 分钟的问题
   useEffect(() => {
     if (isCountdownRunning) {
-      // 确保在开始前清理旧的计时器
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
         countdownIntervalRef.current = null;
       }
-      // 确认剩余时间大于 0 秒，避免一启动就触发告警
       if (countdownRemaining <= 0) {
         setIsCountdownRunning(false);
         return;
       }
+      // 记录开始时间
       countdownSessionStartRef.current = Date.now();
+      
       countdownIntervalRef.current = setInterval(() => {
         setCountdownRemaining(prev => {
             if (prev <= 1) {
-              // --- 修复点：自然结束时立即结算时间 ---
+              // 倒计时自然结束：计算总耗时
               if (countdownSessionStartRef.current > 0) {
-                commitTime((Date.now() - countdownSessionStartRef.current) / 1000);
-                countdownSessionStartRef.current = 0; // 结算完归零防止重复计算
+                const elapsed = (Date.now() - countdownSessionStartRef.current) / 1000;
+                commitTime(elapsed);
+                countdownSessionStartRef.current = 0; 
               }
                 setIsCountdownRunning(false);
                 startAlarmSound();
@@ -345,8 +361,10 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           clearInterval(countdownIntervalRef.current);
           countdownIntervalRef.current = null;
         }
+        // 手动暂停/停止：计算已过时间
         if (countdownSessionStartRef.current > 0) {
-            commitTime((Date.now() - countdownSessionStartRef.current) / 1000);
+            const elapsed = (Date.now() - countdownSessionStartRef.current) / 1000;
+            commitTime(elapsed);
             countdownSessionStartRef.current = 0;
         }
     }
@@ -356,8 +374,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         countdownIntervalRef.current = null;
       }
     };
-  }, [isCountdownRunning, countdownRemaining]);
+  }, [isCountdownRunning]); // 依赖项只有 isCountdownRunning
 
+  // 清理音频
   useEffect(() => {
     return () => {
         if (oscillatorRef.current) {
@@ -374,31 +393,15 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const adjustCountdown = (delta: number) => {
     if (isCountdownRunning || isAlarmActive) return;
-
     let next;
     if (delta < 0) {
-      // 当点击“减号”时
-      if (countdownTarget <= 5 && countdownTarget > 1) {
-        // 如果当前是 5 分钟，直接降到 1 分钟
-        next = 1;
-      } else if (countdownTarget === 1) {
-        // 如果已经是 1 分钟，保持不变
-        next = 1;
-      } else {
-        // 其他情况按 5 分钟递减
-        next = countdownTarget + delta;
-      }
+      if (countdownTarget <= 5 && countdownTarget > 1) next = 1;
+      else if (countdownTarget === 1) next = 1;
+      else next = countdownTarget + delta;
     } else {
-      // 当点击“加号”时
-      if (countdownTarget === 1) {
-        // 如果当前是 1 分钟，直接升到 5 分钟
-        next = 5;
-      } else {
-        // 其他情况按 5 分钟递增，最高 120 分钟
-        next = Math.min(120, countdownTarget + delta);
-      }
+      if (countdownTarget === 1) next = 5;
+      else next = Math.min(120, countdownTarget + delta);
     }
-
     setCountdownTarget(next);
     setCountdownRemaining(next * 60);
   };
@@ -445,16 +448,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                                 <button onClick={() => { 
                                     playSound('confirm'); 
                                     if (!isCountdownRunning) {
-                                        // 开始倒计时前，先清理旧的计时器
                                         if (countdownIntervalRef.current) {
                                             clearInterval(countdownIntervalRef.current);
                                             countdownIntervalRef.current = null;
                                         }
-                                        // 确认剩余时间大于 0 秒，避免一启动就触发告警
                                         if (countdownRemaining > 0) {
                                             setIsCountdownRunning(true);
                                         } else {
-                                            // 如果剩余时间为0，重置为初始值
                                             setCountdownRemaining(countdownTarget * 60);
                                             setIsCountdownRunning(true);
                                         }
@@ -475,7 +475,6 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     </div>
   );
 };
-
 // --- 数据统计 ---
 export const StatsView: React.FC<{ 
   stats: DailyStats, 

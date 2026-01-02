@@ -555,10 +555,11 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
   // 1. 独立的 0 点跨天监听器 (每 30 秒检查一次)
   useEffect(() => {
     const checkMidnight = () => {
-      const myId = currentUser?.id; // 先拿到当前用户ID
-      if (!myId) return; // 如果还没登录，直接返回，什么都不做
+      const myId = currentUser?.id;
+      if (!myId) return;
 
       const todayStr = getBeijingDateString(); 
+      // 1. 获取带有 ID 的 Key
       const dateKey = `last_active_date_${myId}`;
       const lastDate = localStorage.getItem(dateKey);
 
@@ -572,14 +573,12 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
           const total = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
 
           if (total > 0) {
-            // --- 核心修复：双重保险存储 ---
-            // 1. 更新当前状态
+            // 1. 更新历史记录 (这部分保留不动)
             setUserHistoryMap(prev => {
               const newHistory = {
                 ...prev,
                 [myId]: { ...(prev[myId] || {}), [lastDate]: total }
               };
-              // 2. 存入 localStorage (注意 key 名与初始化逻辑保持一致)
               localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
               return newHistory;
             });
@@ -594,11 +593,13 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
           });
         }
 
-        // 更新最后活跃日期
-        localStorage.setItem('last_active_date', todayStr);
+        // ----------------------------------------------------
+        // 🔥 关键修改在这里！
+        // 之前你是 localStorage.setItem('last_active_date', todayStr);
+        // 现在要改成用 dateKey (即带 ID 的 key)
+        // ----------------------------------------------------
+        localStorage.setItem(dateKey, todayStr);
         
-        // --- 核心修复：延迟刷新 ---
-        // 给存储留出 500ms 的写入时间，然后再刷新页面
         console.log('结算完毕，即将自动重载页面...');
         setTimeout(() => {
           window.location.reload(); 
@@ -610,63 +611,64 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
     return () => clearInterval(timer);
   }, [currentUser]); 
 
-  // 2. 独立的初始化 Auth 检查 (仅在组件加载时执行一次)
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        let u = null;
+// 2. 独立的初始化 Auth 检查 (仅在组件加载时执行一次)
+useEffect(() => {
+  const initAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      let u = null;
 
-        if (session?.user) {
-          const savedUserJson = localStorage.getItem('growth_app_current_user');
-          u = savedUserJson ? JSON.parse(savedUserJson) : null;
-        } else {
-          const savedUserJson = localStorage.getItem('growth_app_current_user');
-          u = savedUserJson ? JSON.parse(savedUserJson) : null;
-        }
-        
-        if (u && u.id) {
-          setCurrentUser(u);
+      // 尝试获取用户信息
+      if (session?.user) {
+        const savedUserJson = localStorage.getItem('growth_app_current_user');
+        u = savedUserJson ? JSON.parse(savedUserJson) : null;
+      } else {
+        const savedUserJson = localStorage.getItem('growth_app_current_user');
+        u = savedUserJson ? JSON.parse(savedUserJson) : null;
+      }
+      
+      if (u && u.id) {
+        setCurrentUser(u);
 
-          const todayStr = getBeijingDateString(); 
-          const lastDate = localStorage.getItem('last_active_date');
+        const todayStr = getBeijingDateString(); 
+        // ✅ 关键修复：统一使用带 ID 的 Key
+        const dateKey = `last_active_date_${u.id}`;
+        const lastDate = localStorage.getItem(dateKey); 
 
-          if (lastDate && lastDate !== todayStr) {
-            const oldStatsMap = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-            const yesterdayStats = oldStatsMap[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-            
-            const totalMins = (yesterdayStats.nianfo || 0) + (yesterdayStats.baifo || 0) + 
-                              (yesterdayStats.zenghui || 0) + (yesterdayStats.breath || 0);
-            
-            if (totalMins > 0) {
-              setUserHistoryMap(prev => {
-                const newHistory = {
-                  ...prev,
-                  [u.id]: { ...(prev[u.id] || {}), [lastDate]: totalMins }
-                };
-                localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
-                return newHistory;
-              });
-            }
-
-            const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-            setUserStatsMap(prev => {
-              const newStats = { ...prev, [u.id]: resetStats };
-              localStorage.setItem('growth_app_stats', JSON.stringify(newStats));
-              return newStats;
+        // 如果日期不一致（跨天了），或者之前没有记录
+        if (lastDate && lastDate !== todayStr) {
+          const oldStatsMap = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+          const yesterdayStats = oldStatsMap[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+          
+          const totalMins = (yesterdayStats.nianfo || 0) + (yesterdayStats.baifo || 0) + 
+                            (yesterdayStats.zenghui || 0) + (yesterdayStats.breath || 0);
+          
+          // 如果昨天有数据，存入历史记录
+          if (totalMins > 0) {
+            setUserHistoryMap(prev => {
+              const newHistory = {
+                ...prev,
+                [u.id]: { ...(prev[u.id] || {}), [lastDate]: totalMins }
+              };
+              localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
+              return newHistory;
             });
           }
-
-          localStorage.setItem('last_active_date', todayStr);
-          await loadUserDataFromSupabase(u.id);
         }
-      } catch (err) {
-        console.error('Error initializing auth:', err);
-      }
-    };
 
-    initAuth();
-  }, [loadUserDataFromSupabase]); // 这里的括号已经闭合，后续逻辑在 App 内部
+        // ✅ 无论是否跨天，最后统一更新一下“最后活跃日期”为今天
+        // 这样就不用在 if 和 else 里分别写了
+        localStorage.setItem(dateKey, todayStr);
+        
+        await loadUserDataFromSupabase(u.id);
+      }
+    } catch (err) {
+      console.error('Error initializing auth:', err);
+    }
+  };
+
+  initAuth();
+}, [loadUserDataFromSupabase]);
 
   // --- End of Core Logic Fix ---
 
@@ -734,7 +736,6 @@ const rankPercentage = useMemo(() => {
 const handleAddMinutes = useCallback(async (type: TimerType, minutes: number, shouldPlayAlarm: boolean = false) => {
 // 1. 基础检查：调整为允许 1 分钟（及通过进位达到的 1 分钟）通过
 if (!currentUser || minutes < 1) {
-  // 只有当分钟数真的非常小（比如 0.5 以下）时才真正拦截
   if (currentUser && minutes > 0 ) {
      console.log("收到分钟数：", minutes, "，不足 1 分钟，不计入统计");
   }
