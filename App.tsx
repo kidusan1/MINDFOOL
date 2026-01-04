@@ -1129,19 +1129,33 @@ if (!currentUser || minutes < 1) {
       {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-      {/* --- 1. 右下角悬浮放大镜按钮 --- */}
-      {!isSearchOpen && (
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          className="fixed bottom-24 right-6 z-[999] w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-white/50 text-gray-600 hover:text-primary transition-all active:scale-90"
-        >
-          <Icons.Search size={24} strokeWidth={1.5} />
-        </button>
-      )}
+    {/* --- 1. 响应式搜索按钮 --- */}
+{!isSearchOpen && (
+  <button
+    onClick={() => setIsSearchOpen(true)}
+    className={`
+      fixed z-[999] flex items-center justify-center 
+      transition-all duration-300 active:scale-90
+      /* 基础样式：增加透明度背景，边框减淡 */
+      bg-white/30 backdrop-blur-md border border-white/30 shadow-lg
+      /* 颜色：默认深灰色，悬浮时变为目录同色系 */
+      text-[#666666] hover:text-[#6D8D9D]
+      
+      /* 📱 手机版布局：屏幕底部水平正中间，避开 TabBar 文字 */
+      bottom-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full
+      md:left-auto md:translate-x-0
+      
+      /* 💻 电脑版布局：回到右下角，比“+”号更高（bottom-64） */
+      md:bottom-64 md:right-6 md:w-12 md:h-12
+    `}
+  >
+    <Icons.Search size={26} strokeWidth={1.5} />
+  </button>
+)}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
       {isSearchOpen && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-[20vh]">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
           {/* 点击背景关闭 */}
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-xl" 
@@ -1155,7 +1169,7 @@ if (!currentUser || minutes < 1) {
               <input 
                 autoFocus
                 type="text"
-                placeholder="搜索佛法名相 (sanmodi.cn)..."
+                placeholder="搜索名词名相..."
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
