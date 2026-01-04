@@ -38,17 +38,6 @@ export const SPLASH_QUOTES = [
   "不记得是谁说 生命成长 有两步非常关键 甘愿放下误会的幻象和执念 慢慢认出并转向真实的寂然"
 ];
 
-export const SPLASH_QUOTES_EN = [
-  "When we balance sense and reason, bearing our own weight with independent thought, we can face life's truths with direct resolve.",
-  "From a dependent child to an independent soul; from the fog of vexation to clarity of mind. Only through this transformation can we pierce illusions and return to reality.",
-  "Trust that everyone finds their own path. We only need to live out our small light; those who need it will follow the glow.",
-  "Liberation comes from seeing the truth of life and insightful wisdom, not from a master's approval or the warmth of a group.",
-  "The 'self' does not inherently exist; it is not something we struggle to remove, but something we realize was never there.",
-  "When one grows inwardly, the quality of that inner life naturally shines forth.",
-  "The direction of growth is to discover the fact of 'non-self' in life, not to become a 'better self' upon the premise of a self.",
-  "We long to be fully caught and held, but all we need is 100% trust in life itself to find peace.",
-  "Two key steps in life's growth: willingly laying down misunderstood illusions and attachments, and slowly recognizing and turning toward the true silence."
-];
 
 // --- I18N DICTIONARY ---
 

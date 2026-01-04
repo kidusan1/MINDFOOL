@@ -9,7 +9,7 @@ import { ToolsView, BreathingView, TimerView, StatsView } from './views/ToolsAnd
 import { DailyView, RecordView, RecordInputModal } from './views/DailyAndRecord';
 import CourseDetail from './views/CourseDetail';
 import Splash from './views/Splash';
-import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES, SPLASH_QUOTES_EN } from './constants';
+import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES } from './constants';
 import { supabase } from './src/supabaseClient';
 
 /**
@@ -1213,7 +1213,7 @@ if (!currentUser || minutes < 1) {
     {/* 这里的 size 和文字保持你原来的设置 */}
     <Icons.Search size={20} strokeWidth={1.5} />
     <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
-      {lang === 'zh' ? '名词名相' : 'Search Terms'}
+      {lang === 'zh' ? '搜索' : 'Search Terms'}
     </span>
   </button>
 )}
