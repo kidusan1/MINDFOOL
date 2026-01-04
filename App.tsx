@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import * as Icons from 'lucide-react';
 import Layout from './components/Layout';
 import { ViewName, TimerType, CheckInType, DailyStats, GrowthRecord, User, LeaveState, CourseContentMap, CourseScheduleMap, CourseWeek, CourseStatus, UserWeeklyState, CheckInConfig, Language } from './types';
 import Home from './views/Home';
@@ -80,7 +81,9 @@ const calculateWeekRange = (shiftWeeks: number = 0, offsetWeeks: number = 0) => 
 };
 
 const App: React.FC = () => {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const loadState = <T,>(key: string, fallback: T): T => {
+    
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
@@ -1122,7 +1125,53 @@ if (!currentUser || minutes < 1) {
           <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} onRefreshUsers={loadAllUsers} onRefreshWeeklyStates={refreshWeeklyStates} />
         )}
       </Layout>
+
+      {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
+
+      {/* --- 1. 右下角悬浮放大镜按钮 --- */}
+      {!isSearchOpen && (
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="fixed bottom-24 right-6 z-[999] w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-white/50 text-gray-600 hover:text-primary transition-all active:scale-90"
+        >
+          <Icons.Search size={24} strokeWidth={1.5} />
+        </button>
+      )}
+
+      {/* --- 2. 全屏毛玻璃搜索层 --- */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-[20vh]">
+          {/* 点击背景关闭 */}
+          <div 
+            className="absolute inset-0 bg-black/20 backdrop-blur-xl" 
+            onClick={() => setIsSearchOpen(false)}
+          />
+          
+          {/* 搜索框主体 */}
+          <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
+              <Icons.Search className="text-gray-500 mr-3" size={24} />
+              <input 
+                autoFocus
+                type="text"
+                placeholder="搜索佛法名相 (sanmodi.cn)..."
+                className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setIsSearchOpen(false);
+                  if (e.key === 'Enter') console.log("开始搜索:", e.currentTarget.value);
+                }}
+              />
+              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-gray-400">
+                <Icons.X size={20} />
+              </button>
+            </div>
+            <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
+              仅检索正见资料 · 无痕浏览
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
