@@ -1159,52 +1159,28 @@ if (!currentUser || minutes < 1) {
       {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-{/* --- 1. 电脑版固定 / 手机版可拖拽搜索按钮 --- */}
+{/* --- 1. 电脑版左侧 / 手机版右下角固定搜索按钮 --- */}
 {!isSearchOpen && (
-  <div
-    // 手机版通过 style 实现位置跟随，电脑版由 class 控制固定位置
-    style={typeof window !== 'undefined' && window.innerWidth < 768 ? {
-      position: 'fixed',
-      touchAction: 'none', // 防止拖拽时页面滚动
-      // 这里你可以根据需要设置初始位置
-    } : {}}
-    className="fixed z-[999] md:bottom-32 md:left-10"
+  <button
+    onClick={() => setIsSearchOpen(true)}
+    className={`
+      fixed z-[999] flex items-center justify-center transition-all active:scale-95
+      /* 统一颜色为深灰，增加透明度背景 */
+      bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
+      
+      /* 📱 手机版：固定右下角，不再偏移 */
+      bottom-24 right-6 w-10 h-10 rounded-full
+      
+      /* 💻 电脑版：保持在你要求的左侧位置，不影响原布局 */
+      md:bottom-32 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
+    `}
   >
-    <button
-      // 这里的 id 方便后续如果你想做更复杂的拖拽库
-      id="draggable-search"
-      onClick={(e) => {
-        // 如果是点击而非拖拽结束，则打开搜索
-        setIsSearchOpen(true);
-      }}
-      // 电脑版样式：长条带文字；手机版样式：缩小悬浮球
-      className={`
-        flex items-center justify-center transition-all active:scale-95
-        bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
-        /* 📱 手机版：圆形小球 */
-        w-10 h-10 rounded-full right-6 bottom-24 fixed
-        /* 💻 电脑版：恢复长条形 */
-        md:relative md:right-auto md:bottom-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent md:hover:text-[#6D8D9D]
-      `}
-      // 手机端简单的拖拽逻辑
-      onTouchMove={(e) => {
-        const touch = e.touches[0];
-        const btn = e.currentTarget;
-        // 限制拖拽不超出屏幕高度/宽度
-        const x = Math.min(Math.max(10, touch.clientX - 20), window.innerWidth - 50);
-        const y = Math.min(Math.max(10, touch.clientY - 20), window.innerHeight - 50);
-        btn.style.left = x + 'px';
-        btn.style.top = y + 'px';
-        btn.style.right = 'auto';
-        btn.style.bottom = 'auto';
-      }}
-    >
-      <Icons.Search size={20} strokeWidth={1.5} />
-      <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
+    {/* 这里的 size 和文字保持你原来的设置 */}
+    <Icons.Search size={20} strokeWidth={1.5} />
+    <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
       {lang === 'zh' ? '搜索名词名相' : 'Search Terms'}
-      </span>
-    </button>
-  </div>
+    </span>
+  </button>
 )}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
