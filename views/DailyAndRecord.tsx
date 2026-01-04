@@ -572,7 +572,7 @@ export const RecordView: React.FC<RecordViewProps> = ({ onOpenInput, records, on
            playSound('confirm'); 
            onOpenInput(); 
          }}
-         className={`fixed bottom-28 md:bottom-12 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-40 active:scale-95 transition-transform ${
+         className={`fixed bottom-40 md:bottom-12 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-40 active:scale-95 transition-transform ${
            isMaxRecords 
              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
              : 'bg-primary text-white hover:bg-primary/90'
