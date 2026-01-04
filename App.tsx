@@ -936,7 +936,37 @@ if (!currentUser || minutes < 1) {
     } else setCurrentView(ViewName.HOME);
     setEditingRecord(null);
   };
-
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResult, setSearchResult] = useState<{title: string, content: string} | null>(null);
+  
+  const handleCleanSearch = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setIsSearching(true);
+    setSearchResult(null); 
+  
+    try {
+      // 这里的 URL 是我们即将配置的 Supabase 后端清洗中心
+      const response = await fetch('https://YOUR_PROJECT_ID.supabase.co/functions/v1/clean-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          keyword: query,
+          blacklist: ['萧平实', '正觉', '同修会', '导师', '平实'] // 严格执行过滤名单
+        })
+      });
+      if (!response.ok) throw new Error('网络异常，请重试');
+    
+      const data = await response.json();
+      if (data.pureContent) {
+        setSearchResult({ title: query, content: data.pureContent });
+      }
+    } catch (err) {
+      console.error("搜索失败，请更换词条重试:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
   const handleSaveRecord = (type: string, content: string, colors: any) => {
     if (!currentUser) return;
     
@@ -1240,7 +1270,9 @@ if (!currentUser || minutes < 1) {
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
-                  if (e.key === 'Enter') console.log("开始搜索:", e.currentTarget.value);
+                  if (e.key === 'Enter') {
+                    handleCleanSearch(e.currentTarget.value); // 👈 修改这里
+                  }
                 }}
               />
               
@@ -1248,6 +1280,25 @@ if (!currentUser || minutes < 1) {
                 <Icons.X size={20} />
               </button>
             </div>
+            {/* 在 input 所在的 div 闭合标签下方插入 */}
+{isSearching && (
+  <div className="mt-8 text-white/60 animate-pulse text-center font-light">
+    正在为您从三摩地站点提取净纯法义...
+  </div>
+)}
+
+{searchResult && (
+  <div className="mt-8 bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <h3 className="text-xl font-bold text-gray-800 border-b pb-3 mb-4">{searchResult.title}</h3>
+    <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify">
+      {/* 渲染 AI 清洗后的 1000 字纯净内容 */}
+      {searchResult.content}
+    </div>
+    <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center italic">
+      此内容已通过 AI 严格执行去人名、去来源、屏蔽争议词清洗。
+    </div>
+  </div>
+)}
             <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
             {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Search Only · Tap any space to return.'}
               
