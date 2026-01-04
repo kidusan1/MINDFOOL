@@ -1200,7 +1200,9 @@ if (!currentUser || minutes < 1) {
       }}
     >
       <Icons.Search size={20} strokeWidth={1.5} />
-      <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">搜索名词名相</span>
+      <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
+      {lang === 'zh' ? '搜索名词名相' : 'Search Terms'}
+      </span>
     </button>
   </div>
 )}
@@ -1221,19 +1223,21 @@ if (!currentUser || minutes < 1) {
               <input 
                 autoFocus
                 type="text"
-                placeholder="搜索名词名相..."
+                placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
                   if (e.key === 'Enter') console.log("开始搜索:", e.currentTarget.value);
                 }}
               />
+              
               <button onClick={() => setIsSearchOpen(false)} className="p-2 text-gray-400">
                 <Icons.X size={20} />
               </button>
             </div>
             <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-              无痕浏览 · 点按空白处返回
+            {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Search Only · Tap any space to return.'}
+              
             </div>
           </div>
         </div>
