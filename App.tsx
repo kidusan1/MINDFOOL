@@ -1130,55 +1130,63 @@ if (!currentUser || minutes < 1) {
         {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
         {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
         {currentView === ViewName.ADMIN && (
-  <div className="flex flex-col gap-4">
-    {/* --- 这里是新插入的日期设置模块 --- */}
-    <div className="mx-4 mt-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-      <div className="flex items-center gap-2 mb-3 text-primary font-bold">
-        <Icons.Calendar size={18} />
-        <span className="text-sm">学修周期调整</span>
+  <div className="h-full overflow-y-auto pb-20 custom-scrollbar"> {/* 添加滚动容器确保内容可见 */}
+    <div className="max-w-4xl mx-auto p-4 space-y-4">
+      
+      {/* --- 周期调整模块：放在课程管理最上方 --- */}
+      <div className="bg-[#F8F9FA] rounded-2xl border-2 border-dashed border-primary/20 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Icons.Calendar size={20} className="text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-gray-800">班级学修周期设定</h3>
+            <p className="text-[10px] text-gray-400">设置后，全班“正知正见”页面的周日期将自动更新</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap md:flex-nowrap gap-3">
+          <input 
+            type="date" 
+            className="flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            value={checkInConfig.weekStartDate || '2026-01-06'}
+            onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
+          />
+          <button 
+            onClick={handleSaveGlobalConfigs}
+            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all shadow-md shadow-primary/10"
+          >
+            同步全班周期
+          </button>
+        </div>
       </div>
-      <div className="flex gap-2">
-        <input 
-          type="date" 
-          className="flex-1 bg-gray-50 border-none rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-          value={checkInConfig.weekStartDate || '2026-01-06'}
-          onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
-        />
-        <button 
-          onClick={handleSaveGlobalConfigs}
-          className="bg-primary text-white px-4 py-2 rounded-xl text-sm active:scale-95 transition-transform"
-        >
-          确认更新
-        </button>
-      </div>
-      <p className="text-[10px] text-gray-400 mt-2">提示：修改此日期会改变全班“本周状态”显示的日期范围。</p>
-    </div>
 
-    {/* --- 下面是你原本的 Admin 组件 --- */}
-    <Admin 
-      courseContents={courseContents} 
-      onUpdateCourseContent={handleUpdateCourseContent} 
-      onUpdateCourseStatus={handleUpdateCourseStatus} 
-      onUpdateCourseTitle={handleUpdateCourseTitle} 
-      allUsers={allUsers} 
-      onUpdateUserPermission={handleUpdateUserPermission} 
-      coursesMap={coursesMap} 
-      onAddCourseWeek={handleAddCourseWeek} 
-      onDeleteCourseWeek={handleDeleteCourseWeek} 
-      authCode={authCode} 
-      setAuthCode={setAuthCode} 
-      weeklyStates={weeklyStates} 
-      splashQuotes={splashQuotes} 
-      setSplashQuotes={setSplashQuotes} 
-      homeQuotes={homeQuotes} 
-      setHomeQuotes={setHomeQuotes} 
-      checkInConfig={checkInConfig} 
-      setCheckInConfig={setCheckInConfig} 
-      lang={lang} 
-      onSaveGlobalConfigs={handleSaveGlobalConfigs} 
-      onRefreshUsers={loadAllUsers} 
-      onRefreshWeeklyStates={refreshWeeklyStates} 
-    />
+      {/* --- 原有的 Admin 组件 (课程管理、用户管理等) --- */}
+      <Admin 
+        courseContents={courseContents} 
+        onUpdateCourseContent={handleUpdateCourseContent} 
+        onUpdateCourseStatus={handleUpdateCourseStatus} 
+        onUpdateCourseTitle={handleUpdateCourseTitle} 
+        allUsers={allUsers} 
+        onUpdateUserPermission={handleUpdateUserPermission} 
+        coursesMap={coursesMap} 
+        onAddCourseWeek={handleAddCourseWeek} 
+        onDeleteCourseWeek={handleDeleteCourseWeek} 
+        authCode={authCode} 
+        setAuthCode={setAuthCode} 
+        weeklyStates={weeklyStates} 
+        splashQuotes={splashQuotes} 
+        setSplashQuotes={setSplashQuotes} 
+        homeQuotes={homeQuotes} 
+        setHomeQuotes={setHomeQuotes} 
+        checkInConfig={checkInConfig} 
+        setCheckInConfig={setCheckInConfig} 
+        lang={lang} 
+        onSaveGlobalConfigs={handleSaveGlobalConfigs} 
+        onRefreshUsers={loadAllUsers} 
+        onRefreshWeeklyStates={refreshWeeklyStates} 
+      />
+    </div>
   </div>
 )}
       </Layout>
@@ -1199,7 +1207,7 @@ if (!currentUser || minutes < 1) {
       bottom-24 right-6 w-10 h-10 rounded-full
       
       /* 💻 电脑版：保持在你要求的左侧位置，不影响原布局 */
-      md:bottom-32 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
+      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
     `}
   >
     {/* 这里的 size 和文字保持你原来的设置 */}
