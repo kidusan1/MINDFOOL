@@ -65,19 +65,28 @@ const INITIAL_CHECKIN_CONFIG: CheckInConfig = {
     locationName: '共修点'
 };
 
-const calculateWeekRange = (shiftWeeks: number = 0, offsetWeeks: number = 0) => {
+// 1. 纯净版计算函数：不直接依赖 checkInConfig，而是通过参数传入 baseDate
+const calculateWeekRange = (shiftWeeks: number = 0, baseDateStr: string = '2026-01-06') => {
+  const baseStart = new Date(baseDateStr);
+  baseStart.setHours(0, 0, 0, 0);
+
   const today = new Date();
-  const day = today.getDay(); 
-  const diff = (day - 3 + 7) % 7;
-  const start = new Date(today);
-  start.setHours(0,0,0,0);
-  start.setDate(today.getDate() - diff);
-  const totalWeeks = shiftWeeks + offsetWeeks;
-  start.setDate(start.getDate() + (totalWeeks * 7));
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+  today.setHours(0, 0, 0, 0);
+
+  // 计算经过的周数
+  const diffTime = today.getTime() - baseStart.getTime();
+  const weeksSinceBase = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+
+  // 计算目标周的起始
+  const currentWeekStart = new Date(baseStart);
+  currentWeekStart.setDate(baseStart.getDate() + (weeksSinceBase + shiftWeeks) * 7);
+
+  // 计算目标周的结束
+  const currentWeekEnd = new Date(currentWeekStart);
+  currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+
   const fmt = (d: Date) => `${(d.getMonth() + 1)}.${d.getDate()}`;
-  return `${fmt(start)} - ${fmt(end)}`;
+  return `${fmt(currentWeekStart)} - ${fmt(currentWeekEnd)}`;
 };
 
 const App: React.FC = () => {
@@ -392,44 +401,10 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
   // --- Effect Hooks ---
 
 useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUsers)); }, [allUsers]);
-  // 跨天数据自动归零逻辑
+
 
 // 跨天数据自动归零逻辑
-useEffect(() => {
-  const checkAndResetDailyStats = () => {
-    const lastDate = localStorage.getItem('last_active_date');
-    const today = new Date().toISOString().split('T')[0];
-// 调试辅助：改完时间后看控制台是否打印这两值
-console.log("日期对比:", { lastDate, today });
-    // 只有在日期变更且有登录用户时才执行
-    if (lastDate && lastDate !== today && currentUser) {
-      setUserStatsMap(prev => {
-        const currentUserStats = prev[currentUser.id];
-        if (!currentUserStats) return prev;
 
-        return {
-          ...prev,
-          [currentUser.id]: {
-            ...currentUserStats, // 1. 先解构保留所有原始字段（防止缺少类型定义的字段）
-            totalMinutes: 0,     // 2. 覆盖需要归零的字段
-            meditation: 0,
-            chanting: 0,
-            reading: 0,
-            reflection: 0,
-            // 如果你的类型里还有 nianfo 或其他字段，这里会自动保持原样或在此处手动加一行设为 0
-            lastUpdated: new Date().toISOString()
-          }
-        };
-      });
-      console.log("检测到日期变更，今日功课已自动归零");
-    }
-    localStorage.setItem('last_active_date', today);
-  };
-
-  checkAndResetDailyStats();
-  const timer = setInterval(checkAndResetDailyStats, 60000); 
-  return () => clearInterval(timer);
-}, [currentUser?.id, setUserStatsMap]);
 
   // 同步用户数据到 Supabase
   useEffect(() => {
@@ -706,7 +681,9 @@ useEffect(() => {
 
   // --- End of Core Logic Fix ---
 
-  const currentWeekRangeStr = calculateWeekRange(weekShift, 0);
+  const currentWeekRangeStr = useMemo(() => {
+    return calculateWeekRange(weekShift, checkInConfig?.weekStartDate || '2026-01-06');
+  }, [weekShift, checkInConfig?.weekStartDate]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -873,7 +850,7 @@ if (!currentUser || minutes < 1) {
             onConflict: 'user_id,key'
           });
         
-        const currentWeekRangeStr = calculateWeekRange(0, 0);
+          const currentWeekRangeStr = calculateWeekRange(0, checkInConfig?.weekStartDate || '2025-12-30');
         const initialWeeklyState: UserWeeklyState = {
           key: `${user.id}_${currentWeekRangeStr}`,
           userId: user.id,
@@ -1153,8 +1130,57 @@ if (!currentUser || minutes < 1) {
         {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
         {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
         {currentView === ViewName.ADMIN && (
-          <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} onRefreshUsers={loadAllUsers} onRefreshWeeklyStates={refreshWeeklyStates} />
-        )}
+  <div className="flex flex-col gap-4">
+    {/* --- 这里是新插入的日期设置模块 --- */}
+    <div className="mx-4 mt-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-2 mb-3 text-primary font-bold">
+        <Icons.Calendar size={18} />
+        <span className="text-sm">学修周期调整</span>
+      </div>
+      <div className="flex gap-2">
+        <input 
+          type="date" 
+          className="flex-1 bg-gray-50 border-none rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+          value={checkInConfig.weekStartDate || '2026-01-06'}
+          onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
+        />
+        <button 
+          onClick={handleSaveGlobalConfigs}
+          className="bg-primary text-white px-4 py-2 rounded-xl text-sm active:scale-95 transition-transform"
+        >
+          确认更新
+        </button>
+      </div>
+      <p className="text-[10px] text-gray-400 mt-2">提示：修改此日期会改变全班“本周状态”显示的日期范围。</p>
+    </div>
+
+    {/* --- 下面是你原本的 Admin 组件 --- */}
+    <Admin 
+      courseContents={courseContents} 
+      onUpdateCourseContent={handleUpdateCourseContent} 
+      onUpdateCourseStatus={handleUpdateCourseStatus} 
+      onUpdateCourseTitle={handleUpdateCourseTitle} 
+      allUsers={allUsers} 
+      onUpdateUserPermission={handleUpdateUserPermission} 
+      coursesMap={coursesMap} 
+      onAddCourseWeek={handleAddCourseWeek} 
+      onDeleteCourseWeek={handleDeleteCourseWeek} 
+      authCode={authCode} 
+      setAuthCode={setAuthCode} 
+      weeklyStates={weeklyStates} 
+      splashQuotes={splashQuotes} 
+      setSplashQuotes={setSplashQuotes} 
+      homeQuotes={homeQuotes} 
+      setHomeQuotes={setHomeQuotes} 
+      checkInConfig={checkInConfig} 
+      setCheckInConfig={setCheckInConfig} 
+      lang={lang} 
+      onSaveGlobalConfigs={handleSaveGlobalConfigs} 
+      onRefreshUsers={loadAllUsers} 
+      onRefreshWeeklyStates={refreshWeeklyStates} 
+    />
+  </div>
+)}
       </Layout>
 
       {/* 录入日记的弹窗 */}

@@ -94,6 +94,7 @@ export interface CheckInConfig {
   radius: number; // in meters
   enabled: boolean;
   locationName?: string;
+  weekStartDate?: string;
 }
 
 // Map course ID to content string. 
