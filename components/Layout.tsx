@@ -176,8 +176,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, onBa
         </main>
 
         {/* --- MOBILE BOTTOM NAV --- */}
-        <nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 w-full z-30 flex justify-around items-start pt-3 pb-6 safe-area-bottom">
-          <button onClick={() => handleNavClick(ViewName.HOME)} className={`flex flex-col items-center gap-1 ${getTabClass(ViewName.HOME).replace('bg-primary/10', '')}`}>
+        <nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 w-full z-30 flex items-center safe-area-bottom">          
+        <button onClick={() => handleNavClick(ViewName.HOME)} className={`flex-1 flex flex-col items-center justify-center gap-1 ${getTabClass(ViewName.HOME).replace('bg-primary/10', '')}`}>
             <Icons.Home size={24} />
             <span className="text-xs font-medium">{t.nav.home}</span>
           </button>
