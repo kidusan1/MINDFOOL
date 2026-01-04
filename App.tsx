@@ -1298,7 +1298,7 @@ if (!currentUser || minutes < 1) {
       {searchResult.content}
     </div>
     <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center italic">
-      此内容已通过 AI 严格执行去人名、去来源、屏蔽争议词清洗。
+      闻、思、修、证
     </div>
   </div>
 )}
