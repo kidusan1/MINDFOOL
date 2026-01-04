@@ -1141,59 +1141,52 @@ if (!currentUser || minutes < 1) {
       text-[#666666] hover:text-[#6D8D9D] hover:bg-white/40
       
       /* 📱 手机版：回到右下角，整体缩小一圈 (w-10 h-10) */
-      bottom-24 right-6 w-10 h-10 rounded-full
+      bottom-24 left-12 w-10 h-10 rounded-full
       
       /* 💻 电脑版：挪到左侧目录区，退出登录上方 */
       /* 这里假设你的侧边栏宽度在 md 以后是固定宽度，通常是 left-0 附近 */
-      md:bottom-32 md:left-4 md:right-auto md:w-auto md:h-auto md:px-4 md:py-2 md:rounded-lg md:border-none md:shadow-none md:bg-transparent
+      md:bottom-32 md:left-10 md:right-auto md:w-auto md:h-auto md:px-4 md:py-2 md:rounded-lg md:border-none md:shadow-none md:bg-transparent
     `}
   >
     <Icons.Search size={20} strokeWidth={1.5} />
     {/* 电脑版显示的文字标签 */}
-    <span className="hidden md:inline-block ml-3 text-sm font-light">搜索名相</span>
+    <span className="hidden md:inline-block ml-3 text-sm font-light">名词名相</span>
   </button>
 )}
-{/* --- 2. 方案 A：Spotlight 实时搜索层 --- */}
-{isSearchOpen && (
-  <div className="fixed inset-0 z-[10000] flex flex-col items-center justify-center p-4">
-    {/* 遮罩背景 */}
-    <div className="absolute inset-0 bg-[#F0EEE9]/60 backdrop-blur-xl" onClick={() => setIsSearchOpen(false)} />
-    
-    <div className="relative w-full max-w-2xl z-10 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-300">
-      {/* 搜索主框 */}
-      <div className="flex items-center bg-white/90 backdrop-blur-md border border-white shadow-2xl rounded-2xl px-5 py-4">
-        <Icons.Search className="text-gray-400 mr-3" size={24} />
-        <input 
-          autoFocus
-          type="text"
-          placeholder="搜索名词名相..."
-          className="w-full bg-transparent border-none outline-none text-xl text-gray-800 placeholder:text-gray-300 font-light"
-          onKeyDown={(e) => e.key === 'Escape' && setIsSearchOpen(false)}
-        />
-        {/* 关闭按钮 - 明显的交互退出 */}
-        <button 
-          onClick={() => setIsSearchOpen(false)}
-          className="ml-2 p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
-        >
-          <Icons.X size={20} />
-          <span className="sr-only">关闭</span>
-        </button>
-      </div>
 
-      {/* 实时结果展示区 (方案 A 的核心) */}
-      <div className="w-full bg-white/80 backdrop-blur-md rounded-2xl shadow-xl max-h-[50vh] overflow-y-auto border border-white/50 p-2 hidden group-focus-within:block">
-         {/* 这里未来接入搜索结果列表 */}
-         <div className="p-4 text-center text-gray-400 font-light text-sm">
-           开始输入以检索正见库...
-         </div>
-      </div>
-      
-      <div className="text-center text-gray-400/80 text-xs tracking-widest font-light">
-        ESC 或 点击空白处退出
-      </div>
-    </div>
-  </div>
-)}
+      {/* --- 2. 全屏毛玻璃搜索层 --- */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
+          {/* 点击背景关闭 */}
+          <div 
+            className="absolute inset-0 bg-black/20 backdrop-blur-xl" 
+            onClick={() => setIsSearchOpen(false)}
+          />
+          
+          {/* 搜索框主体 */}
+          <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
+              <Icons.Search className="text-gray-500 mr-3" size={24} />
+              <input 
+                autoFocus
+                type="text"
+                placeholder="搜索名词名相..."
+                className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setIsSearchOpen(false);
+                  if (e.key === 'Enter') console.log("开始搜索:", e.currentTarget.value);
+                }}
+              />
+              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-gray-400">
+                <Icons.X size={20} />
+              </button>
+            </div>
+            <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
+              仅检索正见资料 · 无痕浏览
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
