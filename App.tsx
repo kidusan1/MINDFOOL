@@ -1208,6 +1208,8 @@ if (!currentUser || minutes < 1) {
       
       /* 💻 电脑版：保持在你要求的左侧位置，不影响原布局 */
       md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
+      /* ✨ 核心：鼠标移入时的浅色方框效果（与目录一致） */
+    md:hover:bg-[#E8E6E1] md:text-[#6D8D9D]
     `}
   >
     {/* 这里的 size 和文字保持你原来的设置 */}
