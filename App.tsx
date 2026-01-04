@@ -1178,7 +1178,7 @@ if (!currentUser || minutes < 1) {
     {/* 这里的 size 和文字保持你原来的设置 */}
     <Icons.Search size={20} strokeWidth={1.5} />
     <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
-      {lang === 'zh' ? '搜索名词名相' : 'Search Terms'}
+      {lang === 'zh' ? '名词名相' : 'Search Terms'}
     </span>
   </button>
 )}
