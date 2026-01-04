@@ -391,14 +391,44 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
 
   // --- Effect Hooks ---
 
-  useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUsers)); }, [allUsers]);
-  
-  // 保持管理员权限
-  useEffect(() => {
-    if (currentUser?.id === 'admin' && !currentUser.isAdmin) {
-      setCurrentUser(prev => prev ? { ...prev, isAdmin: true } : null);
+useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUsers)); }, [allUsers]);
+  // 跨天数据自动归零逻辑
+
+// 跨天数据自动归零逻辑
+useEffect(() => {
+  const checkAndResetDailyStats = () => {
+    const lastDate = localStorage.getItem('last_active_date');
+    const today = new Date().toLocaleDateString();
+
+    // 只有在日期变更且有登录用户时才执行
+    if (lastDate && lastDate !== today && currentUser) {
+      setUserStatsMap(prev => {
+        const currentUserStats = prev[currentUser.id];
+        if (!currentUserStats) return prev;
+
+        return {
+          ...prev,
+          [currentUser.id]: {
+            ...currentUserStats, // 1. 先解构保留所有原始字段（防止缺少类型定义的字段）
+            totalMinutes: 0,     // 2. 覆盖需要归零的字段
+            meditation: 0,
+            chanting: 0,
+            reading: 0,
+            reflection: 0,
+            // 如果你的类型里还有 nianfo 或其他字段，这里会自动保持原样或在此处手动加一行设为 0
+            lastUpdated: new Date().toISOString()
+          }
+        };
+      });
+      console.log("检测到日期变更，今日功课已自动归零");
     }
-  }, [currentUser]);
+    localStorage.setItem('last_active_date', today);
+  };
+
+  checkAndResetDailyStats();
+  const timer = setInterval(checkAndResetDailyStats, 60000); 
+  return () => clearInterval(timer);
+}, [currentUser?.id, setUserStatsMap]);
 
   // 同步用户数据到 Supabase
   useEffect(() => {
@@ -1129,29 +1159,50 @@ if (!currentUser || minutes < 1) {
       {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-{/* --- 1. 精准定位的搜索按钮 --- */}
+{/* --- 1. 电脑版固定 / 手机版可拖拽搜索按钮 --- */}
 {!isSearchOpen && (
-  <button
-    onClick={() => setIsSearchOpen(true)}
-    className={`
-      fixed z-[999] flex items-center justify-center 
-      transition-all duration-300 active:scale-90
-      /* 基础视觉：超高透明度，更柔和的深灰色 */
-      bg-white/20 backdrop-blur-sm border border-white/20 shadow-sm
-      text-[#666666] hover:text-[#6D8D9D] hover:bg-white/40
-      
-      /* 📱 手机版：回到右下角，整体缩小一圈 (w-10 h-10) */
-      bottom-24 left-12 w-10 h-10 rounded-full
-      
-      /* 💻 电脑版：挪到左侧目录区，退出登录上方 */
-      /* 这里假设你的侧边栏宽度在 md 以后是固定宽度，通常是 left-0 附近 */
-      md:bottom-32 md:left-10 md:right-auto md:w-auto md:h-auto md:px-4 md:py-2 md:rounded-lg md:border-none md:shadow-none md:bg-transparent
-    `}
+  <div
+    // 手机版通过 style 实现位置跟随，电脑版由 class 控制固定位置
+    style={typeof window !== 'undefined' && window.innerWidth < 768 ? {
+      position: 'fixed',
+      touchAction: 'none', // 防止拖拽时页面滚动
+      // 这里你可以根据需要设置初始位置
+    } : {}}
+    className="fixed z-[999] md:bottom-32 md:left-10"
   >
-    <Icons.Search size={20} strokeWidth={1.5} />
-    {/* 电脑版显示的文字标签 */}
-    <span className="hidden md:inline-block ml-3 text-sm font-light">名词名相</span>
-  </button>
+    <button
+      // 这里的 id 方便后续如果你想做更复杂的拖拽库
+      id="draggable-search"
+      onClick={(e) => {
+        // 如果是点击而非拖拽结束，则打开搜索
+        setIsSearchOpen(true);
+      }}
+      // 电脑版样式：长条带文字；手机版样式：缩小悬浮球
+      className={`
+        flex items-center justify-center transition-all active:scale-95
+        bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
+        /* 📱 手机版：圆形小球 */
+        w-10 h-10 rounded-full right-6 bottom-24 fixed
+        /* 💻 电脑版：恢复长条形 */
+        md:relative md:right-auto md:bottom-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent md:hover:text-[#6D8D9D]
+      `}
+      // 手机端简单的拖拽逻辑
+      onTouchMove={(e) => {
+        const touch = e.touches[0];
+        const btn = e.currentTarget;
+        // 限制拖拽不超出屏幕高度/宽度
+        const x = Math.min(Math.max(10, touch.clientX - 20), window.innerWidth - 50);
+        const y = Math.min(Math.max(10, touch.clientY - 20), window.innerHeight - 50);
+        btn.style.left = x + 'px';
+        btn.style.top = y + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+      }}
+    >
+      <Icons.Search size={20} strokeWidth={1.5} />
+      <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">搜索名词名相</span>
+    </button>
+  </div>
 )}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
@@ -1182,7 +1233,7 @@ if (!currentUser || minutes < 1) {
               </button>
             </div>
             <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-              仅检索正见资料 · 无痕浏览
+              无痕浏览 · 点按空白处返回
             </div>
           </div>
         </div>
