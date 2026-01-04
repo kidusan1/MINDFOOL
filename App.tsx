@@ -947,7 +947,7 @@ if (!currentUser || minutes < 1) {
   
     try {
       // 这里的 URL 是我们即将配置的 Supabase 后端清洗中心
-      const response = await fetch('https://YOUR_PROJECT_ID.supabase.co/functions/v1/clean-search', {
+      const response = await fetch('https://qcbpsqvoyxifwtkszlrm.supabase.co/functions/v1/clean-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1256,7 +1256,10 @@ if (!currentUser || minutes < 1) {
           {/* 点击背景关闭 */}
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-xl" 
-            onClick={() => setIsSearchOpen(false)}
+            onClick={() => {
+              setIsSearchOpen(false);
+              setSearchResult(null);
+            }}
           />
           
           {/* 搜索框主体 */}
@@ -1283,7 +1286,7 @@ if (!currentUser || minutes < 1) {
             {/* 在 input 所在的 div 闭合标签下方插入 */}
 {isSearching && (
   <div className="mt-8 text-white/60 animate-pulse text-center font-light">
-    正在为您从三摩地站点提取净纯法义...
+    正在为您搜索...
   </div>
 )}
 
