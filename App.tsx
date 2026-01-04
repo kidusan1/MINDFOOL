@@ -946,10 +946,11 @@ if (!currentUser || minutes < 1) {
     setSearchResult(null); 
   
     try {
+      const SUPABASE_ANON_KEY = 'sb_publishable_o-rqO4pavdQa3vB4mmYDtQ_GGmpHJ2r';
       // 这里的 URL 是我们即将配置的 Supabase 后端清洗中心
       const response = await fetch('https://qcbpsqvoyxifwtkszlrm.supabase.co/functions/v1/clean-search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`},
         body: JSON.stringify({ 
           keyword: query,
           blacklist: ['萧平实', '正觉', '同修会', '导师', '平实'] // 严格执行过滤名单
@@ -1297,7 +1298,7 @@ if (!currentUser || minutes < 1) {
       {/* 渲染 AI 清洗后的 1000 字纯净内容 */}
       {searchResult.content}
     </div>
-    <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center italic">
+    <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center">
       闻、思、修、证
     </div>
   </div>
