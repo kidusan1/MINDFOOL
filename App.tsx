@@ -398,8 +398,9 @@ useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUse
 useEffect(() => {
   const checkAndResetDailyStats = () => {
     const lastDate = localStorage.getItem('last_active_date');
-    const today = new Date().toLocaleDateString();
-
+    const today = new Date().toISOString().split('T')[0];
+// 调试辅助：改完时间后看控制台是否打印这两值
+console.log("日期对比:", { lastDate, today });
     // 只有在日期变更且有登录用户时才执行
     if (lastDate && lastDate !== today && currentUser) {
       setUserStatsMap(prev => {
