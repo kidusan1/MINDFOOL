@@ -7,17 +7,24 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // 处理跨域预检请求
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { keyword, blacklist } = await req.json()
-    
-    // 获取刚刚设置的新变量名
+    const body = await req.json()
+    console.log("接收到的数据:", body)
+    const { keyword, blacklist } = body
+
+    // 从环境变量获取配置
     const apiKey = Deno.env.get('GROQ_API_KEY')
     const projectUrl = Deno.env.get('MY_PROJECT_URL')
     const serviceKey = Deno.env.get('MY_SERVICE_KEY')
 
-    const supabase = createClient(projectUrl ?? '', serviceKey ?? '')
+    if (!apiKey || !projectUrl || !serviceKey) {
+      throw new Error("服务器环境变量配置缺失")
+    }
+
+    const supabase = createClient(projectUrl, serviceKey)
 
     // --- 步骤 1: 检查缓存 ---
     const { data: cached } = await supabase
@@ -27,6 +34,7 @@ serve(async (req) => {
       .single()
 
     if (cached) {
+      console.log(`命中缓存: ${keyword}`)
       return new Response(JSON.stringify({ pureContent: cached.pure_content, isCached: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
@@ -69,6 +77,7 @@ serve(async (req) => {
     })
 
   } catch (error) {
+    console.error("后端报错:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400

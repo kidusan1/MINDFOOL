@@ -946,24 +946,37 @@ if (!currentUser || minutes < 1) {
     setSearchResult(null); 
   
     try {
-      const SUPABASE_ANON_KEY = 'sb_publishable_o-rqO4pavdQa3vB4mmYDtQ_GGmpHJ2r';
-      // 这里的 URL 是我们即将配置的 Supabase 后端清洗中心
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjYnBzcXZveXhpZnd0a3N6bHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNTcxMTEsImV4cCI6MjA4MTYzMzExMX0.mS7sZeSdAQCZdDLJKxiKlp794l571rnrM_CmvTocu0Y'; // ！！！请再次确认这里是那个超长的 Key
+      console.log("1. 准备发起请求，关键词:", query);
+      console.log("Payload:", { keyword: query })
       const response = await fetch('https://qcbpsqvoyxifwtkszlrm.supabase.co/functions/v1/clean-search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`},
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
         body: JSON.stringify({ 
           keyword: query,
-          blacklist: ['萧平实', '正觉', '同修会', '导师', '平实'] // 严格执行过滤名单
+          blacklist: ['萧平实', '正觉', '同修会', '导师', '平实']
         })
       });
-      if (!response.ok) throw new Error('网络异常，请重试');
+    
+      console.log("2. 收到响应，状态码:", response.status);
+    
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("3. 服务器返回错误:", errorText);
+        throw new Error('网络异常');
+      }
     
       const data = await response.json();
+      console.log("4. 成功获取数据:", data);
+    
       if (data.pureContent) {
         setSearchResult({ title: query, content: data.pureContent });
       }
     } catch (err) {
-      console.error("搜索失败，请更换词条重试:", err);
+      console.error("5. 最终捕获错误:", err);
     } finally {
       setIsSearching(false);
     }
