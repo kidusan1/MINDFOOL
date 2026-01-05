@@ -175,25 +175,29 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, onBa
           </div>
         </main>
 
-        {/* --- MOBILE BOTTOM NAV --- */}
-        <nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 w-full z-30 flex items-center safe-area-bottom">          
-        <button onClick={() => handleNavClick(ViewName.HOME)} className={`flex-1 flex flex-col items-center justify-center gap-1 ${getTabClass(ViewName.HOME).replace('bg-primary/10', '')}`}>
-            <Icons.Home size={24} />
-            <span className="text-xs font-medium">{t.nav.home}</span>
-          </button>
-          <button onClick={() => handleNavClick(ViewName.TOOLS)} className={`flex flex-col items-center gap-1 ${getTabClass(ViewName.TOOLS).replace('bg-primary/10', '')}`}>
-            <Icons.Tools size={24} />
-            <span className="text-xs font-medium">{t.nav.tools}</span>
-          </button>
-          <button onClick={() => handleNavClick(ViewName.DAILY)} className={`flex flex-col items-center gap-1 ${getTabClass(ViewName.DAILY).replace('bg-primary/10', '')}`}>
-            <Icons.Daily size={24} />
-            <span className="text-xs font-medium">{t.nav.daily}</span>
-          </button>
-          <button onClick={() => handleNavClick(ViewName.RECORD)} className={`flex flex-col items-center gap-1 ${getTabClass(ViewName.RECORD).replace('bg-primary/10', '')}`}>
-            <Icons.Record size={24} />
-            <span className="text-xs font-medium">{t.nav.record}</span>
-          </button>
-        </nav>
+     {/* --- MOBILE BOTTOM NAV --- */}
+<nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 w-full z-30 flex safe-area-bottom">
+  {[
+    { view: ViewName.HOME, icon: Icons.Home, label: t.nav.home },
+    { view: ViewName.TOOLS, icon: Icons.Tools, label: t.nav.tools },
+    { view: ViewName.DAILY, icon: Icons.Daily, label: t.nav.daily },
+    { view: ViewName.RECORD, icon: Icons.Record, label: t.nav.record }
+  ].map((item) => (
+    <button 
+      key={item.view}
+      onClick={() => handleNavClick(item.view)} 
+      /* w-0 flex-1 是强制等分的关键，justify-center 确保图标在格子里居中 */
+      className={`flex-1 w-0 flex flex-col items-center justify-center h-full transition-all ${
+        currentView === item.view ? 'text-primary' : 'text-textSub'
+      }`}
+    >
+      <item.icon size={24} />
+      <span className="text-[10px] mt-1 font-medium whitespace-nowrap overflow-hidden">
+        {item.label}
+      </span>
+    </button>
+  ))}
+</nav>
 
       </div>
     </div>
