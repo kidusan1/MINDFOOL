@@ -561,64 +561,73 @@ useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUse
   // 🔥 核心修复区域：跨天重置与初始化逻辑 🔥
   // ============================================
 
-  // 1. 独立的 0 点跨天监听器 (每 30 秒检查一次)
+  // 1. 独立的 0 点跨天监听器 (修复版：确保历史数据先上传数据库，再归零)
   useEffect(() => {
-    const checkMidnight = () => {
+    const checkMidnight = async () => {
       const myId = currentUser?.id;
       if (!myId) return;
 
       const todayStr = getBeijingDateString(); 
-      // 1. 获取带有 ID 的 Key
       const dateKey = `last_active_date_${myId}`;
       const lastDate = localStorage.getItem(dateKey);
 
+      // 如果本地记录的日期存在，且不等于今天（说明跨天了）
       if (lastDate && lastDate !== todayStr) {
-        console.log('检测到跨天，正在结算昨天数据并归零今日...');
+        console.log(`检测到跨天: 从 ${lastDate} -> ${todayStr}`);
 
-        const userStats = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+        // 1. 读取昨天的最终数据
+        const userStatsMapLocal = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+        const yStats = userStatsMapLocal[myId];
+        
+        if (yStats) {
+          const totalYesterday = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
 
-        if (userStats[myId]) {
-          const yStats = userStats[myId];
-          const total = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
+          // 2. 如果昨天有数据，先更新历史记录并【强制同步到 Supabase】
+          if (totalYesterday > 0) {
+            console.log(`正在归档昨日数据: ${totalYesterday} 分钟`);
+            
+            // 更新本地历史
+            const oldHistory = JSON.parse(localStorage.getItem('growth_app_user_history') || '{}');
+            const myHistory = oldHistory[myId] || {};
+            const newHistoryMap = { ...oldHistory, [myId]: { ...myHistory, [lastDate]: totalYesterday } };
+            
+            setUserHistoryMap(newHistoryMap);
+            localStorage.setItem('growth_app_user_history', JSON.stringify(newHistoryMap));
 
-          if (total > 0) {
-            // 1. 更新历史记录 (这部分保留不动)
-            setUserHistoryMap(prev => {
-              const newHistory = {
-                ...prev,
-                [myId]: { ...(prev[myId] || {}), [lastDate]: total }
-              };
-              localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
-              return newHistory;
-            });
+            // 【关键修复】等待 Supabase 写入成功，防止刷新导致数据丢失
+            await supabase.from('daily_stats').upsert({
+              user_id: myId,
+              date: lastDate,
+              total_minutes: totalYesterday,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,date' });
           }
-
-          // 重置今日数据
-          const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-          setUserStatsMap(prev => {
-            const newMap = { ...prev, [myId]: resetStats };
-            localStorage.setItem('growth_app_stats', JSON.stringify(newMap));
-            return newMap;
-          });
         }
 
-        // ----------------------------------------------------
-        // 🔥 关键修改在这里！
-        // 之前你是 localStorage.setItem('last_active_date', todayStr);
-        // 现在要改成用 dateKey (即带 ID 的 key)
-        // ----------------------------------------------------
+        // 3. 归零今日数据
+        const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0, total_minutes: 0 };
+        setUserStatsMap(prev => {
+          const newMap = { ...prev, [myId]: resetStats };
+          localStorage.setItem('growth_app_stats', JSON.stringify(newMap));
+          return newMap;
+        });
+
+        // 4. 更新最后活跃日期为今天
         localStorage.setItem(dateKey, todayStr);
         
-        console.log('结算完毕，即将自动重载页面...');
+        // 5. 稍微延迟后刷新，确保 UI 彻底更新
+        console.log('跨天结算完毕，页面即将刷新...');
         setTimeout(() => {
           window.location.reload(); 
-        }, 500);
+        }, 1000);
       }
     };
 
+    // 启动定时器
+    checkMidnight(); // 组件加载时先检查一次
     const timer = setInterval(checkMidnight, 30000); 
     return () => clearInterval(timer);
-  }, [currentUser]); 
+  }, [currentUser]);
 
 // 2. 独立的初始化 Auth 检查 (仅在组件加载时执行一次)
 useEffect(() => {
