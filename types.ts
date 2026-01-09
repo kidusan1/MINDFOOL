@@ -33,7 +33,7 @@ export enum TimerType {
   NIANFO = '念佛念经',
   BAIFO = '忆佛拜佛',
   ZENGHUI = '一念相续', 
-  BREATH = '呼吸', 
+  BREATH = '呼吸跟随', 
 }
 
 export enum CheckInType {
@@ -43,11 +43,19 @@ export enum CheckInType {
 }
 
 export interface DailyStats {
-  nianfo: number; // minutes
+  // 各项功课分钟数
+  nianfo: number;
   baifo: number;
   zenghui: number;
   breath: number;
+
+  // 当日记录次数
+  recordCount: number;
+
+  // 👇 当日总分钟数（派生值，但在数据中长期存在）
+  total_minutes: number;
 }
+
 
 export interface GrowthRecord {
   id: number;

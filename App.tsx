@@ -11,6 +11,56 @@ import CourseDetail from './views/CourseDetail';
 import Splash from './views/Splash';
 import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES } from './constants';
 import { supabase } from './src/supabaseClient';
+import dictionaryDataRaw from './app_dictionary.json';
+// ✅ 把不完整的 DailyStats 补齐成完整结构（给 UI 用）
+// ===== 工具函数：补齐 DailyStats，供 UI 使用 =====
+
+function normalizeDailyStats(stats: Partial<DailyStats>): DailyStats {
+  return {
+    nianfo: stats.nianfo ?? 0,
+    baifo: stats.baifo ?? 0,
+    zenghui: stats.zenghui ?? 0,
+    breath: stats.breath ?? 0,
+    recordCount: stats.recordCount ?? 0,
+    total_minutes: stats.total_minutes ?? 0,
+  };
+}
+
+
+if (typeof document !== 'undefined') {
+  const styleId = 'search-ui-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+    /* 强制给主页和每日功课的最底层容器加间距 */
+    /* 这样即便内部组件有自己的样式，也会被强制推上去 */
+    .home-view-wrapper, .daily-view-wrapper {
+      padding-bottom: 180px !important;
+      height: auto !important;
+      min-height: 100vh;
+      margin-top: 10px; /* 增加顶部间距 */
+      }
+   /* 确保子元素不强制撑满 */
+.daily-view-wrapper > div {
+  height: auto !important;
+}
+
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    
+    /* 省略号的颜色和粗细 */
+    .dots-indicator {
+      color: #888 !important;
+      font-weight: 900 !important;
+    }
+  `;
+
+    document.head.appendChild(style);
+  }
+}
+// 2. 强制定义为数组，这样 TypeScript 就不再报“不存在属性 find”的错误了
+const dictionaryData = (dictionaryDataRaw as any).default || (dictionaryDataRaw as any[]);
 
 /**
  * 核心工具：获取当前北京时间的 YYYY-MM-DD 字符串
@@ -118,7 +168,9 @@ const App: React.FC = () => {
   const [authCode, setAuthCode] = useState(() => loadState('growth_app_auth_code', '888888'));
   const [splashQuotes, setSplashQuotes] = useState<string[]>(() => loadState('growth_app_splash_quotes', DEFAULT_SPLASH_QUOTES));
   const [homeQuotes, setHomeQuotes] = useState<string[]>(() => loadState('growth_app_home_quotes', DEFAULT_HOME_QUOTES));
-  const [userStatsMap, setUserStatsMap] = useState<Record<string, DailyStats>>(() => loadState('growth_app_stats', {}));
+  // ✅ 允许局部缺字段，避免 TS 报错
+const [userStatsMap, setUserStatsMap] = useState<Record<string, Partial<DailyStats>>>(
+  () => loadState('growth_app_stats', {}));
   const [userHistoryMap, setUserHistoryMap] = useState<Record<string, Record<string, number>>>(() => loadState('growth_app_user_history', {}));
   const [userRecordsMap, setUserRecordsMap] = useState<Record<string, GrowthRecord[]>>(() => loadState('growth_app_records', {}));
   const [coursesMap, setCoursesMap] = useState<CourseScheduleMap>(() => loadState('growth_app_courses_map', INITIAL_COURSES_MAP));
@@ -562,72 +614,80 @@ useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUse
   // ============================================
 
   // 1. 独立的 0 点跨天监听器 (修复版：确保历史数据先上传数据库，再归零)
-  useEffect(() => {
-    const checkMidnight = async () => {
-      const myId = currentUser?.id;
-      if (!myId) return;
+// 修改一：深度修复 0 点跨天与趋势图同步
+useEffect(() => {
+  const checkMidnight = async () => {
+    const myId = currentUser?.id;
+    if (!myId) return;
 
-      const todayStr = getBeijingDateString(); 
-      const dateKey = `last_active_date_${myId}`;
-      const lastDate = localStorage.getItem(dateKey);
+    const todayStr = getBeijingDateString(); 
+    const dateKey = `last_active_date_${myId}`;
+    const lastDate = localStorage.getItem(dateKey);
 
-      // 如果本地记录的日期存在，且不等于今天（说明跨天了）
-      if (lastDate && lastDate !== todayStr) {
-        console.log(`检测到跨天: 从 ${lastDate} -> ${todayStr}`);
+    // 只有当本地记录的日期存在，且不等于今天时，才触发结算
+    if (lastDate && lastDate !== todayStr) {
+      console.log(`[系统] 检测到跨天: 从 ${lastDate} 切换至 ${todayStr}`);
 
-        // 1. 读取昨天的最终数据
-        const userStatsMapLocal = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-        const yStats = userStatsMapLocal[myId];
-        
-        if (yStats) {
-          const totalYesterday = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
+      // 1. 获取本地存的所有用户数据
+      const userStatsMapLocal = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+      const yStats = userStatsMapLocal[myId];
+      
+      if (yStats) {
+        // 计算昨天的总和
+        const totalYesterday = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
 
-          // 2. 如果昨天有数据，先更新历史记录并【强制同步到 Supabase】
-          if (totalYesterday > 0) {
-            console.log(`正在归档昨日数据: ${totalYesterday} 分钟`);
-            
-            // 更新本地历史
-            const oldHistory = JSON.parse(localStorage.getItem('growth_app_user_history') || '{}');
-            const myHistory = oldHistory[myId] || {};
-            const newHistoryMap = { ...oldHistory, [myId]: { ...myHistory, [lastDate]: totalYesterday } };
-            
-            setUserHistoryMap(newHistoryMap);
-            localStorage.setItem('growth_app_user_history', JSON.stringify(newHistoryMap));
-
-            // 【关键修复】等待 Supabase 写入成功，防止刷新导致数据丢失
-            await supabase.from('daily_stats').upsert({
+        // 2. 核心同步：将数据写入 growth_records (这是 ToolsAndFeatures 读取的表)
+        if (totalYesterday > 0) {
+          console.log(`[同步] 正在上传昨日(${lastDate})数据: ${totalYesterday} 分钟`);
+          
+          try {
+            // 必须同步到 growth_records，趋势图才能显示
+            const { error } = await supabase.from('growth_records').upsert({
               user_id: myId,
-              date: lastDate,
-              total_minutes: totalYesterday,
+              date: lastDate, // 存入昨天的日期
+              meditation_minutes: (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.breath || 0),
+              study_minutes: (yStats.zenghui || 0),
+              is_completed: totalYesterday > 0,
               updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,date' });
+
+            if (error) throw error;
+            console.log('[同步] 数据库写入成功');
+          } catch (err) {
+            console.error('[同步] 失败:', err);
           }
         }
-
-        // 3. 归零今日数据
-        const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0, total_minutes: 0 };
-        setUserStatsMap(prev => {
-          const newMap = { ...prev, [myId]: resetStats };
-          localStorage.setItem('growth_app_stats', JSON.stringify(newMap));
-          return newMap;
-        });
-
-        // 4. 更新最后活跃日期为今天
-        localStorage.setItem(dateKey, todayStr);
-        
-        // 5. 稍微延迟后刷新，确保 UI 彻底更新
-        console.log('跨天结算完毕，页面即将刷新...');
-        setTimeout(() => {
-          window.location.reload(); 
-        }, 1000);
       }
-    };
 
-    // 启动定时器
-    checkMidnight(); // 组件加载时先检查一次
-    const timer = setInterval(checkMidnight, 30000); 
-    return () => clearInterval(timer);
-  }, [currentUser]);
+      // 3. 物理归零：清理本地缓存和状态
+      console.log('[系统] 正在清理今日状态...');
+      const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0, total_minutes: 0 };
+      
+      // 更新本地存储，防止刷新后又读出旧数据
+      const updatedMap = { ...userStatsMapLocal, [myId]: resetStats };
+      localStorage.setItem('growth_app_stats', JSON.stringify(updatedMap));
+      
+      // 更新 React 状态，驱动 UI 变 0
+      setUserStatsMap(updatedMap);
+
+      // 4. 更新活跃日期标记
+      localStorage.setItem(dateKey, todayStr);
+      
+      // 5. 强制刷新，让整个 App 的定时器和状态重新初始化
+      alert("新的一天开始了，系统已自动结算并重置。"); 
+      window.location.reload(); 
+    } else if (!lastDate) {
+      // 如果是第一次使用，初始化日期
+      localStorage.setItem(dateKey, todayStr);
+    }
+  };
+
+  // 检查频率设为 10 秒一次，确保零点附近能快速捕捉
+  const timer = setInterval(checkMidnight, 10000); 
+  checkMidnight(); // 启动时立即运行一次
+
+  return () => clearInterval(timer);
+}, [currentUser?.id]); // 仅在用户 ID 变化时重启监听
 
 // 2. 独立的初始化 Auth 检查 (仅在组件加载时执行一次)
 useEffect(() => {
@@ -948,48 +1008,38 @@ if (!currentUser || minutes < 1) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<{title: string, content: string} | null>(null);
   
-  const handleCleanSearch = async (query: string) => {
-    if (!query.trim()) return;
-    
-    setIsSearching(true);
-    setSearchResult(null); 
-  
-    try {
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjYnBzcXZveXhpZnd0a3N6bHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNTcxMTEsImV4cCI6MjA4MTYzMzExMX0.mS7sZeSdAQCZdDLJKxiKlp794l571rnrM_CmvTocu0Y'; // ！！！请再次确认这里是那个超长的 Key
-      console.log("1. 准备发起请求，关键词:", query);
-      console.log("Payload:", { keyword: query })
-      const response = await fetch('https://qcbpsqvoyxifwtkszlrm.supabase.co/functions/v1/clean-search', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ 
-          keyword: query,
-          blacklist: ['萧平实', '正觉', '同修会', '导师', '平实']
-        })
-      });
-    
-      console.log("2. 收到响应，状态码:", response.status);
-    
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("3. 服务器返回错误:", errorText);
-        throw new Error('网络异常');
-      }
-    
-      const data = await response.json();
-      console.log("4. 成功获取数据:", data);
-    
-      if (data.pureContent) {
-        setSearchResult({ title: query, content: data.pureContent });
-      }
-    } catch (err) {
-      console.error("5. 最终捕获错误:", err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+ // 1. 新增：联想建议状态和联想函数
+ const [suggestions, setSuggestions] = useState<any[]>([]); // 👈 必须加这一行
+
+ // 2. 核心搜索函数（支持中英文提示）
+ const handleCleanSearch = useCallback((query: string) => {
+   const q = query.trim();
+   if (!q) return;
+   
+   setIsSearching(true);
+   setSearchResult(null);
+   setSuggestions([]); // 搜索后清空候选列表
+
+   // 模拟 200ms 延迟，增加交互舒适度
+   setTimeout(() => {
+     // 在 JSON 中查找
+     const found = dictionaryData.find(item => 
+       item.title === q || item.title.includes(q)
+     );
+
+     if (found) {
+       setSearchResult({ title: found.title, content: found.content });
+     } else {
+       // 👈 这里加入了英文版找不到词条时的提示
+       setSearchResult({ 
+         title: lang === 'zh' ? "未找到相关词条" : "No results found", 
+         content: lang === 'zh' ? "抱歉，词典中暂时没有收录该词条。" : "Sorry, this term is not yet in the dictionary."
+       });
+     }
+     setIsSearching(false);
+   }, 200);
+ }, [lang]); // 依赖 lang 确保语言切换时提示同步
+
   const handleSaveRecord = (type: string, content: string, colors: any) => {
     if (!currentUser) return;
     
@@ -1159,133 +1209,136 @@ if (!currentUser || minutes < 1) {
       </div>
     );
   }
-
-  if (!currentUser) {
-    return <Login onLogin={handleLogin} users={allUsers} authCode={authCode} lang={lang} setLang={setLang} />;
-  }
-
   const currentContentKey = selectedCourseId ? `${currentUser.classVersion}-${selectedCourseId}` : '';
 
   return (
     <>
+    
       <Layout currentView={currentView} onNavigate={navigate} onBack={goBack} user={currentUser} onLogout={handleLogout} lang={lang} setLang={setLang}>
-        {currentView === ViewName.HOME && (
-          <Home onNavigate={navigate} stats={dailyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} />
-        )}
+      {currentView === ViewName.HOME && (
+  <div className="home-view-wrapper">
+   <Home
+  onNavigate={navigate}
+  stats={normalizeDailyStats(dailyStats)}
+  lang={lang}
+  user={currentUser}
+  homeQuotes={homeQuotes}
+/>
+
+  </div>
+)}
         {currentView === ViewName.TOOLS && <ToolsView onNavigate={navigate} setTimerType={setSelectedTimerType} lang={lang} />}
         {currentView === ViewName.BREATHING && <BreathingView onAddMinutes={(m) => handleAddMinutes(TimerType.BREATH, m)} lang={lang} />}
         {currentView === ViewName.TIMER && <TimerView type={selectedTimerType} onAddMinutes={(m) => handleAddMinutes(selectedTimerType, m)} lang={lang} />}
-        {currentView === ViewName.STATS && <StatsView stats={dailyStats} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} allUsersStats={userStatsMap} rankPercentage={rankPercentage}/>}
+        {currentView === ViewName.STATS && <StatsView
+  stats={normalizeDailyStats(dailyStats)}
+  history={historyStats}
+  lang={lang}
+  user={currentUser}
+  homeQuotes={homeQuotes}
+  allUsersStats={userStatsMap}
+  rankPercentage={rankPercentage}
+/>
+}
         
         {currentView === ViewName.DAILY && (
+          <div className="daily-view-wrapper">
           <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
+          </div>
         )}
         {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
         {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
         {currentView === ViewName.ADMIN && (
-  <div className="h-full overflow-y-auto pb-20 custom-scrollbar"> {/* 添加滚动容器确保内容可见 */}
-    <div className="max-w-4xl mx-auto p-4 space-y-4">
-      
-      {/* --- 周期调整模块：放在课程管理最上方 --- */}
-      <div className="bg-[#F8F9FA] rounded-2xl border-2 border-dashed border-primary/20 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Icons.Calendar size={20} className="text-primary" />
+          <div className="h-full overflow-y-auto pb-20 custom-scrollbar">
+            <div className="max-w-4xl mx-auto p-4 space-y-4">
+              <div className="bg-[#F8F9FA] rounded-2xl border-2 border-dashed border-primary/20 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Icons.Calendar size={20} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800">班级学修周期设定</h3>
+                    <p className="text-[10px] text-gray-400">设置后，全班“正知正见”页面的周日期将自动更新</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap md:flex-nowrap gap-3">
+                  <input 
+                    type="date" 
+                    className="flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    value={checkInConfig.weekStartDate || '2026-01-06'}
+                    onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
+                  />
+                  <button 
+                    onClick={handleSaveGlobalConfigs}
+                    className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all shadow-md shadow-primary/10"
+                  >
+                    同步全班周期
+                  </button>
+                </div>
+              </div>
+              <Admin 
+                courseContents={courseContents} 
+                onUpdateCourseContent={handleUpdateCourseContent} 
+                onUpdateCourseStatus={handleUpdateCourseStatus} 
+                onUpdateCourseTitle={handleUpdateCourseTitle} 
+                allUsers={allUsers} 
+                onUpdateUserPermission={handleUpdateUserPermission} 
+                coursesMap={coursesMap} 
+                onAddCourseWeek={handleAddCourseWeek} 
+                onDeleteCourseWeek={handleDeleteCourseWeek} 
+                authCode={authCode} 
+                setAuthCode={setAuthCode} 
+                weeklyStates={weeklyStates} 
+                splashQuotes={splashQuotes} 
+                setSplashQuotes={setSplashQuotes} 
+                homeQuotes={homeQuotes} 
+                setHomeQuotes={setHomeQuotes} 
+                checkInConfig={checkInConfig} 
+                setCheckInConfig={setCheckInConfig} 
+                lang={lang} 
+                onSaveGlobalConfigs={handleSaveGlobalConfigs} 
+                onRefreshUsers={loadAllUsers} 
+                onRefreshWeeklyStates={refreshWeeklyStates} 
+              />
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-gray-800">班级学修周期设定</h3>
-            <p className="text-[10px] text-gray-400">设置后，全班“正知正见”页面的周日期将自动更新</p>
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap md:flex-nowrap gap-3">
-          <input 
-            type="date" 
-            className="flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            value={checkInConfig.weekStartDate || '2026-01-06'}
-            onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
-          />
-          <button 
-            onClick={handleSaveGlobalConfigs}
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all shadow-md shadow-primary/10"
-          >
-            同步全班周期
-          </button>
-        </div>
-      </div>
-
-      {/* --- 原有的 Admin 组件 (课程管理、用户管理等) --- */}
-      <Admin 
-        courseContents={courseContents} 
-        onUpdateCourseContent={handleUpdateCourseContent} 
-        onUpdateCourseStatus={handleUpdateCourseStatus} 
-        onUpdateCourseTitle={handleUpdateCourseTitle} 
-        allUsers={allUsers} 
-        onUpdateUserPermission={handleUpdateUserPermission} 
-        coursesMap={coursesMap} 
-        onAddCourseWeek={handleAddCourseWeek} 
-        onDeleteCourseWeek={handleDeleteCourseWeek} 
-        authCode={authCode} 
-        setAuthCode={setAuthCode} 
-        weeklyStates={weeklyStates} 
-        splashQuotes={splashQuotes} 
-        setSplashQuotes={setSplashQuotes} 
-        homeQuotes={homeQuotes} 
-        setHomeQuotes={setHomeQuotes} 
-        checkInConfig={checkInConfig} 
-        setCheckInConfig={setCheckInConfig} 
-        lang={lang} 
-        onSaveGlobalConfigs={handleSaveGlobalConfigs} 
-        onRefreshUsers={loadAllUsers} 
-        onRefreshWeeklyStates={refreshWeeklyStates} 
-      />
-    </div>
-  </div>
-)}
+        )}
       </Layout>
 
       {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-{/* --- 1. 电脑版左侧 / 手机版右下角固定搜索按钮 --- */}
-{!isSearchOpen && (
-  <button
-    onClick={() => setIsSearchOpen(true)}
-    className={`
-      fixed z-[999] flex items-center justify-center transition-all active:scale-95
-      /* 统一颜色为深灰，增加透明度背景 */
-      bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
-      
-      /* 📱 手机版：固定右下角，不再偏移 */
-      bottom-24 right-6 w-10 h-10 rounded-full
-      
-      /* 💻 电脑版：保持在你要求的左侧位置，不影响原布局 */
-      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
-      /* ✨ 核心：鼠标移入时的浅色方框效果（与目录一致） */
-    md:hover:bg-[#E8E6E1] md:text-[#6D8D9D]
-    `}
-  >
-    {/* 这里的 size 和文字保持你原来的设置 */}
-    <Icons.Search size={20} strokeWidth={1.5} />
-    <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
-      {lang === 'zh' ? '搜索' : 'Search Terms'}
-    </span>
-  </button>
-)}
+      {/* --- 1. 搜索按钮 --- */}
+      {!isSearchOpen && (
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className={`
+            fixed z-[999] flex items-center justify-center transition-all active:scale-95
+            bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
+            bottom-24 right-6 w-10 h-10 rounded-full
+            md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
+            md:hover:bg-[#E8E6E1] md:text-[#6D8D9D]
+          `}
+        >
+          <Icons.Search size={20} strokeWidth={1.5} />
+          <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
+            {lang === 'zh' ? '搜索' : 'Search Terms'}
+          </span>
+        </button>
+      )}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
       {isSearchOpen && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
-          {/* 点击背景关闭 */}
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-12 md:pt-24">
           <div 
-            className="absolute inset-0 bg-black/20 backdrop-blur-xl" 
+            className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-300" 
             onClick={() => {
               setIsSearchOpen(false);
               setSearchResult(null);
+              setSuggestions([]);
             }}
           />
           
-          {/* 搜索框主体 */}
           <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300">
             <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
               <Icons.Search className="text-gray-500 mr-3" size={24} />
@@ -1294,46 +1347,106 @@ if (!currentUser || minutes < 1) {
                 type="text"
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setIsSearchOpen(false);
-                  if (e.key === 'Enter') {
-                    handleCleanSearch(e.currentTarget.value); // 👈 修改这里
+                onChange={(e) => {
+                  const val = e.target.value;
+                  
+                  // 1. 核心逻辑：只要检测到输入动作，立刻重置搜索结果，回退到联想状态
+                  if (searchResult) setSearchResult(null); 
+                  
+                  if (val.length >= 1) {
+                    // 2. 匹配逻辑
+                    const matches = dictionaryData.filter((i: any) => i.title.includes(val)).slice(0, 8);
+                    setSuggestions(matches);
+                  } else {
+                    // 3. 清空逻辑
+                    setSuggestions([]);
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setIsSearchOpen(false);
+                  if (e.key === 'Enter') handleCleanSearch(e.currentTarget.value);
+                }}
               />
-              
-              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-gray-400">
+              <button onClick={() => { setIsSearchOpen(false); setSuggestions([]); }} className="p-2 text-gray-400">
                 <Icons.X size={20} />
               </button>
             </div>
-            {/* 在 input 所在的 div 闭合标签下方插入 */}
-{isSearching && (
-  <div className="mt-8 text-white/60 animate-pulse text-center font-light">
-    正在为您搜索...
-  </div>
-)}
 
-{searchResult && (
-  <div className="mt-8 bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <h3 className="text-xl font-bold text-gray-800 border-b pb-3 mb-4">{searchResult.title}</h3>
-    <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify">
-      {/* 渲染 AI 清洗后的 1000 字纯净内容 */}
-      {searchResult.content}
-    </div>
-    <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center">
-      闻、思、修、证
-    </div>
+            {/* 联想词列表 */}
+            {suggestions.length > 0 && !searchResult && (
+// 关键：增加 duration-700 和 scale-100 的缓冲感
+<div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">              
+                   {suggestions.map((item: any) => (
+                  <div 
+                    key={item.id}
+                    className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
+                    onClick={() => {
+                      handleCleanSearch(item.title);
+                     
+                    }}
+                  >
+                    <span className="text-gray-600 font-light tracking-wide">{item.title}</span>
+                    <span className="text-xs text-gray-400 truncate ml-4 max-w-[180px] font-light">
+                      {item.content.replace(/【.*?】/g, '').substring(0, 20)}...
+                    </span>
+                  </div>
+                ))}
+                {/* ✨ 刚才插入的省略提示 */}
+{suggestions.length >= 8 && (
+  <div className="relative py-3 text-center text-[10px] text-gray-500 tracking-[1em] border-t border-gray-50 bg-white/30">
+    ······
   </div>
 )}
-            <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-            {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Search Only · Tap any space to return.'}
-              
+{/* ✨ 插入结束 */}
+
+              </div>
+            )}
+
+            {isSearching && (
+              <div className="mt-8 text-white/60 animate-pulse text-center font-light">
+                {lang === 'zh' ? '正在为您搜索...' : 'Searching...'}
+              </div>
+            )}
+
+            {searchResult && (
+              <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
+              <div className="flex justify-between items-center border-b pb-3 mb-4">
+                {/* 标题减细 */}
+              <h3 className="text-xl font-medium text-gray-800">{searchResult.title}</h3>
+              <button 
+                onClick={() => {
+                  // 1. 关闭详情
+                  setSearchResult(null);
+    // 2. 这里的逻辑确保如果列表丢了，会根据当前输入框内容重新激活列表
+    const inputEl = document.querySelector('input[placeholder*="搜索"]') as HTMLInputElement;
+    if (inputEl && inputEl.value && suggestions.length === 0) {
+      const matches = dictionaryData.filter((i: any) => i.title.includes(inputEl.value)).slice(0, 8);
+      setSuggestions(matches);
+    }
+  }}
+  className="flex items-center text-[10px] text-gray-500 bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-200 transition-all active:scale-95 leading-none"
+>
+  <Icons.ChevronLeft size={12} className="mr-1" />
+  {lang === 'zh' ? '返回列表' : 'Back'}
+</button>
+</div>
+                <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap">
+                  {searchResult.content}
+                </div>
+                <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
+                  {lang === 'zh' ? '闻 · 思 · 修 · 证' : 'HEAR · THINK · PRACTICE · REALIZE'}
+                </div>
+              </div>
+            )}
+
+<div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
+              {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Privacy Search · Tap space to return'}
             </div>
           </div>
         </div>
       )}
     </>
   );
-};
+}; // <--- 补全这个闭合大括号，它是整个 App 函数的结尾
 
 export default App;

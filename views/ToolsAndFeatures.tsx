@@ -482,7 +482,8 @@ export const StatsView: React.FC<{
   lang: Language, 
   user: User | null, 
   homeQuotes: string[], 
-  allUsersStats?: Record<string, DailyStats>, 
+  allUsersStats: Record<string, Partial<DailyStats>>;
+
   rankPercentage: number 
 }> = ({ 
   stats, 
