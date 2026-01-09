@@ -163,7 +163,10 @@ const App: React.FC = () => {
       return null;
     }
   });
-
+  const isManager = Boolean(
+    currentUser?.isAdmin || currentUser?.id === 'admin'
+  );
+  
   const [allUsers, setAllUsers] = useState<User[]>(() => loadState('growth_app_users', INITIAL_USERS));
   const [authCode, setAuthCode] = useState(() => loadState('growth_app_auth_code', '888888'));
   const [splashQuotes, setSplashQuotes] = useState<string[]>(() => loadState('growth_app_splash_quotes', DEFAULT_SPLASH_QUOTES));
@@ -191,7 +194,10 @@ const [userStatsMap, setUserStatsMap] = useState<Record<string, Partial<DailySta
   const [currentWeek, setCurrentWeek] = useState<LeaveState>(initialLeaveState);
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
 
-  const isManager = currentUser?.id === 'admin' || currentUser?.isAdmin === true;
+  // ✅ 搜索视图状态：列表 / 详情
+  const [searchView, setSearchView] = useState<'list' | 'detail'>('list');
+
+
 
   // 保存数据到 Supabase
   const saveToSupabase = useCallback(async (userId: string, keyName: string, content: any) => {
@@ -1347,21 +1353,24 @@ if (!currentUser || minutes < 1) {
                 type="text"
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
+                
                 onChange={(e) => {
                   const val = e.target.value;
-                  
-                  // 1. 核心逻辑：只要检测到输入动作，立刻重置搜索结果，回退到联想状态
-                  if (searchResult) setSearchResult(null); 
-                  
+                
+                  // ✅ 新增：输入即回到列表态
+                  setSearchView('list');
+                  setSearchResult(null);
+
                   if (val.length >= 1) {
-                    // 2. 匹配逻辑
-                    const matches = dictionaryData.filter((i: any) => i.title.includes(val)).slice(0, 8);
+                    const matches = dictionaryData
+                      .filter((i: any) => i.title.includes(val))
+                      .slice(0, 8);
                     setSuggestions(matches);
                   } else {
-                    // 3. 清空逻辑
                     setSuggestions([]);
                   }
                 }}
+                
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
                   if (e.key === 'Enter') handleCleanSearch(e.currentTarget.value);
@@ -1373,18 +1382,19 @@ if (!currentUser || minutes < 1) {
             </div>
 
             {/* 联想词列表 */}
-            {suggestions.length > 0 && !searchResult && (
+            {searchView === 'list' && suggestions.length > 0 && (
 // 关键：增加 duration-700 和 scale-100 的缓冲感
 <div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">              
                    {suggestions.map((item: any) => (
                   <div 
-                    key={item.id}
-                    className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
-                    onClick={() => {
-                      handleCleanSearch(item.title);
-                     
-                    }}
-                  >
+                  key={item.id}
+                  className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
+                  onClick={() => {
+                    handleCleanSearch(item.title);
+                    setSearchView('detail');
+                  }}
+                >
+                
                     <span className="text-gray-600 font-light tracking-wide">{item.title}</span>
                     <span className="text-xs text-gray-400 truncate ml-4 max-w-[180px] font-light">
                       {item.content.replace(/【.*?】/g, '').substring(0, 20)}...
@@ -1408,14 +1418,14 @@ if (!currentUser || minutes < 1) {
               </div>
             )}
 
-            {searchResult && (
+{searchView === 'detail' && searchResult && (
               <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
               <div className="flex justify-between items-center border-b pb-3 mb-4">
                 {/* 标题减细 */}
               <h3 className="text-xl font-medium text-gray-800">{searchResult.title}</h3>
               <button 
                 onClick={() => {
-                  // 1. 关闭详情
+                  setSearchView('list');
                   setSearchResult(null);
     // 2. 这里的逻辑确保如果列表丢了，会根据当前输入框内容重新激活列表
     const inputEl = document.querySelector('input[placeholder*="搜索"]') as HTMLInputElement;
