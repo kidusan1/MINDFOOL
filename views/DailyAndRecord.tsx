@@ -286,40 +286,54 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   return (
       <>
-        <div className="hidden md:flex h-full gap-8 p-4 overflow-hidden">
-            <div className="shrink-0 w-1/2 flex flex-col justify-center overflow-y-auto no-scrollbar">
-                <div className="space-y-4">
+      {/* --- 电脑端布局 (MD及以上) --- */}
+        <div className="hidden md:flex h-full gap-8 p-4 overflow-hidde items-center justify-center">
+            {/* 左侧：垂直居中 + 宽度限制 */}
+        <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6 overflow-y-auto no-scrollbar">
+                
                     {renderCurrentWeekCard()}
                     <CheckInSection />
                 </div>
-            </div>
-            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                <div className="px-1 py-2 shrink-0 bg-[#E8E6E1] z-10 flex items-center justify-between">
+          {/* 右侧：列表区域 */}
+                <div className="flex-1 h-full flex flex-col overflow-hidden bg-white/50 rounded-3xl border border-white/60 shadow-sm relative">
+                {/* 列表头部 */}
+                <div className="px-6 py-4 shrink-0 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md z-10">
                     <h3 className="text-textSub font-medium">{t.courseList}</h3>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">{classVersion}{tApp.class}</span>
+                    <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+                        {classVersion} {tApp.class}
+                    </span>
                 </div>
-                <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-6">
+                {/* 列表滚动区 */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 ">
                     {renderCourses()}
                 </div>
             </div>
         </div>
-
-        <div className="flex md:hidden flex-col h-full p-4 overflow-hidden">
-            <div className="shrink-0 z-20 bg-[#E8E6E1] pb-2">
+{/* --- 手机端布局 (MD以下) --- */}
+        <div className="flex md:hidden flex-col h-full w-full overflow-hidden relative">
+            {/* 顶部固定区域：本周状态 */}
+            <div className="shrink-0 z-20 px-4 pt-2 pb-2 bg-[#E8E6E1]">
                 {renderCurrentWeekCard()}
             </div>
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+            {/* 下方滚动区域：签到 + 课程列表 */}
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+            <div className="mb-4">
+
                 <CheckInSection />
-                <div className="sticky top-0 z-10 bg-[#E8E6E1] py-2 flex items-center justify-between border-b border-gray-200/50 mb-2 mt-4">
-                    <h3 className="text-textSub font-medium">{t.courseList}</h3>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">{classVersion}{tApp.class}</span>
                 </div>
-                <div className="space-y-2 pb-6">
+                {/* 列表标题 (粘性定位) */}
+                <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-2">
+                    <h3 className="text-textSub font-medium">{t.courseList}</h3>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+                    {classVersion}{tApp.class}
+                    </span>
+                </div>
+                <div className="space-y-3">
                     {renderCourses()}
                 </div>
             </div>
         </div>
-
+{/* --- 弹窗逻辑保持不变 --- */}
         {isLeaveModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
                 <div className="bg-cloud w-full max-w-xs rounded-2xl p-5 shadow-xl animate-fade-in border border-white">
