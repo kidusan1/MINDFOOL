@@ -11,7 +11,14 @@ interface HomeProps {
   homeQuotes: string[];
 }
 
+// 打开 Home.tsx，找到函数开头：
 const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }) => {
+  
+  // 🟢 1. 【新增】必须加这个拦截！
+  // 防止未登录时 user 为空导致后续代码读取 user.id 报错白屏
+  if (!user) return null; 
+
+  // ... 下面是原来的代码 ...
   const t = TRANSLATIONS[lang].home;
   const totalMinutes = stats.nianfo + stats.baifo + stats.zenghui + stats.breath;
 
