@@ -242,7 +242,8 @@ export const DailyView: React.FC<DailyProps> = ({
   const renderCourses = () => (
     <>
         {courses.length === 0 && <p className="text-center text-xs text-textSub py-8">暂无课程</p>}
-        {courses.map((course) => {
+        {(courses || []).filter(Boolean).map((course) => {
+
             let statusText = course.status || CourseStatus.NOT_STARTED;
          // 1. 设置默认颜色：让“未开始”和“已结束”默认都显示为浅灰色
 let statusColor = 'text-gray-400'; 
