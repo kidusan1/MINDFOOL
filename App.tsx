@@ -193,6 +193,9 @@ const [userStatsMap, setUserStatsMap] = useState<Record<string, Partial<DailySta
   const initialLeaveState: LeaveState = { hasLeft: false, leaveReason: '', hasRevokedLeave: false };
   const [currentWeek, setCurrentWeek] = useState<LeaveState>(initialLeaveState);
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
+  // 当前搜索输入内容（用于受控 input 和返回列表恢复）
+const [searchQuery, setSearchQuery] = useState('');
+
 
   // ✅ 搜索视图状态：列表 / 详情
   const [searchView, setSearchView] = useState<'list' | 'detail'>('list');
@@ -1027,6 +1030,7 @@ if (!currentUser || minutes < 1) {
    setSearchResult(null);
    setSuggestions([]); // 搜索后清空候选列表
 
+
    // 模拟 200ms 延迟，增加交互舒适度
    setTimeout(() => {
      // 在 JSON 中查找
@@ -1361,13 +1365,14 @@ if (!currentUser || minutes < 1) {
                 type="text"
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
-                
+                value={searchQuery}
                 onChange={(e) => {
                   const val = e.target.value;
                 
                   // ✅ 新增：输入即回到列表态
                   setSearchView('list');
                   setSearchResult(null);
+                  setSearchQuery(val);
 
                   if (val.length >= 1) {
                     const matches = dictionaryData
