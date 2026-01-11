@@ -1388,9 +1388,24 @@ if (!currentUser || minutes < 1) {
                   if (e.key === 'Enter') handleCleanSearch(e.currentTarget.value);
                 }}
               />
-              <button onClick={() => { setIsSearchOpen(false); setSuggestions([]); }} className="p-2 text-gray-400">
-                <Icons.X size={20} />
-              </button>
+              <button
+  onClick={() => {
+    // 1️⃣ 清空搜索内容
+    setSearchQuery('');
+    setSuggestions([]);
+    setSearchResult(null);
+
+    // 2️⃣ 回到列表态
+    setSearchView('list');
+
+    // ❗ 不关闭搜索层
+    // 不要 setIsSearchOpen(false)
+  }}
+  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+>
+  <Icons.X size={20} />
+</button>
+
             </div>
 
             {/* 联想词列表 */}
