@@ -240,7 +240,9 @@ export const DailyView: React.FC<DailyProps> = ({
   );
 
   const renderCourses = () => (
+
     <>
+
         {courses.length === 0 && <p className="text-center text-xs text-textSub py-8">暂无课程</p>}
         {(courses || []).filter(Boolean).map((course) => {
 
@@ -280,86 +282,73 @@ if (course.status === CourseStatus.IN_PROGRESS) {
                 </div>
             );
         })}
-        <p className="text-center text-[10px] text-gray-400 pt-4 pb-2">{t.courseHint}</p>
     </>
   );
 
   return (
       <>
       <div className="min-h-screen">
-      {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="hidden md:flex w-full h-full gap-8 p-6 overflow-hidden items-center justify-center">
-
-  {/* 左侧 */}
-  <div className="shrink-0 w-80 flex flex-col justify-center gap-6">
+   {/* --- 电脑端布局 --- */}
+<div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
+  {/* 左侧固定 */}
+  <div className="shrink-0 w-80">
     {renderCurrentWeekCard()}
     <CheckInSection />
   </div>
 
-  {/* 右侧课程卡片 */}
-  <div className="flex-1 w-full max-w-3xl h-full max-h-[85vh] flex flex-col bg-white/50 rounded-[32px] border border-white/60 shadow-sm overflow-hidden relative">
-
-    {/* Header */}
-    <div className="shrink-0 h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md z-10">
-    <h3 className="text-xl text-textMain font-medium">{t.courseList}</h3>
+  {/* 右侧课程卡片：这里的 flex flex-col 和 min-h-0 是关键 */}
+  <div className="flex-1 max-w-3xl h-full min-h-0 flex flex-col bg-white/50 rounded-[32px] border border-white/60 shadow-sm overflow-hidden">
+    
+    {/* 标题栏：确保它 shrink-0（不被压缩） */}
+    <div className="shrink-0 h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md">
+      <h3 className="text-xl text-textMain font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
         {classVersion} {tApp.class}
       </span>
     </div>
 
-    {/* Scroll Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
+    {/* 列表区：只有这里允许滚动 */}
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
       {renderCourses()}
     </div>
 
-    {/* 底部说明（永远可见） */}
-    <div className="shrink-0 h-12 flex items-center justify-center bg-white/60 backdrop-blur border-t border-gray-100/50">
-      <p className="text-[10px] text-gray-400">
-        {t.courseHint}
-      </p>
+    {/* 底部：也确保 shrink-0 */}
+    <div className="shrink-0 h-12 flex items-center justify-center bg-white/60 border-t border-gray-100">
+      <p className="text-[10px] text-gray-400">{t.courseHint}</p>
     </div>
   </div>
 </div>
-
-
-{/* --- 手机端布局 (MD以下) --- */}
-<div className="md:hidden flex flex-col h-screen overflow-hidden bg-[#E8E6E1]">
-
-  {/* 顶部固定 */}
-  <div className="shrink-0 px-4 pt-2 pb-2">
+{/* --- 手机端布局 --- */}
+{/* 改为 h-[100dvh] 以适配 Safari 底部工具栏 */}
+<div className="md:hidden flex flex-col h-[100dvh] overflow-hidden bg-[#E8E6E1]">
+  
+  {/* 顶部固定区域 */}
+  <div className="shrink-0 px-4 pt-2">
     {renderCurrentWeekCard()}
   </div>
 
-  {/* 中间唯一滚动区 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 space-y-4">
-
+  {/* 中间滚动区 */}
+  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6">
     <CheckInSection />
-
-    {/* 列表头 */}
-    <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
+    
+    {/* 课程列表头 */}
+    <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">
       <h3 className="text-textSub font-medium">{t.courseList}</h3>
-      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
-        {classVersion}{tApp.class}
-      </span>
+      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">{classVersion}{tApp.class}</span>
     </div>
 
-    {/* 课程列表 */}
     <div className="space-y-3">
       {renderCourses()}
     </div>
   </div>
 
-  {/* 底部说明（固定） */}
-  <div className="shrink-0 h-10 flex items-center justify-center pb-[env(safe-area-inset-bottom)]">
-    <p className="text-[10px] text-gray-400">
-      {t.courseHint}
-    </p>
+  {/* 底部固定区：适配全面屏底部黑条 */}
+  <div className="shrink-0 h-12 flex items-center justify-center pb-[env(safe-area-inset-bottom)]">
+    {/* 注意：如果 renderCourses 里面已经有了这行，这里就不加；如果想固定，就在这里加 */}
+    <p className="text-[10px] text-gray-400">{t.courseHint}</p>
   </div>
 </div>
-
-
 </div>
-
 
 {/* --- 弹窗逻辑保持不变 --- */}
         {isLeaveModalOpen && (
