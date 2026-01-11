@@ -623,139 +623,89 @@ useEffect(() => { localStorage.setItem('growth_app_users', JSON.stringify(allUse
   // ============================================
 
   // 1. 独立的 0 点跨天监听器 (修复版：确保历史数据先上传数据库，再归零)
-// 修改一：深度修复 0 点跨天与趋势图同步
+// --- 修改一：彻底隔离未登录状态 ---
 useEffect(() => {
+  const myId = currentUser?.id;
+  // 必须有用户且不是管理员才跑重置
+  // 1. 如果没有登录，或者身份是管理员，不执行跨天重置逻辑
+  if (!myId || myId === 'admin') return;
   const checkMidnight = async () => {
-    const myId = currentUser?.id;
-    if (!myId) return;
-
     const todayStr = getBeijingDateString(); 
     const dateKey = `last_active_date_${myId}`;
     const lastDate = localStorage.getItem(dateKey);
 
-    // 只有当本地记录的日期存在，且不等于今天时，才触发结算
-    if (lastDate && lastDate !== todayStr) {
-      console.log(`[系统] 检测到跨天: 从 ${lastDate} 切换至 ${todayStr}`);
+ // 2. 只有当记录的日期存在且不等于今天，才触发“结算”
+ if (lastDate && lastDate !== todayStr) {
+  console.log(`[静默结算] 检测到日期变更: ${lastDate} -> ${todayStr}`);
 
-      // 1. 获取本地存的所有用户数据
-      const userStatsMapLocal = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-      const yStats = userStatsMapLocal[myId];
-      
-      if (yStats) {
-        // 计算昨天的总和
-        const totalYesterday = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
-
-        // 2. 核心同步：将数据写入 growth_records (这是 ToolsAndFeatures 读取的表)
-        if (totalYesterday > 0) {
-          console.log(`[同步] 正在上传昨日(${lastDate})数据: ${totalYesterday} 分钟`);
+  // 从本地读取旧数据准备上传（为了趋势图）
+  const statsMap = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
+  const yStats = statsMap[myId];
+  if (yStats) {
+    const total = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
+    if (total > 0) {
+      try {
+        // 将昨天的数据备份到数据库趋势表
+        await supabase.from('growth_records').upsert({
+          user_id: myId,
+          date: lastDate,
+          meditation_minutes: (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.breath || 0),
+          study_minutes: (yStats.zenghui || 0),
+          is_completed: true,
           
-          try {
-            // 必须同步到 growth_records，趋势图才能显示
-            const { error } = await supabase.from('growth_records').upsert({
-              user_id: myId,
-              date: lastDate, // 存入昨天的日期
-              meditation_minutes: (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.breath || 0),
-              study_minutes: (yStats.zenghui || 0),
-              is_completed: totalYesterday > 0,
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,date' });
-
-            if (error) throw error;
-            console.log('[同步] 数据库写入成功');
-          } catch (err) {
-            console.error('[同步] 失败:', err);
-          }
-        }
-      }
-
-      // 3. 物理归零：清理本地缓存和状态
-      console.log('[系统] 正在清理今日状态...');
-      const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0, total_minutes: 0 };
-      
-      // 更新本地存储，防止刷新后又读出旧数据
-      const updatedMap = { ...userStatsMapLocal, [myId]: resetStats };
-      localStorage.setItem('growth_app_stats', JSON.stringify(updatedMap));
-      
-      // 更新 React 状态，驱动 UI 变 0
-      setUserStatsMap(updatedMap);
-
-      // 4. 更新活跃日期标记
-      localStorage.setItem(dateKey, todayStr);
-      
-      // 5. 强制刷新，让整个 App 的定时器和状态重新初始化
-      alert("新的一天开始了，系统已自动结算并重置。"); 
-      window.location.reload(); 
-    } else if (!lastDate) {
-      // 如果是第一次使用，初始化日期
-      localStorage.setItem(dateKey, todayStr);
+        }, { onConflict: 'user_id,date' });
+      } catch (e) { console.error("跨天备份失败", e); }
     }
-  };
+  }
+  // 3. 🔥 静默重置：直接修改 React 状态，不刷新页面
+  const resetStats = { nianfo: 0, baifo: 0, zenghui: 0, breath: 0, total_minutes: 0 };
+      
+  // 更新内存状态（UI 立即变 0）
+  setUserStatsMap(prev => ({ ...prev, [myId]: resetStats }));
+  
+  // 更新本地存储（防止刷新后读旧值）
+  const newMap = { ...statsMap, [myId]: resetStats };
+  localStorage.setItem('growth_app_stats', JSON.stringify(newMap));
 
-  // 检查频率设为 10 秒一次，确保零点附近能快速捕捉
-  const timer = setInterval(checkMidnight, 10000); 
-  checkMidnight(); // 启动时立即运行一次
+  // 更新日期标记，完成这一天的交接
+  localStorage.setItem('growth_app_stats', JSON.stringify({ ...statsMap, [myId]: resetStats }));
+  localStorage.setItem(dateKey, todayStr);
+} else if (!lastDate) {
+  // 纯新用户或初次记录日期
+  localStorage.setItem(dateKey, todayStr);
+    // 4. 如果是新用户，只存日期，不执行任何重置
+    localStorage.setItem(dateKey, todayStr);
+  }
+};
 
-  return () => clearInterval(timer);
-}, [currentUser?.id]); // 仅在用户 ID 变化时重启监听
+const timer = setInterval(checkMidnight, 30000); // 每30秒检查一次
+checkMidnight(); 
 
-// 2. 独立的初始化 Auth 检查 (仅在组件加载时执行一次)
+return () => clearInterval(timer);
+}, [currentUser?.id]); // 只有登录用户变动时重跑监听
+
+// 2. 初始化 Auth 检查：仅负责登录状态判定，不再参与跨天逻辑（职责分离）
 useEffect(() => {
   const initAuth = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      let u = null;
-
-      // 尝试获取用户信息
-      if (session?.user) {
-        const savedUserJson = localStorage.getItem('growth_app_current_user');
-        u = savedUserJson ? JSON.parse(savedUserJson) : null;
-      } else {
-        const savedUserJson = localStorage.getItem('growth_app_current_user');
-        u = savedUserJson ? JSON.parse(savedUserJson) : null;
-      }
+      const savedUserJson = localStorage.getItem('growth_app_current_user');
+      const u = savedUserJson ? JSON.parse(savedUserJson) : null;
       
+      // 只要本地有缓存或 session 有效
       if (u && u.id) {
         setCurrentUser(u);
-
-        const todayStr = getBeijingDateString(); 
-        // ✅ 关键修复：统一使用带 ID 的 Key
-        const dateKey = `last_active_date_${u.id}`;
-        const lastDate = localStorage.getItem(dateKey); 
-
-        // 如果日期不一致（跨天了），或者之前没有记录
-        if (lastDate && lastDate !== todayStr) {
-          const oldStatsMap = JSON.parse(localStorage.getItem('growth_app_stats') || '{}');
-          const yesterdayStats = oldStatsMap[u.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-          
-          const totalMins = (yesterdayStats.nianfo || 0) + (yesterdayStats.baifo || 0) + 
-                            (yesterdayStats.zenghui || 0) + (yesterdayStats.breath || 0);
-          
-          // 如果昨天有数据，存入历史记录
-          if (totalMins > 0) {
-            setUserHistoryMap(prev => {
-              const newHistory = {
-                ...prev,
-                [u.id]: { ...(prev[u.id] || {}), [lastDate]: totalMins }
-              };
-              localStorage.setItem('growth_app_user_history', JSON.stringify(newHistory));
-              return newHistory;
-            });
-          }
-        }
-
-        // ✅ 无论是否跨天，最后统一更新一下“最后活跃日期”为今天
-        // 这样就不用在 if 和 else 里分别写了
-        localStorage.setItem(dateKey, todayStr);
-        
+        // 加载云端数据（会自动处理当天的数据同步）
         await loadUserDataFromSupabase(u.id);
       }
     } catch (err) {
       console.error('Error initializing auth:', err);
     }
   };
-
   initAuth();
 }, [loadUserDataFromSupabase]);
+
+
 
   // --- End of Core Logic Fix ---
 
