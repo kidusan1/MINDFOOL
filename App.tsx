@@ -1354,8 +1354,9 @@ if (!currentUser || minutes < 1) {
               setSearchView('list');
               // ❗ 不要 setIsSearchOpen(false)
             }}
-            
+
           />
+          
           
           <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300"
           onClick={(e) => e.stopPropagation()}
@@ -1409,7 +1410,18 @@ if (!currentUser || minutes < 1) {
                 
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
-                  if (e.key === 'Enter') handleCleanSearch(e.currentTarget.value);
+                  if (e.key === 'Enter') {
+                    // 🚀 优化：如果有联想词，Enter 直接进入第一项
+                    if (suggestions.length > 0) {
+                      const firstItem = suggestions[0];
+                      // 关键：直接用 ID 查找或直接传递对象，避免字符串模糊匹配
+                      setSearchResult(firstItem); 
+                      setSearchView('detail');
+                    } else {
+                      // 只有完全没结果时，才执行原有的模糊搜索（避免出现“尚未收录”）
+                      handleCleanSearch(e.currentTarget.value);
+                    }
+                  }
                 }}
               />
               <button
