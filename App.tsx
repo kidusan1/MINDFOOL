@@ -1489,9 +1489,13 @@ if (!currentUser || minutes < 1) {
 </div>
 {/* 正文滚动区 */}
 <div className="max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
-  <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap">
-    {searchResult.content}
-  </div>
+<div className="text-gray-700 font-light whitespace-pre-wrap text-justify
+                leading-[1.9] tracking-[0.02em]
+                space-y-6
+                max-w-[42rem] mx-auto
+                px-1 md:px-0">
+  {searchResult.content}
+</div>
 </div>
 
                   {/* 底部点题（可选固定） */}
