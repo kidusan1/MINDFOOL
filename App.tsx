@@ -1467,7 +1467,10 @@ if (!currentUser || minutes < 1) {
                   key={item.id}
                   className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
                   onClick={() => {
-                    handleCleanSearch(item.title);
+                    // 🚀 核心修复：直接设置对象，不再通过 title 去 find
+                    setSearchResult(item); 
+                    setSearchQuery(item.title); // 输入框显示点击的词
+
                     setSearchView('detail');
                   }}
                 >
