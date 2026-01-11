@@ -286,9 +286,10 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   return (
       <>
-      <div className="h-screen overflow-hidden">
+      <div className="min-h-screen">
       {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden items-stretch">
+      <div className="md:hidden flex flex-col min-h-screen">
+
 
   {/* 左侧：固定宽度 + 垂直居中 */}
   <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6">
@@ -310,7 +311,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 </div>
 
 {/* 中间：唯一滚动区域 */}
-<div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3">
+<div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(24px+env(safe-area-inset-bottom))]">
   {renderCourses()}
 </div>
 
