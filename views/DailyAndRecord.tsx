@@ -316,8 +316,9 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </div>
   </div>
 </div>
+
 {/* --- 手机端布局 (MD以下) --- */}
-<div className="md:hidden flex flex-col h-full overflow-hidden">
+<div className="md:hidden flex flex-col h-screen overflow-hidden">
 
   {/* 顶部固定：本周状态 */}
   <div className="shrink-0 px-4 pt-2 pb-2 bg-[#E8E6E1]">
