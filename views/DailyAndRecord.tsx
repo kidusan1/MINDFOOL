@@ -316,28 +316,36 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </div>
   </div>
 </div>
-
-{/* 手机版 顶部固定区域：本周状态 */}
+{/* --- 手机端布局 (MD以下) --- */}
 <div className="md:hidden flex flex-col h-full overflow-hidden">
-<div className="shrink-0 px-4 pt-2 pb-2 bg-[#E8E6E1]">
+
+  {/* 顶部固定：本周状态 */}
+  <div className="shrink-0 px-4 pt-2 pb-2 bg-[#E8E6E1]">
     {renderCurrentWeekCard()}
   </div>
 
-{/* 下方滚动区域 */}
-<div className="flex-1 overflow-y-auto no-scrollbar pb-32">
-  <div className="px-4 space-y-4">
-    <CheckInSection />
-    </div>
+  {/* ⬇️ 唯一的滚动容器：下面所有内容都在这里 */}
+  <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
 
-    {/* 列表标题 */}
-    <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
-      <h3 className="text-textSub font-medium">{t.courseList}</h3>
-      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
-        {classVersion}{tApp.class}
-      </span>
-    </div>
+    <div className="px-4 space-y-4">
 
-    {renderCourses()}
+      {/* 签到卡片 */}
+      <CheckInSection />
+
+      {/* 课程列表标题（在滚动容器内，用 sticky） */}
+      <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
+        <h3 className="text-textSub font-medium">{t.courseList}</h3>
+        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+          {classVersion}{tApp.class}
+        </span>
+      </div>
+
+      {/* 课程列表 */}
+      <div className="space-y-3">
+        {renderCourses()}
+      </div>
+
+    </div>
   </div>
 </div>
 </div>
