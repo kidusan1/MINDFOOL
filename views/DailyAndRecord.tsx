@@ -288,8 +288,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
       <>
       <div className="min-h-screen">
       {/* --- 电脑端布局 (MD及以上) --- */}
-   {/* --- 电脑端布局 (MD及以上) --- */}
-<div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden">
+      <div className="hidden md:flex w-full h-full gap-8 p-6 overflow-hidden items-center justify-center">
 
   {/* 左侧 */}
   <div className="shrink-0 w-80 flex flex-col justify-center gap-6">
@@ -298,26 +297,23 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 右侧课程卡片 */}
-  <div className="relative flex-1 bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
+  <div className="flex-1 w-full max-w-3xl h-full max-h-[85vh] flex flex-col bg-white/50 rounded-[32px] border border-white/60 shadow-sm overflow-hidden relative">
 
     {/* Header */}
-    <div className="h-16 px-6 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md">
-      <h3 className="text-textSub font-medium">{t.courseList}</h3>
-      <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+    <div className="shrink-0 h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md z-10">
+    <h3 className="text-xl text-textMain font-medium">{t.courseList}</h3>
+      <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
         {classVersion} {tApp.class}
       </span>
     </div>
 
     {/* Scroll Area */}
-    <div
-      className="absolute left-0 right-0 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3"
-      style={{ top: 64, bottom: 36 }}
-    >
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
       {renderCourses()}
     </div>
 
     {/* 底部说明（永远可见） */}
-    <div className="absolute bottom-0 left-0 right-0 h-9 flex items-center justify-center bg-white/60 backdrop-blur">
+    <div className="shrink-0 h-12 flex items-center justify-center bg-white/60 backdrop-blur border-t border-gray-100/50">
       <p className="text-[10px] text-gray-400">
         {t.courseHint}
       </p>
@@ -326,7 +322,6 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 </div>
 
 
-{/* --- 手机端布局 (MD以下) --- */}
 {/* --- 手机端布局 (MD以下) --- */}
 <div className="md:hidden flex flex-col h-screen overflow-hidden bg-[#E8E6E1]">
 
