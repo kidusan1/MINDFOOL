@@ -1360,6 +1360,27 @@ if (!currentUser || minutes < 1) {
           <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300"
           onClick={(e) => e.stopPropagation()}
           >
+            {/* 顶部无痕浏览提示（移动端关键引导） */}
+<div
+  onClick={() => setIsSearchOpen(false)}
+  className="
+    mb-3
+    text-center
+    text-white/70
+    text-[11px]
+    tracking-widest
+    font-light
+    cursor-pointer
+    select-none
+    hover:text-white
+    transition-colors
+  "
+>
+  {lang === 'zh'
+    ? '无痕浏览 · 点按此处返回'
+    : 'Private Search · Tap here to return'}
+</div>
+
             <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
               <Icons.Search className="text-gray-500 mr-3" size={24} />
               <input 
@@ -1506,7 +1527,7 @@ if (!currentUser || minutes < 1) {
             )}
 
 <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-              {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Privacy Search · Tap any place to return'}
+              {lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Privacy Search · Tap here to return'}
             </div>
           </div>
         </div>
