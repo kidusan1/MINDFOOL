@@ -298,23 +298,29 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 右侧：课程列表（关键：min-w-0） */}
-  <div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
+  {/* 右侧：课程列表 */}
+<div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
 
-    
-    {/* 列表头部 */}
-    <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md">
+{/* 头部 */}
+<div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md">
+  <h3 className="text-textSub font-medium">{t.courseList}</h3>
+  <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+    {classVersion} {tApp.class}
+  </span>
+</div>
 
-      <h3 className="text-textSub font-medium">{t.courseList}</h3>
-      <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
-        {classVersion} {tApp.class}
-      </span>
-    </div>
+{/* 中间：唯一滚动区域 */}
+<div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3">
+  {renderCourses()}
+</div>
 
-    {/* 列表滚动区 */}
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-      {renderCourses()}
-    </div>
-  </div>
+{/* 底部：固定展示 */}
+<div className="shrink-0 py-3">
+  <p className="text-center text-[10px] text-gray-400">
+    {t.courseHint}
+  </p>
+</div>
+</div>
 </div>
 
 {/* --- 手机端布局 (MD以下) --- */}
@@ -326,28 +332,32 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* ⬇️ 唯一的滚动容器：下面所有内容都在这里 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+  <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(24px+env(safe-area-inset-bottom))]">
 
-    <div className="px-4 space-y-4">
+  <div className="px-4 space-y-4">
 
-      {/* 签到卡片 */}
-      <CheckInSection />
+    <CheckInSection />
 
-      {/* 课程列表标题（在滚动容器内，用 sticky） */}
-      <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
-        <h3 className="text-textSub font-medium">{t.courseList}</h3>
-        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
-          {classVersion}{tApp.class}
-        </span>
-      </div>
-
-      {/* 课程列表 */}
-      <div className="space-y-3">
-        {renderCourses()}
-      </div>
-
+    <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
+      <h3 className="text-textSub font-medium">{t.courseList}</h3>
+      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+        {classVersion}{tApp.class}
+      </span>
     </div>
+
+    {/* 课程列表 */}
+    <div className="space-y-3">
+      {renderCourses()}
+    </div>
+
+    {/* ✅ 只在这里放一次 */}
+    <p className="text-center text-[10px] text-gray-400 pt-4">
+      {t.courseHint}
+    </p>
+
   </div>
+</div>
+
 </div>
 </div>
 
