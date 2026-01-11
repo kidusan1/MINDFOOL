@@ -340,13 +340,14 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     <div className="space-y-3">
       {renderCourses()}
       {/* 增加一个隐形的占位块，确保最后一节课能推到导航栏上方 */}
-    <div className="h-20 w-full"></div>
+      <div className="h-[120px] w-full" />
     </div>
   </div>
 
   {/* 底部固定区：适配全面屏底部黑条 */}
-  <div className="absolute bottom-16 left-0 w-full h-10 flex items-center justify-center pointer-events-none">
-  <p className="text-[10px] text-gray-400 opacity-80">        {t.courseHint}</p>
+  <div className="pt-8 pb-4 flex justify-center items-center">  
+    <p className="text-[10px] text-gray-400 opacity-80">        
+    {t.courseHint}</p>
   </div>
 </div>
 </div>
