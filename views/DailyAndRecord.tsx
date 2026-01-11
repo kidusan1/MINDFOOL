@@ -328,7 +328,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 中间滚动区 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-12">
+  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-20">
     <CheckInSection />
     
     {/* 课程列表头 */}
@@ -339,13 +339,14 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
     <div className="space-y-3">
       {renderCourses()}
+      {/* 增加一个隐形的占位块，确保最后一节课能推到导航栏上方 */}
+    <div className="h-20 w-full"></div>
     </div>
   </div>
 
   {/* 底部固定区：适配全面屏底部黑条 */}
-  <div className="shrink-0 w-full flex items-center justify-center bg-transparent">    {/* 注意：如果 renderCourses 里面已经有了这行，这里就不加；如果想固定，就在这里加 */}
-  <p className="text-[10px] text-gray-400 py-6 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-        {t.courseHint}</p>
+  <div className="absolute bottom-16 left-0 w-full h-10 flex items-center justify-center pointer-events-none">
+  <p className="text-[10px] text-gray-400 opacity-80">        {t.courseHint}</p>
   </div>
 </div>
 </div>
