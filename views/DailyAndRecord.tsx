@@ -287,19 +287,24 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   return (
       <>
       {/* --- 电脑端布局 (MD及以上) --- */}
-<div className="hidden md:flex h-full gap-8 p-4 items-stretch">
+      <div className="hidden md:flex h-full gap-8 p-4 overflow-hidden items-stretch min-h-0">
+
+
   
   {/* 左侧：固定宽度 + 垂直居中 */}
-  <div className="w-80 flex flex-col justify-center gap-6">
+  <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6 self-center">
+    
     {renderCurrentWeekCard()}
     <CheckInSection />
   </div>
 
   {/* 右侧：课程列表（关键：min-w-0） */}
-  <div className="flex-1 min-w-0 flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm">
+  <div className="flex-1 h-full flex flex-col overflow-hidden bg-white/50 rounded-3xl border border-white/60 shadow-sm relative">
+
     
     {/* 列表头部 */}
-    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md">
+    <div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm relative overflow-hidden">
+
       <h3 className="text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
         {classVersion} {tApp.class}
@@ -313,25 +318,8 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 </div>
 
-{/* --- 弹窗逻辑保持不变 --- */}
-        {isLeaveModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
-                <div className="bg-cloud w-full max-w-xs rounded-2xl p-5 shadow-xl animate-fade-in border border-white">
-                    <h3 className="font-medium mb-4">{t.leaveReason}</h3>
-                    <textarea 
-                        className="w-full h-24 bg-bgMain rounded-lg p-3 text-sm resize-none mb-4 focus:outline-none"
-                        placeholder={t.leaveInputPlaceholder}
-                        value={leaveReason}
-                        onChange={(e) => setLeaveReason(e.target.value)}
-                    />
-                    <div className="flex gap-2">
-                        <button onClick={() => { playSound('light'); setIsLeaveModalOpen(false); }} className="flex-1 py-2 rounded-lg bg-gray-200 text-textSub text-sm">{tApp.cancel}</button>
-                        <button onClick={handleSubmitLeave} className="flex-1 py-2 rounded-lg bg-primary text-white text-sm">{tApp.submit}</button>
-                    </div>
-                </div>
-            </div>
-        )}
 {/* 手机版 顶部固定区域：本周状态 */}
+<div className="flex md:hidden flex-col h-full overflow-hidden">
 <div className="shrink-0 z-20 px-4 pt-2 pb-2 bg-[#E8E6E1]">
   <div className="max-w-md mx-auto">
     {renderCurrentWeekCard()}
@@ -354,6 +342,25 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     {renderCourses()}
   </div>
 </div>
+</div>
+{/* --- 弹窗逻辑保持不变 --- */}
+        {isLeaveModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+                <div className="bg-cloud w-full max-w-xs rounded-2xl p-5 shadow-xl animate-fade-in border border-white">
+                    <h3 className="font-medium mb-4">{t.leaveReason}</h3>
+                    <textarea 
+                        className="w-full h-24 bg-bgMain rounded-lg p-3 text-sm resize-none mb-4 focus:outline-none"
+                        placeholder={t.leaveInputPlaceholder}
+                        value={leaveReason}
+                        onChange={(e) => setLeaveReason(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                        <button onClick={() => { playSound('light'); setIsLeaveModalOpen(false); }} className="flex-1 py-2 rounded-lg bg-gray-200 text-textSub text-sm">{tApp.cancel}</button>
+                        <button onClick={handleSubmitLeave} className="flex-1 py-2 rounded-lg bg-primary text-white text-sm">{tApp.submit}</button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {isRevokeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
