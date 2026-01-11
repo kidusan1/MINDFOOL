@@ -288,56 +288,59 @@ if (course.status === CourseStatus.IN_PROGRESS) {
       <>
       <div className="min-h-screen">
       {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden items-stretch">
+   {/* --- 电脑端布局 (MD及以上) --- */}
+<div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden">
 
-  {/* 左侧：固定宽度 + 垂直居中 */}
-  <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6">
-    
+  {/* 左侧 */}
+  <div className="shrink-0 w-80 flex flex-col justify-center gap-6">
     {renderCurrentWeekCard()}
     <CheckInSection />
   </div>
 
-  {/* 右侧：课程列表（关键：min-w-0） */}
-  {/* 右侧：课程列表 */}
-<div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm">
+  {/* 右侧课程卡片 */}
+  <div className="relative flex-1 bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
 
-{/* 头部 */}
-<div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md">
-  <h3 className="text-textSub font-medium">{t.courseList}</h3>
-  <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
-    {classVersion} {tApp.class}
-  </span>
+    {/* Header */}
+    <div className="h-16 px-6 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md">
+      <h3 className="text-textSub font-medium">{t.courseList}</h3>
+      <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
+        {classVersion} {tApp.class}
+      </span>
+    </div>
+
+    {/* Scroll Area */}
+    <div
+      className="absolute left-0 right-0 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3"
+      style={{ top: 64, bottom: 36 }}
+    >
+      {renderCourses()}
+    </div>
+
+    {/* 底部说明（永远可见） */}
+    <div className="absolute bottom-0 left-0 right-0 h-9 flex items-center justify-center bg-white/60 backdrop-blur">
+      <p className="text-[10px] text-gray-400">
+        {t.courseHint}
+      </p>
+    </div>
+  </div>
 </div>
 
-{/* 中间：唯一滚动区域 */}
-<div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3">
-  {renderCourses()}
-</div>
-
-{/* 底部：固定展示 */}
-<div className="shrink-0 py-3">
-  <p className="text-center text-[10px] text-gray-400">
-    {t.courseHint}
-  </p>
-</div>
-</div>
-</div>
 
 {/* --- 手机端布局 (MD以下) --- */}
-<div className="md:hidden flex flex-col min-h-screen h-[100dvh]">
+{/* --- 手机端布局 (MD以下) --- */}
+<div className="md:hidden flex flex-col h-screen overflow-hidden bg-[#E8E6E1]">
 
-  {/* 顶部固定：本周状态 */}
-  <div className="shrink-0 px-4 pt-2 pb-2 bg-[#E8E6E1]">
+  {/* 顶部固定 */}
+  <div className="shrink-0 px-4 pt-2 pb-2">
     {renderCurrentWeekCard()}
   </div>
 
-  {/* ⬇️ 唯一的滚动容器：下面所有内容都在这里 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(24px+env(safe-area-inset-bottom))]">
-
-  <div className="px-4 space-y-4">
+  {/* 中间唯一滚动区 */}
+  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 space-y-4">
 
     <CheckInSection />
 
+    {/* 列表头 */}
     <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
       <h3 className="text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
@@ -349,17 +352,19 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     <div className="space-y-3">
       {renderCourses()}
     </div>
+  </div>
 
-    {/* ✅ 只在这里放一次 */}
-    <p className="text-center text-[10px] text-gray-400 pt-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
+  {/* 底部说明（固定） */}
+  <div className="shrink-0 h-10 flex items-center justify-center pb-[env(safe-area-inset-bottom)]">
+    <p className="text-[10px] text-gray-400">
       {t.courseHint}
     </p>
-
   </div>
 </div>
 
+
 </div>
-</div>
+
 
 {/* --- 弹窗逻辑保持不变 --- */}
         {isLeaveModalOpen && (
