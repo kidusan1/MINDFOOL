@@ -299,7 +299,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   {/* 右侧：课程列表（关键：min-w-0） */}
   {/* 右侧：课程列表 */}
-<div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
+<div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm">
 
 {/* 头部 */}
 <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/40 backdrop-blur-md">
@@ -351,7 +351,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </div>
 
     {/* ✅ 只在这里放一次 */}
-    <p className="text-center text-[10px] text-gray-400 pt-4">
+    <p className="text-center text-[10px] text-gray-400 pt-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
       {t.courseHint}
     </p>
 
