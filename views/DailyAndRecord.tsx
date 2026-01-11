@@ -311,7 +311,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 </div>
 
 {/* 中间：唯一滚动区域 */}
-<div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(24px+env(safe-area-inset-bottom))]">
+<div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3 space-y-3">
   {renderCourses()}
 </div>
 
