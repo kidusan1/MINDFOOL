@@ -288,16 +288,17 @@ if (course.status === CourseStatus.IN_PROGRESS) {
       <>
       <div className="h-screen overflow-hidden">
       {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="hidden md:flex h-full gap-8 p-4 overflow-hidden">
+      <div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden items-stretch">
+
   {/* 左侧：固定宽度 + 垂直居中 */}
-  <div className="w-80 flex flex-col justify-center gap-6">
+  <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6">
     
     {renderCurrentWeekCard()}
     <CheckInSection />
   </div>
 
   {/* 右侧：课程列表（关键：min-w-0） */}
-  <div className="flex-1 min-w-0 flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
+  <div className="flex-1 h-full flex flex-col bg-white/50 rounded-3xl border border-white/60 shadow-sm overflow-hidden">
 
     
     {/* 列表头部 */}
@@ -326,6 +327,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
   <div className="px-4 space-y-4">
     <CheckInSection />
+    </div>
 
     {/* 列表标题 */}
     <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50">
@@ -339,7 +341,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 </div>
 </div>
-</div>
+
 {/* --- 弹窗逻辑保持不变 --- */}
         {isLeaveModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
