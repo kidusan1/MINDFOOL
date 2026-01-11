@@ -1345,18 +1345,21 @@ if (!currentUser || minutes < 1) {
             className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-300" 
             onClick={() => {
               // 1️⃣ 只清空搜索内容
+              setIsSearchOpen(false);
+              // 顺手复位，避免下次打开状态残留
               setSearchQuery('');
               setSuggestions([]);
               setSearchResult(null);           
               // 2️⃣ 回到列表态
               setSearchView('list');
-            
               // ❗ 不要 setIsSearchOpen(false)
             }}
             
           />
           
-          <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300">
+          <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300"
+          onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
               <Icons.Search className="text-gray-500 mr-3" size={24} />
               <input 
@@ -1447,17 +1450,23 @@ if (!currentUser || minutes < 1) {
 
 {searchView === 'detail' && searchResult && (
               <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
+              {/* 固定头部 */}
               <div className="flex justify-between items-center border-b pb-3 mb-4">
                 {/* 标题减细 */}
-              <h3 className="text-xl font-medium text-gray-800">{searchResult.title}</h3>
+              <h3 className="text-xl font-medium text-gray-800">
+                {searchResult.title}
+                </h3>
               <button 
                 onClick={() => {
                   setSearchView('list');
                   setSearchResult(null);
     // 2. 这里的逻辑确保如果列表丢了，会根据当前输入框内容重新激活列表
-    const inputEl = document.querySelector('input[placeholder*="搜索"]') as HTMLInputElement;
+    const inputEl = document.querySelector(
+      'input[placeholder*="搜索"]'
+    ) as HTMLInputElement;
     if (inputEl && inputEl.value && suggestions.length === 0) {
-      const matches = dictionaryData.filter((i: any) => i.title.includes(inputEl.value)).slice(0, 8);
+      const matches = dictionaryData
+      .filter((i: any) => i.title.includes(inputEl.value)).slice(0, 13);
       setSuggestions(matches);
     }
   }}
@@ -1467,17 +1476,19 @@ if (!currentUser || minutes < 1) {
   {lang === 'zh' ? '返回列表' : 'Back'}
 </button>
 </div>
-                <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap">
+{/* 可滚动正文 */}
+<div className="flex-1 overflow-y-auto px-6 py-5 text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap custom-scrollbar">
                   {searchResult.content}
                 </div>
-                <div className="mt-6 pt-4 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
+                  {/* 底部点题（可选固定） */}
+                <div className="shrink-0 px-6 py-3 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
                   {lang === 'zh' ? '闻 · 思 · 修 · 证' : 'HEAR · THINK · PRACTICE · REALIZE'}
                 </div>
               </div>
             )}
 
 <div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-              {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Privacy Search · Tap space to return'}
+              {lang === 'zh' ? '无痕浏览 · 点按空白处返回' : 'Privacy Search · Tap any place to return'}
             </div>
           </div>
         </div>
