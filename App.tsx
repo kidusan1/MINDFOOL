@@ -1432,9 +1432,9 @@ if (!currentUser || minutes < 1) {
                   </div>
                 ))}
                 {/* ✨ 刚才插入的省略提示 */}
-{suggestions.length >= 8 && (
+{suggestions.length >= 13 && (
   <div className="relative py-3 text-center text-[10px] text-gray-500 tracking-[1em] border-t border-gray-50 bg-white/30">
-    ······
+    ···
   </div>
 )}
 {/* ✨ 插入结束 */}
@@ -1442,11 +1442,22 @@ if (!currentUser || minutes < 1) {
               </div>
             )}
 
-            {isSearching && (
-              <div className="mt-8 text-white/60 animate-pulse text-center font-light">
-                {lang === 'zh' ? '正在为您搜索...' : 'Searching...'}
-              </div>
-            )}
+            {/* --- 搜索无结果时的引导提示 --- */}
+{searchView === 'list' && searchQuery && suggestions.length === 0 && !isSearching && (
+  <div className="mt-6 px-6 py-5 text-center text-gray-500 bg-white/60 backdrop-blur-md rounded-2xl shadow-inner border border-white/40 animate-in fade-in duration-300">
+    <p className="text-sm leading-relaxed font-light">
+      {lang === 'zh'
+        ? '该完整词条尚未收录'
+        : 'This exact term is not yet in the dictionary.'}
+    </p>
+    <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+      {lang === 'zh'
+        ? '建议拆分关键词重新检索'
+        : 'Try simplifying your keywords and search again.'}
+    </p>
+  </div>
+)}
+
 
 {searchView === 'detail' && searchResult && (
               <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
