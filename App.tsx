@@ -1019,7 +1019,7 @@ if (!currentUser || minutes < 1) {
   
  // 1. 新增：联想建议状态和联想函数
  const [suggestions, setSuggestions] = useState<any[]>([]); // 👈 必须加这一行
- const [searchQuery, setSearchQuery] = useState('');
+
 
  // 2. 核心搜索函数（支持中英文提示）
  const handleCleanSearch = useCallback((query: string) => {
@@ -1347,8 +1347,7 @@ if (!currentUser || minutes < 1) {
               // 1️⃣ 只清空搜索内容
               setSearchQuery('');
               setSuggestions([]);
-              setSearchResult(null);
-            
+              setSearchResult(null);           
               // 2️⃣ 回到列表态
               setSearchView('list');
             
