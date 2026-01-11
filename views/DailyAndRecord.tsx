@@ -301,7 +301,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     
     {/* 标题栏：确保它 shrink-0（不被压缩） */}
     <div className="shrink-0 h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md">
-      <h3 className="text-xl text-textMain font-medium">{t.courseList}</h3>
+      <h3 className="text-xl text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
         {classVersion} {tApp.class}
       </span>
@@ -328,7 +328,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 中间滚动区 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6">
+  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-12">
     <CheckInSection />
     
     {/* 课程列表头 */}
@@ -343,9 +343,9 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 底部固定区：适配全面屏底部黑条 */}
-  <div className="shrink-0 h-12 flex items-center justify-center pb-[env(safe-area-inset-bottom)]">
-    {/* 注意：如果 renderCourses 里面已经有了这行，这里就不加；如果想固定，就在这里加 */}
-    <p className="text-[10px] text-gray-400">{t.courseHint}</p>
+  <div className="shrink-0 w-full flex items-center justify-center bg-transparent">    {/* 注意：如果 renderCourses 里面已经有了这行，这里就不加；如果想固定，就在这里加 */}
+  <p className="text-[10px] text-gray-400 py-6 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        {t.courseHint}</p>
   </div>
 </div>
 </div>
