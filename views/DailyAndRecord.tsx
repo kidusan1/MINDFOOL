@@ -287,13 +287,15 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   return (
       <>
       {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="hidden md:flex h-full gap-8 p-4 overflow-hidden items-center">
-            {/* 左侧：垂直居中 + 宽度限制 */}
-        <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6 overflow-y-auto no-scrollbar">
-                
-                    {renderCurrentWeekCard()}
-                    <CheckInSection />
-                </div>
+     {/* 左侧：真正垂直居中 */}
+<div className="shrink-0 w-80 h-full flex items-center justify-center">
+  {/* 左侧内容容器 */}
+  <div className="w-full flex flex-col gap-6 max-h-full overflow-y-auto no-scrollbar">
+    {renderCurrentWeekCard()}
+    <CheckInSection />
+  </div>
+
+
           {/* 右侧：列表区域 */}
                 <div className="flex-1 h-full flex flex-col overflow-hidden bg-white/50 rounded-3xl border border-white/60 shadow-sm relative">
                 {/* 列表头部 */}
@@ -313,8 +315,10 @@ if (course.status === CourseStatus.IN_PROGRESS) {
         <div className="flex md:hidden flex-col h-full w-full overflow-hidden relative">
             {/* 顶部固定区域：本周状态 */}
             <div className="shrink-0 z-20 px-4 pt-2 pb-2 bg-[#E8E6E1]">
-                {renderCurrentWeekCard()}
-            </div>
+            <div className="w-full">
+  {renderCurrentWeekCard()}
+</div>
+</div>
             {/* 下方滚动区域：签到 + 课程列表 */}
             <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
             <div className="mb-4">
