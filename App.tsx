@@ -1526,9 +1526,7 @@ if (!currentUser || minutes < 1) {
               </div>
             )}
 
-<div className="mt-4 text-center text-white/60 text-xs tracking-widest font-light">
-              {lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Privacy Search · Tap here to return'}
-            </div>
+
           </div>
         </div>
       )}
