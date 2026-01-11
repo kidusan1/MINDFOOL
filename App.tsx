@@ -1379,7 +1379,7 @@ if (!currentUser || minutes < 1) {
                   if (val.length >= 1) {
                     const matches = dictionaryData
                       .filter((i: any) => i.title.includes(val))
-                      .slice(0, 8);
+                      .slice(0, 13);
                     setSuggestions(matches);
                   } else {
                     setSuggestions([]);
