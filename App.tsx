@@ -1401,6 +1401,20 @@ if (!currentUser || minutes < 1) {
                   if (val.length >= 1) {
                     const matches = dictionaryData
                       .filter((i: any) => i.title.includes(val))
+                      .sort((a: any, b: any) => {
+                        // 1. 完全一致排第一
+                        if (a.title === val) return -1;
+                        if (b.title === val) return 1;
+                        
+                        // 2. 以关键词开头排第二
+                        const aStarts = a.title.startsWith(val);
+                        const bStarts = b.title.startsWith(val);
+                        if (aStarts && !bStarts) return -1;
+                        if (!aStarts && bStarts) return 1;
+                
+                        // 3. 短的词排前面（更精准）
+                        return a.title.length - b.title.length;
+                      })
                       .slice(0, 13);
                     setSuggestions(matches);
                   } else {
