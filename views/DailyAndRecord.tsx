@@ -288,8 +288,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
       <>
       <div className="min-h-screen">
       {/* --- 电脑端布局 (MD及以上) --- */}
-      <div className="md:hidden flex flex-col min-h-screen">
-
+      <div className="hidden md:flex h-screen gap-8 p-4 overflow-hidden items-stretch">
 
   {/* 左侧：固定宽度 + 垂直居中 */}
   <div className="shrink-0 w-80 h-full flex flex-col justify-center gap-6">
@@ -325,7 +324,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 </div>
 
 {/* --- 手机端布局 (MD以下) --- */}
-<div className="md:hidden flex flex-col h-screen overflow-hidden">
+<div className="md:hidden flex flex-col min-h-screen h-[100dvh]">
 
   {/* 顶部固定：本周状态 */}
   <div className="shrink-0 px-4 pt-2 pb-2 bg-[#E8E6E1]">
