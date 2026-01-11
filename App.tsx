@@ -1460,7 +1460,7 @@ if (!currentUser || minutes < 1) {
 
 
 {searchView === 'detail' && searchResult && (
-              <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl max-h-[60vh] overflow-y-auto animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
+              <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
               {/* 固定头部 */}
               <div className="flex justify-between items-center border-b pb-3 mb-4">
                 {/* 标题减细 */}
@@ -1487,10 +1487,13 @@ if (!currentUser || minutes < 1) {
   {lang === 'zh' ? '返回列表' : 'Back'}
 </button>
 </div>
-{/* 可滚动正文 */}
-<div className="flex-1 overflow-y-auto px-6 py-5 text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap custom-scrollbar">
-                  {searchResult.content}
-                </div>
+{/* 正文滚动区 */}
+<div className="max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
+  <div className="text-gray-700 leading-relaxed space-y-4 font-light text-justify whitespace-pre-wrap">
+    {searchResult.content}
+  </div>
+</div>
+
                   {/* 底部点题（可选固定） */}
                 <div className="shrink-0 px-6 py-3 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
                   {lang === 'zh' ? '闻 · 思 · 修 · 证' : 'HEAR · THINK · PRACTICE · REALIZE'}
