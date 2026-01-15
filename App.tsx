@@ -1227,7 +1227,7 @@ if (!currentUser || minutes < 1) {
 }
         
         {currentView === ViewName.DAILY && (
-          <div className="daily-view-wrapper">
+          <div className="daily-view-wrapper pb-32 overflow-y-auto custom-scrollbar">
           <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
           </div>
         )}
