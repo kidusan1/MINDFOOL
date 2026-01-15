@@ -328,7 +328,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 中间滚动区 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-20">
+  <div className="flex-1 overflow-y-auto no-scrollbar px-4">
     <CheckInSection />
     
     {/* 课程列表头 */}
@@ -336,20 +336,18 @@ if (course.status === CourseStatus.IN_PROGRESS) {
       <h3 className="text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">{classVersion}{tApp.class}</span>
     </div>
-
+    {/* 课程列表容器 */}
     <div className="space-y-3">
       {renderCourses()}
+      {/* 1. 增加底部的提示文字，确保它在滚动区域内 */}
+      <div className="pt-8 pb-4 flex justify-center items-center">  
+        <p className="text-[10px] text-gray-400 opacity-80">{t.courseHint}</p>
+      </div>
       {/* 增加一个隐形的占位块，确保最后一节课能推到导航栏上方 */}
-      <div className="h-[120px] w-full" />
+      <div className="h-32 w-full" />
     </div>
   </div>
-
-  {/* 底部固定区：适配全面屏底部黑条 */}
-  <div className="pt-8 pb-4 flex justify-center items-center">  
-    <p className="text-[10px] text-gray-400 opacity-80">        
-    {t.courseHint}</p>
   </div>
-</div>
 </div>
 
 {/* --- 弹窗逻辑保持不变 --- */}
@@ -591,7 +589,7 @@ export const RecordView: React.FC<RecordViewProps> = ({ onOpenInput, records, on
   const isMaxRecords = records.length >= 50;
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar p-4 pb-24 md:pb-6 relative">
+    <div className="h-full overflow-y-auto no-scrollbar p-4 pb-40 md:pb-6 relative">
        {isMaxRecords && (
          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
            {lang === 'zh' ? '记录数量已达到上限（50条），请先删除一些记录后再添加。' : 'Record limit reached (50). Please delete some records before adding new ones.'}
