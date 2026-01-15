@@ -1296,7 +1296,8 @@ if (!currentUser || minutes < 1) {
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
       {/* --- 1. 搜索按钮 --- */}
-      {!isSearchOpen && (
+    
+        {currentUser && !isSearchOpen && (
         <button
           onClick={() => setIsSearchOpen(true)}
           className={`
@@ -1315,7 +1316,8 @@ if (!currentUser || minutes < 1) {
       )}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
-      {isSearchOpen && (
+     
+        {currentUser && isSearchOpen && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-12 md:pt-24">
           <div 
             className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-300" 
