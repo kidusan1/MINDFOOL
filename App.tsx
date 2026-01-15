@@ -245,8 +245,10 @@ const [searchQuery, setSearchQuery] = useState('');
     }
   }, [isManager]);
 
+  
   // 从 Supabase 加载所有用户
   const loadAllUsers = useCallback(async () => {
+    
     try {
       const { data: userData, error: userDataError } = await supabase
         .from('user_data')
@@ -378,6 +380,7 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
       console.error('Error loading user data:', error);
       return;
     }
+    
 
     if (data) {
       data.forEach((row: { key: string; content: any }) => {
@@ -460,6 +463,31 @@ const loadUserDataFromSupabase = useCallback(async (userId: string) => {
     console.error('Error loading user data from Supabase:', err);
   }
 }, []);
+
+// --- [保险丝版] 零点静默刷新工具 ---
+const refreshDailyData = useCallback(async () => {
+  // 1. 如果没登录，直接退出，不执行
+  if (!currentUser) return;
+
+  try {
+    console.log("📅 检测到跨天，正在为您同步云端最新数据...");
+
+    // 2. 重置打卡按钮状态（对齐你代码中的枚举 CheckInType）
+    if (typeof setCheckInStatus === 'function') {
+      setCheckInStatus(CheckInType.NONE); 
+    }
+
+    // 3. 重新执行你已有的加载函数（直接从数据库拿新的一天）
+    // 这里的函数名已对齐你代码中的：loadUserDataFromSupabase 和 loadAllUsers
+    await loadUserDataFromSupabase(currentUser.id);
+    await loadAllUsers();
+    
+    console.log("✅ 零点同步完成，今日数据已归零。");
+  } catch (error) {
+    // 如果网络报错，静默处理，不弹窗打扰用户
+    console.error("同步暂时受阻:", error);
+  }
+}, [currentUser, loadUserDataFromSupabase, loadAllUsers]);
 
 
 
@@ -1167,6 +1195,26 @@ if (!currentUser || minutes < 1) {
     }));
   };
 
+  // ✅ 监控器必须放在组件顶层，不能放在 if (showSplash) 后面
+useEffect(() => {
+  const checkDateChange = () => {
+    const savedDate = localStorage.getItem('growth_app_active_date');
+    const today = new Date().toLocaleDateString();
+    if (savedDate && savedDate !== today) {
+      if (!isSearchOpen) {
+        localStorage.setItem('growth_app_active_date', today);
+        refreshDailyData(); 
+      }
+    }
+    if (!savedDate) {
+      localStorage.setItem('growth_app_active_date', today);
+    }
+  };
+  const timer = setInterval(checkDateChange, 30000);
+  checkDateChange();
+  return () => clearInterval(timer);
+}, [refreshDailyData, isSearchOpen]);
+
   if (showSplash) {
     return (
       <Splash 
@@ -1227,7 +1275,7 @@ if (!currentUser || minutes < 1) {
 }
         
         {currentView === ViewName.DAILY && (
-          <div className="daily-view-wrapper pb-32 overflow-y-auto custom-scrollbar">
+          <div className="daily-view-wrapper">
           <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
           </div>
         )}
