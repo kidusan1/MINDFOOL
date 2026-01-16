@@ -1371,8 +1371,8 @@ useEffect(() => {
     className={`
       fixed z-[999] flex items-center justify-center transition-all 
       bottom-24 right-6 w-12 h-12 rounded-full
-      bg-slate-800/85 backdrop-blur-2xl border border-white/10
-      shadow-[0_15px_35px_rgba(0,0,0,0.2)] text-white/90
+      bg-[#6D8D9D]/90 backdrop-blur-2xl border border-white/20
+      shadow-[0_12px_30px_rgba(109,141,157,0.3)] text-white
       active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
       md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:text-[#6D8D9D]
     `}
