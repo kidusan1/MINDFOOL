@@ -1607,10 +1607,17 @@ useEffect(() => {
                 leading-[1.9] tracking-[0.02em]
                 space-y-6
                 max-w-[42rem] mx-auto
-                px-1 md:px-0">
+                px-1 md:px-0 pb-24 md:pb-12">
   {searchResult.content}
+  {/* 💡 进阶小技巧：在最底部加一个装饰性的小点，确认内容已读完 */}
+  <div className="flex justify-center pt-8 opacity-20">
+      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
+      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
+      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
+    </div>
+  </div>
 </div>
-</div>
+
 
                   {/* 底部点题（可选固定） */}
                 <div className="shrink-0 px-6 py-3 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
