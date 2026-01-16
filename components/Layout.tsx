@@ -62,7 +62,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, onBa
   };
 
   const displayTitle = getTitle();
-
+// 精准屏蔽：念佛、拜佛、一念相续、呼吸跟随页面的标题显示
+const isTimerPage = [ViewName.TIMER, ViewName.BREATHING].includes(currentView);
+  
   const LangToggle = () => (
       <button 
         onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
@@ -137,8 +139,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, onBa
             </div>
             {/* Title Color: text-textSub, Font weight: normal, Letter spacing: 0.2em */}
             <h1 className="text-lg font-normal text-textSub w-1/3 text-center truncate tracking-[0.2em]">
-              {displayTitle}
-            </h1>
+              {!isTimerPage && displayTitle} 
+              </h1> 
             <div className="w-1/3 flex justify-end items-center gap-2">
                 {user?.isAdmin && (
                    <button 
