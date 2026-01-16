@@ -231,6 +231,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const [countdownRemaining, setCountdownRemaining] = useState(20 * 60);
   const [isCountdownRunning, setIsCountdownRunning] = useState(false);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const [isAlarmUnlocked, setIsAlarmUnlocked] = useState(false);
   
   const effectiveSecondsRef = useRef<number>(0);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -239,6 +240,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
   const startAlarmSound = () => {
+    if (!isAlarmUnlocked) {
+      console.log("🔇 铃声未授权，跳过播放");
+      return;
+    }
+    
     try {
         // 1. 确保拿到最新的 Context
         if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
@@ -337,7 +343,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         }
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
-            if (prev <= 1) {
+            if (prev <= 1 && !isAlarmActive) {
               startAlarmSound();
               return 0;
             }
@@ -438,6 +444,18 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                                 // 关键：即使已经创建，也要在每次点击时尝试 resume，并播放一个极短的静音
                                 const ctx = audioCtxRef.current;
                                 if (ctx.state === 'suspended') ctx.resume();
+                                // ✅ 浏览器音频解锁（关键）
+if (!isAlarmUnlocked) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  gain.gain.value = 0.001; // 极小声
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.05);
+  setIsAlarmUnlocked(true);
+}
+
                                 // 发射一个 0.05秒 的超短无声波，彻底打通硬件通道
                                 const osc = ctx.createOscillator();
                                 const g = ctx.createGain();
