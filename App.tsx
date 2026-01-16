@@ -1396,11 +1396,11 @@ useEffect(() => {
   }}
     className={`
       /* 1. 形状与位置 */
-      fixed z-[999] bottom-24 right-6 w-13 h-13 rounded-full
+      fixed z-[999] bottom-24 right-6 w-11 h-11 rounded-full
       flex items-center justify-center transition-all 
       
       /* 2. 移动端 Tahoe 磨砂白质感 */
-      bg-white/30 backdrop-blur-xl border border-[#6D8D9D]/20
+      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
       /* 3. 电脑端样式（修正圆角） */
