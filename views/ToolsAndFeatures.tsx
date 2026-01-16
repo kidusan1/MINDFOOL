@@ -232,51 +232,49 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
 
-  // --- 1. 闹铃逻辑：保持原样，未改动 ---
-  const startAlarmSound = () => {
-    try {
-        if (!audioCtxRef.current) {
-            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-        const ctx = audioCtxRef.current;
-        if (ctx.state === 'suspended') ctx.resume();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime); 
-        const now = ctx.currentTime;
-        gain.gain.setValueAtTime(0, now);
-        for (let i = 0; i < 120; i++) {
-            const start = now + i * 1.2;
-            gain.gain.setValueAtTime(0, start);
-            gain.gain.linearRampToValueAtTime(0.4, start + 0.05);
-            gain.gain.linearRampToValueAtTime(0, start + 0.15);
-            gain.gain.setValueAtTime(0, start + 0.25);
-            gain.gain.linearRampToValueAtTime(0.4, start + 0.3);
-            gain.gain.linearRampToValueAtTime(0, start + 0.4);
-        }
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        oscillatorRef.current = osc;
-        setIsAlarmActive(true);
-    } catch (e) { console.error('Failed to start alarm', e); }
-  };
+  // ---闹铃逻辑---
+ // 1. 先贴这一行 Ref (建议放在 oscillatorRef 的下一行)
+ const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const stopAlarmSound = () => {
-   // 核心：撤销所有排期的声音指令，恢复静音
-  if (oscillatorRef.current) {
-    try {
-      // 如果你之前定义了 gainNodeRef，这里是最佳切断点
-      oscillatorRef.current.stop(); 
-      oscillatorRef.current.disconnect();
-    } catch (e) {}
-    oscillatorRef.current = null;
-  }
-  setIsAlarmActive(false);
-  setIsCountdownRunning(false);
-  setCountdownRemaining(countdownTarget * 60);
-};
+ // 2. 贴入新的开始函数
+ const startAlarmSound = () => {
+   try {
+     if (!audioCtxRef.current) {
+       audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+     }
+     const ctx = audioCtxRef.current;
+     if (ctx.state === 'suspended') ctx.resume();
+
+     setIsAlarmActive(true);
+
+     // 核心：每隔 1.2 秒发出一声清晰的“哔”，不再堆积排期
+     alarmIntervalRef.current = setInterval(() => {
+       const osc = ctx.createOscillator();
+       const gain = ctx.createGain();
+       osc.type = 'sine';
+       osc.frequency.setValueAtTime(880, ctx.currentTime);
+       gain.gain.setValueAtTime(0, ctx.currentTime);
+       gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.05);
+       gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+       osc.connect(gain);
+       gain.connect(ctx.destination);
+       osc.start();
+       osc.stop(ctx.currentTime + 0.3); // 声音持续 0.3 秒后物理销毁
+     }, 1200); 
+   } catch (e) { console.error('Alarm start failed', e); }
+ };
+
+ // 3. 贴入新的停止函数
+ const stopAlarmSound = () => {
+   // 核心：直接切断定时器，后续所有的“哔”声都会立即停止
+   if (alarmIntervalRef.current) {
+     clearInterval(alarmIntervalRef.current);
+     alarmIntervalRef.current = null;
+   }
+   setIsAlarmActive(false);
+   setIsCountdownRunning(false);
+   setCountdownRemaining(countdownTarget * 60);
+ };
 
   // --- 2. 逻辑：长按重置与保存 (兼容 PC) ---
   const handleReset = (mode: 'up' | 'down') => {
