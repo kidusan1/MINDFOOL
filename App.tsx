@@ -1368,23 +1368,19 @@ useEffect(() => {
       setIsSearchOpen(true);
     }}
     className={`
-      /* 1. 基础定位与形状 (移动端优先) */
-      fixed z-[999] flex items-center justify-center transition-all 
-      bottom-24 right-6 w-11 h-11 rounded-full
+      /* 1. 形状与位置 */
+      fixed z-[999] bottom-24 right-6 w-11 h-11 rounded-full
+      flex items-center justify-center transition-all 
       
-      /* 2. 移动端的 Tahoe 质感 (磨砂白) */
-      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 
+      /* 2. 移动端 Tahoe 磨砂白质感 */
+      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
-      /* 3. 电脑端适配 (md: 这里的设置会覆盖上面的移动端样式) */
+      /* 3. 电脑端样式（修正圆角） */
       md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 
-      md:rounded-xl       /* 🟢 关键：将胶囊形状改为圆角矩形 */
-      md:bg-transparent   /* 🟢 关键：去掉磨砂背景 */
-      md:border-none      /* 🟢 关键：去掉外边框 */
-      md:shadow-none      /* 🟢 关键：去掉外阴影 */
-      md:backdrop-blur-none /* 🟢 关键：去掉模糊效果 */
-    
-      /* 4. 通用交互动画 */
+      md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none md:border-none md:shadow-none
+      
+      /* 4. 视觉反馈：点击时瞬间缩小，模拟压感 */
       active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
     `}
   >
