@@ -254,6 +254,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     audio.play().catch(e => {
       console.error("唤醒失败，显示保底按钮");
       setNeedUserToStartAlarm(true);
+      
     });
     }
   };
