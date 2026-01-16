@@ -1419,39 +1419,40 @@ useEffect(() => {
 )}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
-     
-        {currentUser && isSearchOpen && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-12 md:pt-24">
-          {/* 背景层：液态毛玻璃 */}
-          <div 
-            className="absolute inset-0 bg-black/10 backdrop-blur-[40px] transition-opacity duration-500" 
-            onClick={() => {
-              // 1️⃣ 只清空搜索内容
-              setIsSearchOpen(false);
-              // 顺手复位，避免下次打开状态残留
-              setSearchQuery('');
-              setSuggestions([]);
-              setSearchResult(null);           
-              // 2️⃣ 回到列表态
-              setSearchView('list');
-              // ❗ 不要 setIsSearchOpen(false)
-            }}
-
-          />
+      {currentUser && isSearchOpen && (
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-end md:justify-start pt-12 md:pt-24 pb-12 md:pb-0">
+    
+    {/* 背景层：液态感更强的黑色微透 */}
+    <div 
+      className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-500" 
+      onClick={() => {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setSuggestions([]);
+        setSearchResult(null);           
+        setSearchView('list');
+      }}
+    />
           
-          {/* 内容容器：增加 origin-bottom-right 实现从按钮处展开 */}
+   {/* 内容容器：增加 origin-bottom-right 实现从按钮处展开 */}
 
-<div className="
-      relative w-[92%] max-w-lg z-10 
-      /* 🟢 核心动效：从右下角向左上角扩散展开 */
-      animate-in zoom-in-50 slide-in-from-bottom-12 fade-in 
-      duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-      origin-bottom-right md:origin-top
-    "
+   <div 
+      className={`
+        relative w-[92%] max-w-lg z-10 
+        /* 1. 组合动画：缩放 + 偏移 + 渐入 */
+        animate-in fade-in zoom-in-50 slide-in-from-bottom-32 slide-in-from-right-8
+        duration-500
+      `}
+      style={{
+        /* 2. 苹果级减速曲线：先快后慢，极度丝滑 */
+        animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        /* 3. 精准对齐你的右下角按钮位置 (right-6 = 24px, bottom-24 = 96px) */
+        transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' 
+      }}
       onClick={(e) => e.stopPropagation()}
-          >
-            {/* 顶部无痕浏览提示（移动端关键引导） */}
-<div
+    >
+    {/* 顶部无痕浏览提示（移动端关键引导） */}
+  <div
   onClick={() => setIsSearchOpen(false)}
   className="
     mb-3
@@ -1471,8 +1472,8 @@ useEffect(() => {
     : 'Private Search · Tap here to return'}
 </div>
       {/* 搜索框 */}
-       <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
-              <Icons.Search className="text-gray-500 mr-3" size={24} />
+      <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] px-4 py-4">
+        <Icons.Search className="text-[#6D8D9D]/70 mr-3" size={24} />
               <input 
                 type="text"
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
@@ -1546,12 +1547,12 @@ useEffect(() => {
 
             </div>
 
-            {/* 联想词列表 */}
-            {searchView === 'list' && suggestions.length > 0 && (
+{/* 联想词列表：增加级联淡入效果 */}
+{searchView === 'list' && suggestions.length > 0 && (
 // 关键：增加 duration-700 和 scale-100 的缓冲感
-<div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">              
-                   {suggestions.map((item: any) => (
-                  <div 
+<div className="absolute top-full left-0 right-0 mt-3 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border border-white/30 z-[100] animate-in fade-in slide-in-from-top-4 duration-500 ease-out">
+{/* ... suggestions.map 逻辑保持不变 ... */}                   {suggestions.map((item: any) => (
+ <div 
                   key={item.id}
                   className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
                   onClick={() => {
