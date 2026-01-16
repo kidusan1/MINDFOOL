@@ -50,8 +50,8 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
   };
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar p-4 flex flex-col justify-center">
-      <div className="flex flex-col gap-6 w-full">
+<div className="min-h-full overflow-y-auto no-scrollbar p-4 flex flex-col pt-[12vh] pb-32">
+        <div className="flex flex-col gap-6 w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
             {TIMER_TYPES.map((tool) => (
             <button
@@ -263,7 +263,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     if (alarmIntervalRef.current) {
         clearInterval(alarmIntervalRef.current);
         alarmIntervalRef.current = null;
-    }
+      }
+   // 💡 物理销毁音频上下文，确保声音瞬间消失
+  if (audioCtxRef.current) {
+    audioCtxRef.current.close().then(() => {
+        audioCtxRef.current = null; 
+    });
+      }
     setIsAlarmActive(false);
     setIsCountdownRunning(false);
     setCountdownRemaining(countdownTarget * 60);
@@ -320,8 +326,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 4. 终极布局结构：解决居中与滑动 ---
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
-      {/* 顶部弹性间距：实现垂直居中 */}
+<div className="flex-1 w-full min-h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6 pb-32">
+    {/* 顶部弹性间距：实现垂直居中 */}
       <div className="flex-grow shrink-0 min-h-[40px]"></div>
 
       <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0">
@@ -353,7 +359,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                 <div className="flex items-center gap-4 my-8">
                     {!isCountdownRunning && !isAlarmActive && <button onClick={() => { setCountdownTarget(prev => Math.max(1, prev - 5)); setCountdownRemaining(Math.max(1, countdownTarget - 5) * 60); }} className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">-</button>}
                     <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
-                        {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}m`)}
+                        {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : 'm'}`)}
                     </div>
                     {!isCountdownRunning && !isAlarmActive && <button onClick={() => { setCountdownTarget(prev => prev + 5); setCountdownRemaining((countdownTarget + 5) * 60); }} className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">+</button>}
                 </div>
