@@ -259,22 +259,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
               audioCtxRef.current.resume();
           }
           // 必须重新获取当前的 ctx（以防 ref 变化，虽然概率很低但为了 TS 安全）
-          if (audioCtxRef.current) {
-            const activeCtx = audioCtxRef.current;
 
-            const osc = activeCtx.createOscillator();
-            const gain = activeCtx.createGain();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, activeCtx.currentTime);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
             // 声音渐变（防止爆音）
-            gain.gain.setValueAtTime(0, activeCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, activeCtx.currentTime + 0.1);
-            gain.gain.linearRampToValueAtTime(0, activeCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
             osc.connect(gain);
-            gain.connect(activeCtx.destination);
+            gain.connect(ctx.destination);
             osc.start();
-            osc.stop(activeCtx.currentTime + 0.6);
-          }
+            osc.stop(ctx.currentTime + 0.5);
         }, 1200);
     } catch (e) { console.error('Alarm Error', e); }
   };
@@ -308,7 +305,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       effectiveSecondsRef.current = 0;
     }
     if (mode === 'up') { setIsRunning(false); setSeconds(0); } 
-    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); }
+    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); stopAlarmSound();}
   };
 
   const startPress = (mode: 'up' | 'down') => {
