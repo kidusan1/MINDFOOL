@@ -238,6 +238,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const audioCtxRef = useRef<AudioContext | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const alarmGainRef = useRef<GainNode | null>(null);
+  const [needUserToStartAlarm, setNeedUserToStartAlarm] = useState(false);
 
 
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
@@ -334,7 +335,7 @@ alarmIntervalRef.current = setInterval(() => {
       effectiveSecondsRef.current = 0;
     }
     if (mode === 'up') { setIsRunning(false); setSeconds(0); } 
-    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); stopAlarmSound();}
+    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); stopAlarmSound(); setNeedUserToStartAlarm(false);}
   };
 
   const startPress = (mode: 'up' | 'down') => {
@@ -357,7 +358,7 @@ alarmIntervalRef.current = setInterval(() => {
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
             if (prev <= 1 && !isAlarmActive) {
-              startAlarmSound();
+              setNeedUserToStartAlarm(true); // ⛔ 不直接响
               return 0;
             }
             return prev - 1;
@@ -441,7 +442,17 @@ alarmIntervalRef.current = setInterval(() => {
                 </div>
                 
                 <div className="flex flex-col items-center gap-2 w-full">
-                    {isAlarmActive ? (
+                {needUserToStartAlarm && !isAlarmActive ? (
+  <button
+    onClick={() => {
+      startAlarmSound();           // ✅ 用户手势
+      setNeedUserToStartAlarm(false);
+    }}
+    className="w-full max-w-[200px] py-4 bg-red-500 text-white rounded-full font-bold shadow-lg animate-pulse"
+  >
+    {lang === 'zh' ? '点此响铃' : 'Tap to Ring'}
+  </button>
+) : isAlarmActive ? (
                         <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse">
                             <Icons.Cancel size={18} /> {lang === 'zh' ? '停止' : 'Stop Alarm'}
                         </button>
