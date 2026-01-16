@@ -1363,61 +1363,55 @@ useEffect(() => {
 {/* --- 1. 搜索按钮 --- */}
 {currentUser && !isSearchOpen && (
   <button
-  // 1️⃣ 手指按下
-  onTouchStart={() => {
-    triggerHaptic(20); // 按下即刻震动，给用户反馈
-    
-    // 创建一个定时器，300ms 后自动打开搜索
-    // 这 300ms 就是给用户看“挤压动效”的时间
-    (window as any).searchTimer = setTimeout(() => {
-      setIsSearchOpen(true);
-      triggerHaptic(30); // 成功唤出时再给一个反馈
-    }, 300); 
-  }}
+    // 1️⃣ 手指按下：这里是震动最灵敏的地方
+    onTouchStart={(e) => {
+      // 这里的震动必须是第一行，确保同步触发
+      if (typeof window !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([20, 10, 20]); // 安卓推荐的双震序列，更有质感
+      }
+      
+      (window as any).searchTimer = setTimeout(() => {
+        setIsSearchOpen(true);
+      }, 300); 
+    }}
 
-  // 2️⃣ 手指抬起
-  onTouchEnd={() => {
-    // 如果手指抬起得太快（小于300ms），就取消打开逻辑
-    // 这样就实现了“禁止快速点击跳转”
-    if ((window as any).searchTimer) {
-      clearTimeout((window as any).searchTimer);
-    }
-  }}
+    // 2️⃣ 手指抬起
+    onTouchEnd={(e) => {
+      if ((window as any).searchTimer) {
+        clearTimeout((window as any).searchTimer);
+      }
+    }}
 
-  // 3️⃣ 防止移动端弹出系统菜单
-  onContextMenu={(e) => e.preventDefault()}
+    // 3️⃣ 关键：防止长按弹出系统菜单
+    onContextMenu={(e) => e.preventDefault()}
 
-  // 4️⃣ 电脑端依然保留 onClick 方便鼠标操作
-  onClick={(e) => {
-    // 如果是电脑端（非触摸屏），直接打开
-    if (window.innerWidth > 768) {
-      setIsSearchOpen(true);
-    }
-  }}
+    // 4️⃣ 电脑端逻辑：增加 e.preventDefault 防止触摸设备重复触发
+    onClick={(e) => {
+      if (window.innerWidth > 768) {
+        setIsSearchOpen(true);
+      } else {
+        // 在手机端屏蔽掉 onClick，全靠上面的 Touch 逻辑，防止逻辑混乱
+        e.preventDefault();
+      }
+    }}
+
     className={`
-      /* 1. 形状与位置 */
-      fixed z-[999] bottom-24 right-6 w-11 h-11 rounded-full
+      fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full
       flex items-center justify-center transition-all 
       
-      /* 2. 移动端 Tahoe 磨砂白质感 */
+      /* 这里的白色透明度我建议降到 40%，科技感更强 */
       bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
-      /* 3. 电脑端样式（修正圆角） */
+      /* 动效：缩放改为 75 确实更好，压感更强 */
+      active:scale-75 transition-transform duration-300 ease-out
+      
       md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 
       md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none md:border-none md:shadow-none
-      
-      /* 4. 视觉反馈：点击时瞬间缩小，模拟压感 */
-      active:scale-75 transition-transform duration-300 ease-out
     `}
   >
-    {/* 图标颜色精准匹配导航文字 #6D8D9D */}
-    <Icons.Search 
-      style={{ color: '#6D8D9D' }} 
-      size={24} 
-      strokeWidth={2.5} 
-    />
-    
+    <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
+    {/* 电脑端文字保留 */}
     <span className="hidden md:inline-block ml-3 text-sm font-medium tracking-wide text-[#6D8D9D]">
       {lang === 'zh' ? '搜索' : 'Search Terms'}
     </span>
@@ -1428,8 +1422,9 @@ useEffect(() => {
      
         {currentUser && isSearchOpen && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center pt-12 md:pt-24">
+          {/* 背景层：液态毛玻璃 */}
           <div 
-            className="absolute inset-0 bg-black/20 backdrop-blur-xl transition-opacity duration-300" 
+            className="absolute inset-0 bg-black/10 backdrop-blur-[40px] transition-opacity duration-500" 
             onClick={() => {
               // 1️⃣ 只清空搜索内容
               setIsSearchOpen(false);
@@ -1444,9 +1439,16 @@ useEffect(() => {
 
           />
           
-          
-          <div className="relative w-[90%] max-w-lg z-10 animate-in zoom-in-95 duration-300"
-          onClick={(e) => e.stopPropagation()}
+          {/* 内容容器：增加 origin-bottom-right 实现从按钮处展开 */}
+
+<div className="
+      relative w-[92%] max-w-lg z-10 
+      /* 🟢 核心动效：从右下角向左上角扩散展开 */
+      animate-in zoom-in-50 slide-in-from-bottom-12 fade-in 
+      duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+      origin-bottom-right md:origin-top
+    "
+      onClick={(e) => e.stopPropagation()}
           >
             {/* 顶部无痕浏览提示（移动端关键引导） */}
 <div
@@ -1468,11 +1470,10 @@ useEffect(() => {
     ? '无痕浏览 · 点按此处返回'
     : 'Private Search · Tap here to return'}
 </div>
-
-            <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
+      {/* 搜索框 */}
+       <div className="flex items-center bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-2xl px-4 py-4">
               <Icons.Search className="text-gray-500 mr-3" size={24} />
               <input 
-                autoFocus
                 type="text"
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
