@@ -361,21 +361,40 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         {isBaifo && (
           <>
             <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
+
             {/* 倒计时卡片 */}
             <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
                 <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
                 <div className="flex items-center gap-4 my-8">
-                    {!isCountdownRunning && !isAlarmActive && <button onClick={() => { setCountdownTarget(prev => Math.max(1, prev - 5)); setCountdownRemaining(Math.max(1, countdownTarget - 5) * 60); }} className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">-</button>}
+                {!isCountdownRunning && !isAlarmActive && (
+  <button 
+    onClick={() => {
+      // 逻辑：如果当前 <= 5分，直接降到 1分；否则减 5
+      const next = countdownTarget <= 5 ? 1 : countdownTarget - 5;
+      setCountdownTarget(next);
+      setCountdownRemaining(next * 60);
+    }} 
+    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+  >
+    -
+  </button>
+)}
                     <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
                         {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : 'm'}`)}
                     </div>
-                    {!isCountdownRunning && !isAlarmActive && 
-                    <button 
-                    onClick={() => { 
-                      setCountdownTarget(prev => prev + 5); 
-                      setCountdownRemaining((countdownTarget + 5) * 60);
-                       }} 
-                    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">+</button>}
+                    {!isCountdownRunning && !isAlarmActive && (
+  <button 
+    onClick={() => {
+      // 逻辑：如果当前是 1分，直接跳到 5分；否则加 5
+      const next = countdownTarget === 1 ? 5 : countdownTarget + 5;
+      setCountdownTarget(next);
+      setCountdownRemaining(next * 60);
+    }} 
+    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+  >
+    +
+  </button>
+)}
                 </div>
                 
                 <div className="flex flex-col items-center gap-2 w-full">
