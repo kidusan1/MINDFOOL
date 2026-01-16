@@ -1361,30 +1361,45 @@ useEffect(() => {
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
 {/* --- 1. 搜索按钮 --- */}
-    
-        {currentUser && !isSearchOpen && (
-        <button
-          onClick={() => {
-            triggerHaptic(15); // 🔥 震动注入成功！
+{currentUser && !isSearchOpen && (
+  <button
+    onClick={() => {
+      triggerHaptic(15);
       setIsSearchOpen(true);
     }}
-    /* 替换 className 为这个看看 */
-className={`
-  fixed z-[999] flex items-center justify-center transition-all 
-  bottom-24 right-6 w-12 h-12 rounded-full
-  bg-white/60 backdrop-blur-xl border border-white/50
-  shadow-[0_8px_25px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)] 
-  text-gray-600
-  active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
-  md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:text-[#6D8D9D]
-`}
-        >
-          <Icons.Search size={22} strokeWidth={2.5} />
-          <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
-            {lang === 'zh' ? '搜索' : 'Search Terms'}
-          </span>
-        </button>
-      )}
+    className={`
+      /* 定位与大小 */
+      fixed z-[999] flex items-center justify-center transition-all 
+      bottom-24 right-6 w-12 h-12 rounded-full
+      
+      /* 高级感核心：更高透明度的磨砂白 */
+      bg-white/40 backdrop-blur-xl 
+      
+      /* 增强玻璃边缘感：让极细边框颜色也带一点主题色，更和谐 */
+      border border-[#6D8D9D]/20 
+      
+      /* 柔和阴影：外阴影极其轻微，增加内阴影模拟玻璃厚度 */
+      shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
+      
+      /* 交互反馈 */
+      active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
+      
+      /* 电脑端适配：保持你原本逻辑 */
+      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:border-none md:shadow-none
+    `}
+  >
+    {/* 图标颜色精准匹配导航文字 #6D8D9D */}
+    <Icons.Search 
+      style={{ color: '#6D8D9D' }} 
+      size={22} 
+      strokeWidth={2.5} 
+    />
+    
+    <span className="hidden md:inline-block ml-3 text-sm font-medium tracking-wide text-[#6D8D9D]">
+      {lang === 'zh' ? '搜索' : 'Search Terms'}
+    </span>
+  </button>
+)}
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
      
