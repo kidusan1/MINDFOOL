@@ -244,85 +244,20 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
   const startAlarmSound = () => {
-    if (!isAlarmUnlocked) {
-      console.log("🔇 铃声未授权，跳过播放");
-      return;
-    }
-    
-    try {
-        // 1. 确保拿到最新的 Context
-        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-        
-        // 🚨 关键：在外部先 resume 一次
-        if (audioCtxRef.current.state === 'suspended') {
-            audioCtxRef.current.resume();
-        }
-
-        setIsAlarmActive(true);
-        if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
-
-alarmIntervalRef.current = setInterval(() => {
-  const ctx = audioCtxRef.current;
-  if (!ctx) return;
-
-  // 🚨 不用 await，不然你之前那个报错就会回来
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
-
-  // 🔐 核心：确保至少“真正发声过一次”
-  // 如果 iOS 没被用户解锁过，这一步是唯一救命绳
-  try {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
-  } catch (e) {
-    console.error('🔇 Alarm oscillator failed', e);
-  }
-}, 1200);
-
-    } catch (e) { 
-        console.error('Alarm Error', e); 
+    setIsAlarmActive(true);
+    const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
+    if (audio) {
+      audio.muted = false;
+      audio.volume = 1.0; // 🟢 此时音频一直在后台跑，调大音量即可，不会被拦截
     }
   };
 
   const stopAlarmSound = () => {
-    if (alarmIntervalRef.current) {
-        clearInterval(alarmIntervalRef.current);
-        alarmIntervalRef.current = null;
-      }
-      if (alarmGainRef.current) {
-        try {
-          alarmGainRef.current.disconnect();
-        } catch {}
-        alarmGainRef.current = null;
-      }
-      
- // 2. 🔥 核心优化：使用 close() 而不是 suspend()
-    // close() 会彻底释放音频硬件资源，确保绝对静音，不会有残留
-    if (audioCtxRef.current) {
-      audioCtxRef.current.close().then(() => {
-          audioCtxRef.current = null; // 销毁引用，下次重新 new
-      }).catch((e) => {
-          console.error("Audio close error", e);
-          audioCtxRef.current = null;
-      });
+  const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
+  if (audio) {
+    audio.pause(); 
+    audio.volume = 0;
   }
-  // 3. 重置界面状态
   setIsAlarmActive(false);
   setIsCountdownRunning(false);
   setCountdownRemaining(countdownTarget * 60);
@@ -466,57 +401,21 @@ alarmIntervalRef.current = setInterval(() => {
                     ) : (
                         <>
                             <button 
-                              onClick={() => {
-                                // 必须在用户点击的回调函数最顶层执行
-                                if (!audioCtxRef.current) {
-                                  audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                             onClick={() => {
+                              const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
+                              if (audio) {
+                                if (!isCountdownRunning) {
+                                  // 🟢 开始计时时：后台 0 音量启动
+                                  audio.volume = 0; 
+                                  audio.currentTime = 0;
+                                  audio.play().catch(e => console.log("音频启动失败", e));
+                                } else {
+                                  // 🔴 手动暂停时：彻底停止音频，不浪费电量
+                                  audio.pause();
                                 }
-                                
-                                // 关键：即使已经创建，也要在每次点击时尝试 resume，并播放一个极短的静音
-                                const ctx = audioCtxRef.current;
-                                if (ctx.state === 'suspended') ctx.resume();
-                                // ✅ 浏览器音频解锁（关键）
-                                // ✅ 关键：在用户手势中创建真实发声通道（但音量极小）
-if (!alarmGainRef.current) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = 'sine';
-  osc.frequency.value = 880;
-
-  gain.gain.value = 0.0001; // 几乎听不到，但“真实存在”
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(); // ⚠️ 这一步至关重要
-  alarmGainRef.current = gain;
-}
-
-if (!isAlarmUnlocked) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  // 使用极小音量保持硬件通道开启，不调用 stop()
-  gain.gain.value = 0.0001; 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  // 存入 Ref，以便在 stopAlarmSound 时统一关闭
-  alarmGainRef.current = gain;
-  setIsAlarmUnlocked(true);
-}
-
-                                // 发射一个 0.05秒 的超短无声波，彻底打通硬件通道
-                                const osc = ctx.createOscillator();
-                                const g = ctx.createGain();
-                                g.gain.setValueAtTime(0.01, ctx.currentTime); 
-                                osc.connect(g);
-                                g.connect(ctx.destination);
-                                osc.start();
-                                osc.stop(ctx.currentTime + 0.05);
-                                // 2. 正常业务逻辑
-                                setIsCountdownRunning(!isCountdownRunning); 
-                              }}
+                              }
+                              setIsCountdownRunning(!isCountdownRunning); 
+                            }}
                               onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
                               className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
                             >
@@ -537,6 +436,8 @@ if (!isAlarmUnlocked) {
       {/* 手机端安全垫片：确保滑到底部不被放大镜遮挡 */}
       <div className="flex-grow shrink-0 w-full"></div>
       <div className="h-32 shrink-0 md:hidden"></div>
+{/* loop 属性让它无限循环，muted={false} 配合 volume=0 躲避拦截 */}
+<audio id="alarm-audio" preload="auto" loop src="alarm.mp3"></audio>
     </div>
   );
 };
