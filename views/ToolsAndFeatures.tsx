@@ -240,29 +240,41 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
   const startAlarmSound = () => {
     try {
+      // 1. 确保音频上下文存在
         if (!audioCtxRef.current) {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         const ctx = audioCtxRef.current;
+        // 2. 第一次立即唤醒（针对未锁屏的情况）
         if (ctx.state === 'suspended') ctx.resume();
-
         setIsAlarmActive(true);
         // 清除任何可能存在的旧闹铃
         if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
-
+        // 3. 开启循环响铃
         // 每隔1.2秒发出一声，确保物理切断有效
         alarmIntervalRef.current = setInterval(() => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+      // 每次循环（每一声响铃前），都检查一次 ctx 是否被系统冻结了
+            // 如果被冻结（例如因为锁屏），立刻唤醒它，然后再发声
+            if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+              audioCtxRef.current.resume();
+          }
+          // 必须重新获取当前的 ctx（以防 ref 变化，虽然概率很低但为了 TS 安全）
+          if (audioCtxRef.current) {
+            const activeCtx = audioCtxRef.current;
+
+            const osc = activeCtx.createOscillator();
+            const gain = activeCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.1);
-            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+            osc.frequency.setValueAtTime(880, activeCtx.currentTime);
+            // 声音渐变（防止爆音）
+            gain.gain.setValueAtTime(0, activeCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, activeCtx.currentTime + 0.1);
+            gain.gain.linearRampToValueAtTime(0, activeCtx.currentTime + 0.5);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(activeCtx.destination);
             osc.start();
-            osc.stop(ctx.currentTime + 0.4);
+            osc.stop(activeCtx.currentTime + 0.6);
+          }
         }, 1200);
     } catch (e) { console.error('Alarm Error', e); }
   };
@@ -272,16 +284,21 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         clearInterval(alarmIntervalRef.current);
         alarmIntervalRef.current = null;
       }
-   // 💡 物理销毁音频上下文，确保声音瞬间消失
-  if (audioCtxRef.current) {
-    audioCtxRef.current.close().then(() => {
-        audioCtxRef.current = null; 
-    });
-      }
-    setIsAlarmActive(false);
-    setIsCountdownRunning(false);
-    setCountdownRemaining(countdownTarget * 60);
-  };
+ // 2. 🔥 核心优化：使用 close() 而不是 suspend()
+    // close() 会彻底释放音频硬件资源，确保绝对静音，不会有残留
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().then(() => {
+          audioCtxRef.current = null; // 销毁引用，下次重新 new
+      }).catch((e) => {
+          console.error("Audio close error", e);
+          audioCtxRef.current = null;
+      });
+  }
+  // 3. 重置界面状态
+  setIsAlarmActive(false);
+  setIsCountdownRunning(false);
+  setCountdownRemaining(countdownTarget * 60);
+};
 
   // --- 2. 交互逻辑：长按重置 ---
   const handleReset = (mode: 'up' | 'down') => {
@@ -399,8 +416,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                 
                 <div className="flex flex-col items-center gap-2 w-full">
                     {isAlarmActive ? (
-                        <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm">
-                            <Icons.Cancel size={18} /> {lang === 'zh' ? '停止闹铃' : 'Stop Alarm'}
+                        <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse">
+                            <Icons.Cancel size={18} /> {lang === 'zh' ? '停止' : 'Stop Alarm'}
                         </button>
                     ) : (
                         <>
@@ -414,13 +431,15 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                                 // 关键：即使已经创建，也要在每次点击时尝试 resume，并播放一个极短的静音
                                 const ctx = audioCtxRef.current;
                                 if (ctx.state === 'suspended') ctx.resume();
-                                
-                                const buffer = ctx.createBuffer(1, 1, 22050);
-                                const source = ctx.createBufferSource();
-                                source.buffer = buffer;
-                                source.connect(ctx.destination);
-                                source.start(); // 播放一个空白片段，彻底打通浏览器音频通道
-                              
+                                // 发射一个 0.05秒 的超短无声波，彻底打通硬件通道
+                                const osc = ctx.createOscillator();
+                                const g = ctx.createGain();
+                                g.gain.setValueAtTime(0.01, ctx.currentTime); 
+                                osc.connect(g);
+                                g.connect(ctx.destination);
+                                osc.start();
+                                osc.stop(ctx.currentTime + 0.05);
+                                // 2. 正常业务逻辑
                                 setIsCountdownRunning(!isCountdownRunning); 
                               }}
                               onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
