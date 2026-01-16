@@ -231,6 +231,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const [countdownRemaining, setCountdownRemaining] = useState(20 * 60);
   const [isCountdownRunning, setIsCountdownRunning] = useState(false);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const [needUserToStartAlarm, setNeedUserToStartAlarm] = useState(false);
   const [isAlarmUnlocked, setIsAlarmUnlocked] = useState(false);
   
   const effectiveSecondsRef = useRef<number>(0);
@@ -238,7 +239,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const audioCtxRef = useRef<AudioContext | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const alarmGainRef = useRef<GainNode | null>(null);
-  const [needUserToStartAlarm, setNeedUserToStartAlarm] = useState(false);
+  
 
 
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
@@ -358,12 +359,18 @@ alarmIntervalRef.current = setInterval(() => {
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
             if (prev <= 1 && !isAlarmActive) {
-              setNeedUserToStartAlarm(true); // ⛔ 不直接响
+              // 🔍 审视结果：如果已经 Unlocked，直接触发响铃，不再拦截
+              if (isAlarmUnlocked) {
+                startAlarmSound();
+              } else {
+                setNeedUserToStartAlarm(true); 
+              }
               return 0;
             }
             return prev - 1;
           });
         }
+            
         if (isRunning) setSeconds(s => s + 1);
       }, 1000);
     }
@@ -489,11 +496,13 @@ if (!alarmGainRef.current) {
 if (!isAlarmUnlocked) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  gain.gain.value = 0.001; // 极小声
+  // 使用极小音量保持硬件通道开启，不调用 stop()
+  gain.gain.value = 0.0001; 
   osc.connect(gain);
   gain.connect(ctx.destination);
   osc.start();
-  osc.stop(ctx.currentTime + 0.05);
+  // 存入 Ref，以便在 stopAlarmSound 时统一关闭
+  alarmGainRef.current = gain;
   setIsAlarmUnlocked(true);
 }
 
@@ -686,7 +695,7 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const zenText = useMemo(() => {
-        const phrasesZh = ["真心", "吃茶去", "一食顷", "莫妄想", "止观", "观自在", "不二"];
+        const phrasesZh = ["真心", "吃茶去", "一食顷", "莫妄想", "止观", "观自在", "不二", "一念"];
         const hash = user.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return phrasesZh[(hash + new Date().getDate()) % phrasesZh.length];
     }, [user.name]);
