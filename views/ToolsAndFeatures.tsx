@@ -264,17 +264,19 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const stopAlarmSound = () => {
-    // 核心修改：先清空所有计划中的音频调度
-    if (oscillatorRef.current) {
-        try { oscillatorRef.current.stop(); 
-        oscillatorRef.current.disconnect();
-      } catch (e) {}
-      oscillatorRef.current = null;
-    }
-    setIsAlarmActive(false);
-    setIsCountdownRunning(false);
-    setCountdownRemaining(countdownTarget * 60);
-  };
+   // 核心：撤销所有排期的声音指令，恢复静音
+  if (oscillatorRef.current) {
+    try {
+      // 如果你之前定义了 gainNodeRef，这里是最佳切断点
+      oscillatorRef.current.stop(); 
+      oscillatorRef.current.disconnect();
+    } catch (e) {}
+    oscillatorRef.current = null;
+  }
+  setIsAlarmActive(false);
+  setIsCountdownRunning(false);
+  setCountdownRemaining(countdownTarget * 60);
+};
 
   // --- 2. 逻辑：长按重置与保存 (兼容 PC) ---
   const handleReset = (mode: 'up' | 'down') => {
@@ -345,10 +347,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   return (
-    // 💡 这里调整为 flex-1 和 justify-center 实现垂直居中，pb-32 留出底部滑动空间
+   // 容器：允许滚动，不再强制 justify-center
   <div className="min-h-full overflow-y-auto no-scrollbar flex flex-col items-center w-full px-6 pb-32">
-  {/* 💡 增加一个占位 div，它的高度决定了整体上移的幅度。h-[10vh] 代表占据屏幕 10% 的高度 */}
-  <div className="h-[8vh] w-full shrink-0"></div>
+   {/* 弹簧 A：顶开上方空间 */}
+   <div className="flex-grow flex-shrink-0 min-h-[40px]"></div>
+   {/* 内容主体：你的卡片 */}
 
   <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
         {/* 这里的卡片会自动在屏幕上下居中 */}
@@ -417,6 +420,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           </>
         )}
       </div>
+      {/* ✅ 弹簧 B 就加在这里！ */}
+      <div className="flex-grow flex-shrink-0 min-h-[100px]"></div>
     </div>
   );
 };
