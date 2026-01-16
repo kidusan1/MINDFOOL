@@ -1368,24 +1368,24 @@ useEffect(() => {
       setIsSearchOpen(true);
     }}
     className={`
-      /* 定位与大小 */
+      /* 1. 基础定位与形状 (移动端优先) */
       fixed z-[999] flex items-center justify-center transition-all 
-      bottom-24 right-6 w-12 h-12 rounded-full
+      bottom-24 right-6 w-11 h-11 rounded-full
       
-      /* 高级感核心：更高透明度的磨砂白 */
-      bg-white/40 backdrop-blur-xl 
-      
-      /* 增强玻璃边缘感：让极细边框颜色也带一点主题色，更和谐 */
-      border border-[#6D8D9D]/20 
-      
-      /* 柔和阴影：外阴影极其轻微，增加内阴影模拟玻璃厚度 */
+      /* 2. 移动端的 Tahoe 质感 (磨砂白) */
+      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
-      /* 交互反馈 */
+      /* 3. 电脑端适配 (md: 这里的设置会覆盖上面的移动端样式) */
+      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 
+      md:rounded-xl       /* 🟢 关键：将胶囊形状改为圆角矩形 */
+      md:bg-transparent   /* 🟢 关键：去掉磨砂背景 */
+      md:border-none      /* 🟢 关键：去掉外边框 */
+      md:shadow-none      /* 🟢 关键：去掉外阴影 */
+      md:backdrop-blur-none /* 🟢 关键：去掉模糊效果 */
+    
+      /* 4. 通用交互动画 */
       active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
-      
-      /* 电脑端适配：保持你原本逻辑 */
-      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:border-none md:shadow-none
     `}
   >
     {/* 图标颜色精准匹配导航文字 #6D8D9D */}
@@ -1609,12 +1609,6 @@ useEffect(() => {
                 max-w-[42rem] mx-auto
                 px-1 md:px-0 pb-24 md:pb-12">
   {searchResult.content}
-  {/* 💡 进阶小技巧：在最底部加一个装饰性的小点，确认内容已读完 */}
-  <div className="flex justify-center pt-8 opacity-20">
-      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
-      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
-      <div className="w-1 h-1 rounded-full bg-[#6D8D9D] mx-1" />
-    </div>
   </div>
 </div>
 
