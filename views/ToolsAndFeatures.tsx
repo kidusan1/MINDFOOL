@@ -336,7 +336,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   return (
     <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
   {/* 手机版固定小高度(h-8)，电脑版变成弹簧(flex-grow)实现居中 */}
-    <div className="h-8 md:flex-grow shrink-0 w-full"></div>
+   <div className="flex-grow shrink-0 w-full"></div>
 
     <div className="w-full md:max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-10 shrink-0 pt-4 md:pt-0">
       
@@ -388,7 +388,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                             <button 
                               onClick={() => { 
                                 // 点击时激活 iPhone 音频环境
-                                if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+                                if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
                                 if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
                                 setIsCountdownRunning(!isCountdownRunning); 
                               }}
@@ -410,7 +410,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       {/* 电脑端底部弹簧 */}
       <div className="hidden md:flex md:flex-grow shrink-0 w-full"></div>
       {/* 手机端安全垫片：确保滑到底部不被放大镜遮挡 */}
-      <div className="h-[140px] md:h-8 shrink-0 w-full"></div>
+      <div className="flex-grow shrink-0 w-full"></div>
+      <div className="h-32 shrink-0 md:hidden"></div>
     </div>
   );
 };
