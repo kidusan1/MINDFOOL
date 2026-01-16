@@ -338,10 +338,10 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   {/* 手机版固定小高度(h-8)，电脑版变成弹簧(flex-grow)实现居中 */}
     <div className="h-8 md:flex-grow shrink-0 w-full"></div>
 
-    <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0 pt-4 md:pt-0">
+    <div className="w-full md:max-w-5xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-10 shrink-0 pt-4 md:pt-0">
       
               {/* 正计时卡片 */}
-        <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
+        <div className="flex flex-col items-center justify-center w-full md:w-[400px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
           <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
           <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8">{formatTime(seconds)}</div>
           <div className="flex flex-col items-center gap-2">
@@ -362,14 +362,20 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           <>
             <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
             {/* 倒计时卡片 */}
-            <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
+            <div className="flex flex-col items-center justify-center w-full md:w-[400px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
                 <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
                 <div className="flex items-center gap-4 my-8">
                     {!isCountdownRunning && !isAlarmActive && <button onClick={() => { setCountdownTarget(prev => Math.max(1, prev - 5)); setCountdownRemaining(Math.max(1, countdownTarget - 5) * 60); }} className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">-</button>}
                     <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
                         {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : 'm'}`)}
                     </div>
-                    {!isCountdownRunning && !isAlarmActive && <button onClick={() => { setCountdownTarget(prev => prev + 5); setCountdownRemaining((countdownTarget + 5) * 60); }} className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">+</button>}
+                    {!isCountdownRunning && !isAlarmActive && 
+                    <button 
+                    onClick={() => { 
+                      setCountdownTarget(prev => prev + 5); 
+                      setCountdownRemaining((countdownTarget + 5) * 60);
+                       }} 
+                    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center">+</button>}
                 </div>
                 
                 <div className="flex flex-col items-center gap-2 w-full">
