@@ -249,6 +249,12 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     if (audio) {
       audio.muted = false;
       audio.volume = 1.0; // 🟢 此时音频一直在后台跑，调大音量即可，不会被拦截
+      // 🟢 最优改动：不论它是否在播，强行再调用一次 play()
+    // 由于开始时已经“握过手”，这里的 play() 极高概率直接成功
+    audio.play().catch(e => {
+      console.error("唤醒失败，显示保底按钮");
+      setNeedUserToStartAlarm(true);
+    });
     }
   };
 
@@ -256,7 +262,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
   if (audio) {
     audio.pause(); 
-    audio.volume = 0;
+    audio.currentTime = 0; // 重置进度
   }
   setIsAlarmActive(false);
   setIsCountdownRunning(false);
@@ -294,12 +300,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
             if (prev <= 1 && !isAlarmActive) {
-              // 🔍 审视结果：如果已经 Unlocked，直接触发响铃，不再拦截
-              if (isAlarmUnlocked) {
                 startAlarmSound();
-              } else {
-                setNeedUserToStartAlarm(true); 
-              }
               return 0;
             }
             return prev - 1;
@@ -403,19 +404,24 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                             <button 
                              onClick={() => {
                               const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
-                              if (audio) {
-                                if (!isCountdownRunning) {
-                                  // 🟢 开始计时时：后台 0 音量启动
-                                  audio.volume = 0; 
-                                  audio.currentTime = 0;
-                                  audio.play().catch(e => console.log("音频启动失败", e));
-                                } else {
-                                  // 🔴 手动暂停时：彻底停止音频，不浪费电量
-                                  audio.pause();
-                                }
+                              if (audio && !isCountdownRunning) {
+                                // 🟢 预热激活：在点击开始的瞬间，让它以极小音量播一下
+                                audio.muted = false;
+                                audio.volume = 0.001; 
+                                audio.play().then(() => {
+                                    // 0.1秒后把音量降到 0，但保持它在 play 状态跑着
+                                    setTimeout(() => { 
+                                      if (!isAlarmActive) audio.volume = 0; 
+                                    }, 100);
+                                }).catch(e => console.log("预热被拦截", e));
+                              } else if (audio && isCountdownRunning) {
+                                // 🔴 如果是点击暂停，就暂停音频
+                                audio.pause();
                               }
+                              
                               setIsCountdownRunning(!isCountdownRunning); 
                             }}
+                                
                               onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
                               className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
                             >
