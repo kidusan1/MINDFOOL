@@ -50,9 +50,12 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
   };
 
   return (
-<div className="w-full min-h-screen overflow-y-auto no-scrollbar flex flex-col items-center pt-[5vh] pb-40 px-6">
-          <div className="flex flex-col gap-6 w-full">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
+      <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col items-center pt-[10vh] md:pt-0 pb-32 px-6">
+        {/* 仅在电脑端显示的顶部弹簧 */}
+        <div className="hidden md:flex flex-grow"></div>
+        
+        <div className="flex flex-col gap-6 w-full my-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
             {TIMER_TYPES.map((tool) => (
             <button
                 key={tool.type}
@@ -97,7 +100,9 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
             </button>
         </div>
       </div>
-    </div>
+{/* 💡 在这里插入一个底部弹簧，确保电脑端上下平衡 */}
+<div className="hidden md:flex flex-grow"></div>
+  </div>
   );
 };
 
@@ -326,9 +331,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 4. 终极布局结构：解决居中与滑动 ---
   return (
-<div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
-    {/* 1. 顶部固定留白：替代之前的 flex-grow，确保位置下移但不锁死高度 */}
-    <div className="flex-grow shrink-0 min-h-[5vh]"></div>
+      <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
+        {/* 手机版保留 5vh 固定间距，电脑版(md:)变为 flex-grow 自动弹簧实现正居中 */}
+        <div className="flex-grow shrink-0 min-h-[5vh] w-full"></div>
 
     <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0 my-auto pt-8">        
         {/* 正计时卡片 */}
