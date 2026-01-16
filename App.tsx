@@ -1368,14 +1368,16 @@ useEffect(() => {
             triggerHaptic(15); // 🔥 震动注入成功！
       setIsSearchOpen(true);
     }}
-    className={`
-      fixed z-[999] flex items-center justify-center transition-all 
-      bottom-24 right-6 w-12 h-12 rounded-full
-      bg-[#6D8D9D]/90 backdrop-blur-2xl border border-white/20
-      shadow-[0_12px_30px_rgba(109,141,157,0.3)] text-white
-      active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
-      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:text-[#6D8D9D]
-    `}
+    /* 替换 className 为这个看看 */
+className={`
+  fixed z-[999] flex items-center justify-center transition-all 
+  bottom-24 right-6 w-12 h-12 rounded-full
+  bg-white/60 backdrop-blur-xl border border-white/50
+  shadow-[0_8px_25px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)] 
+  text-gray-600
+  active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
+  md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:text-[#6D8D9D]
+`}
         >
           <Icons.Search size={22} strokeWidth={2.5} />
           <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
