@@ -326,9 +326,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 4. 终极布局结构：解决居中与滑动 ---
   return (
-<div className="w-full min-h-screen overflow-y-auto no-scrollbar flex flex-col items-center px-6 pb-60">
-    {/* 顶部弹性间距：实现垂直居中 */}
-      <div className="flex-grow shrink-0 min-h-[40px]"></div>
+<div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
+    {/* 1. 顶部固定留白：替代之前的 flex-grow，确保位置下移但不锁死高度 */}
+    <div className="h-[10vh] shrink-0 w-full"></div>
 
       <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0">
         
@@ -396,8 +396,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
       {/* 底部弹性间距：确保在安卓上滑出目录遮挡，高度设为 180px */}
       <div className="flex-grow shrink-0 min-h-[180px]"></div>
-      {/* 🚩 新增：物理占位块，强行撑开滚动区域 */}
-      <div className="h-32 w-full shrink-0"></div>
+      {/* 物理占位块：强行撑开滚动区域，确保按钮能滑出遮挡 */}
+      <div className="h-[250px] shrink-0 w-full"></div>
     </div>
   );
 };
