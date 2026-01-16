@@ -50,8 +50,8 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
   };
 
   return (
-<div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col items-center pt-[10vh] pb-32 px-6">
-        <div className="flex flex-col gap-6 w-full">
+<div className="w-full min-h-screen overflow-y-auto no-scrollbar flex flex-col items-center pt-[5vh] pb-40 px-6">
+          <div className="flex flex-col gap-6 w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
             {TIMER_TYPES.map((tool) => (
             <button
@@ -326,7 +326,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 4. 终极布局结构：解决居中与滑动 ---
   return (
-<div className="flex-1 w-full min-h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6 pb-32">
+<div className="w-full min-h-screen overflow-y-auto no-scrollbar flex flex-col items-center px-6 pb-60">
     {/* 顶部弹性间距：实现垂直居中 */}
       <div className="flex-grow shrink-0 min-h-[40px]"></div>
 
@@ -396,6 +396,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
       {/* 底部弹性间距：确保在安卓上滑出目录遮挡，高度设为 180px */}
       <div className="flex-grow shrink-0 min-h-[180px]"></div>
+      {/* 🚩 新增：物理占位块，强行撑开滚动区域 */}
+      <div className="h-32 w-full shrink-0"></div>
     </div>
   );
 };
