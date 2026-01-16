@@ -49,61 +49,64 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
       }
   };
 
-  return (
-      <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col items-center pt-[10vh] md:pt-0 pb-32 px-6">
-        {/* 仅在电脑端显示的顶部弹簧 */}
-        <div className="hidden md:flex flex-grow"></div>
-        
-        <div className="flex flex-col gap-6 w-full my-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
-            {TIMER_TYPES.map((tool) => (
-            <button
-                key={tool.type}
-                onClick={() => {
-                    playSound('medium');
-                    setTimerType(tool.type);
-                    onNavigate(ViewName.TIMER);
-                }}
-                className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
-            >
-                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${tool.color}33`, color: tool.color }}>
-                <Icons.Play size={20} fill="currentColor" />
-                </div>
-                <span className="text-textSub font-medium text-sm tracking-[0.3em]">{getToolLabel(tool.type)}</span>
-            </button>
-            ))}
+  // --- ToolsView 完整布局替换 ---
+return (
+  <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
+    {/* 🟢 顶部：手机版固定 32px(h-8) 确保靠上；电脑版(md)变为弹性弹簧实现居中 */}
+    <div className="h-8 md:flex-grow shrink-0 w-full"></div>
 
-            <button
-            onClick={() => {
-                playSound('medium');
-                onNavigate(ViewName.BREATHING);
-            }}
-            className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
-            >
-            <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-primary mb-2">
-                <Icons.Breathing size={20} />
-            </div>
-            <span className="text-textSub font-medium text-sm tracking-[0.3em]">{t.tools.breathing}</span>
-            </button>
+    <div className="flex flex-col gap-6 w-full max-w-4xl">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center">
+          {TIMER_TYPES.map((tool) => (
+          <button
+              key={tool.type}
+              onClick={() => {
+                  playSound('medium');
+                  setTimerType(tool.type);
+                  onNavigate(ViewName.TIMER);
+              }}
+              className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
+          >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${tool.color}33`, color: tool.color }}>
+              <Icons.Play size={20} fill="currentColor" />
+              </div>
+              <span className="text-textSub font-medium text-sm tracking-[0.3em]">{getToolLabel(tool.type)}</span>
+          </button>
+          ))}
 
-            <button
-            onClick={() => {
-                playSound('medium');
-                onNavigate(ViewName.STATS);
-            }}
-            className="col-span-2 md:col-span-4 bg-gradient-to-r from-[#E8F1F5] to-cloud rounded-2xl p-4 flex items-center justify-between shadow-sm border border-white/50 mt-1"
-            >
-            <span className="text-textSub font-medium ml-2 text-sm tracking-[0.3em]">{t.tools.stats}</span>
-            <div className="w-8 h-8 rounded-full bg-cloud flex items-center justify-center text-primary shadow-sm mr-2">
-                <Icons.Stats size={16} />
-            </div>
-            </button>
-        </div>
+          <button
+          onClick={() => {
+              playSound('medium');
+              onNavigate(ViewName.BREATHING);
+          }}
+          className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
+          >
+          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-primary mb-2">
+              <Icons.Breathing size={20} />
+          </div>
+          <span className="text-textSub font-medium text-sm tracking-[0.3em]">{t.tools.breathing}</span>
+          </button>
+
+          <button
+          onClick={() => {
+              playSound('medium');
+              onNavigate(ViewName.STATS);
+          }}
+          className="col-span-2 md:col-span-4 bg-gradient-to-r from-[#E8F1F5] to-cloud rounded-2xl p-4 flex items-center justify-between shadow-sm border border-white/50 mt-1"
+          >
+          <span className="text-textSub font-medium ml-2 text-sm tracking-[0.3em]">{t.tools.stats}</span>
+          <div className="w-8 h-8 rounded-full bg-cloud flex items-center justify-center text-primary shadow-sm mr-2">
+              <Icons.Stats size={16} />
+          </div>
+          </button>
       </div>
-{/* 💡 在这里插入一个底部弹簧，确保电脑端上下平衡 */}
-<div className="hidden md:flex flex-grow"></div>
+    </div>
+
+    {/* 🟢 底部：电脑版弹簧(配合顶部实现正居中) + 手机版超大垫片(确保不被放大镜遮挡) */}
+    <div className="hidden md:flex md:flex-grow shrink-0 w-full"></div>
+    <div className="h-48 md:h-12 shrink-0 w-full"></div>
   </div>
-  );
+);
 };
 
 // --- 呼吸跟随 ---
