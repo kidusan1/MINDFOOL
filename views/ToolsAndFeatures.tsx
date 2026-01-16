@@ -368,8 +368,18 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   </button>
 )}
                     <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
-                        {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : 'm'}`)}
-                    </div>
+                    {isCountdownRunning ? (
+  formatTime(countdownRemaining)
+) : isAlarmActive ? (
+  '00:00'
+) : (
+  <>
+    {countdownTarget}
+    <span className="text-2xl ml-1 font-normal opacity-80">
+      {lang === 'zh' ? '分' : 'm'}
+    </span>
+  </>
+)}                    </div>
                     {!isCountdownRunning && !isAlarmActive && (
   <button 
     onClick={() => {
