@@ -237,6 +237,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const alarmGainRef = useRef<GainNode | null>(null);
+
 
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
   const startAlarmSound = () => {
@@ -259,34 +261,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         setIsAlarmActive(true);
         if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
 
-        alarmIntervalRef.current = setInterval(() => {
-            // 2. 🚨 核心修复：必须在 setInterval 内部 重新获取 ref 的当前值
-            // 否则在 iOS 后台或长时间倒计时后，闭包内的 ctx 会失效
-            const activeCtx = audioCtxRef.current;
-            if (!activeCtx) return;
+alarmIntervalRef.current = setInterval(() => {
+  const ctx = audioCtxRef.current;
+  if (!ctx) return;
 
-            // 3. 每次发声前强行 Resume（应对锁屏冻结）
-            if (activeCtx.state === 'suspended') {
-                activeCtx.resume();
-            }
+  // 🚨 不用 await，不然你之前那个报错就会回来
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
 
-            const osc = activeCtx.createOscillator();
-            const gain = activeCtx.createGain();
-            
-            osc.type = 'sine';
-            // 4. 🚨 关键修复：使用 activeCtx.currentTime 确保时间轴对齐
-            osc.frequency.setValueAtTime(880, activeCtx.currentTime);
-            
-            gain.gain.setValueAtTime(0.001, activeCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.4, activeCtx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.001, activeCtx.currentTime + 0.4);
-            
-            osc.connect(gain);
-            gain.connect(activeCtx.destination);
-            
-            osc.start();
-            osc.stop(activeCtx.currentTime + 0.5);
-        }, 1200);
+  // 🔐 核心：确保至少“真正发声过一次”
+  // 如果 iOS 没被用户解锁过，这一步是唯一救命绳
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    console.error('🔇 Alarm oscillator failed', e);
+  }
+}, 1200);
+
     } catch (e) { 
         console.error('Alarm Error', e); 
     }
@@ -297,6 +303,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
         clearInterval(alarmIntervalRef.current);
         alarmIntervalRef.current = null;
       }
+      if (alarmGainRef.current) {
+        try {
+          alarmGainRef.current.disconnect();
+        } catch {}
+        alarmGainRef.current = null;
+      }
+      
  // 2. 🔥 核心优化：使用 close() 而不是 suspend()
     // close() 会彻底释放音频硬件资源，确保绝对静音，不会有残留
     if (audioCtxRef.current) {
@@ -445,6 +458,23 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                                 const ctx = audioCtxRef.current;
                                 if (ctx.state === 'suspended') ctx.resume();
                                 // ✅ 浏览器音频解锁（关键）
+                                // ✅ 关键：在用户手势中创建真实发声通道（但音量极小）
+if (!alarmGainRef.current) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.value = 880;
+
+  gain.gain.value = 0.0001; // 几乎听不到，但“真实存在”
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(); // ⚠️ 这一步至关重要
+  alarmGainRef.current = gain;
+}
+
 if (!isAlarmUnlocked) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
