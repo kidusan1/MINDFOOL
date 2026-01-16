@@ -116,9 +116,9 @@ export const BreathingView: React.FC<BreathingViewProps> = ({ onAddMinutes, lang
 
   const cycle = useRef([
     { phase: 'In', duration: 4000, text: lang === 'en' ? 'Inhale' : '吸气' },
-    { phase: 'Hold1', duration: 6000, text: lang === 'en' ? 'Hold' : '屏息' },
+    { phase: 'Hold1', duration: 4000, text: lang === 'en' ? 'Hold' : '屏息' },
     { phase: 'Out', duration: 4000, text: lang === 'en' ? 'Exhale' : '呼气' },
-    { phase: 'Hold2', duration: 6000, text: lang === 'en' ? 'Hold' : '屏息' },
+    { phase: 'Hold2', duration: 4000, text: lang === 'en' ? 'Hold' : '屏息' },
   ]).current;
 
   useEffect(() => {
@@ -265,14 +265,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const stopAlarmSound = () => {
     // 核心修改：先清空所有计划中的音频调度
-  if (audioCtxRef.current) {
-    audioCtxRef.current.close().then(() => {
-        audioCtxRef.current = null;
-    });
-}
     if (oscillatorRef.current) {
-        try { oscillatorRef.current.stop(); } catch(e) {}
-        oscillatorRef.current = null;
+        try { oscillatorRef.current.stop(); 
+        oscillatorRef.current.disconnect();
+      } catch (e) {}
+      oscillatorRef.current = null;
     }
     setIsAlarmActive(false);
     setIsCountdownRunning(false);
@@ -349,10 +346,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   return (
     // 💡 这里调整为 flex-1 和 justify-center 实现垂直居中，pb-32 留出底部滑动空间
-    <div className="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto no-scrollbar pt-4 pb-24 px-6 min-h-screen">
-      <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+  <div className="min-h-full overflow-y-auto no-scrollbar flex flex-col items-center w-full px-6 pb-32">
+  {/* 💡 增加一个占位 div，它的高度决定了整体上移的幅度。h-[10vh] 代表占据屏幕 10% 的高度 */}
+  <div className="h-[8vh] w-full shrink-0"></div>
+
+  <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
         {/* 这里的卡片会自动在屏幕上下居中 */}
-        
+
         {/* 正计时卡片：保留你所有的 UI 参数 */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md min-h-[300px]">
           <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{typeLabel}</h2>
@@ -597,9 +597,9 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
     const blueBoxText = useMemo(() => {
       const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
       if (lang === 'zh') {
-          return `今天我已完成 ${items}，回向大家色身康泰、福慧增长、道业增上，随喜赞叹各位伙伴！`;
+          return `今天我已完成 ${items}，回向大家色身康泰、福慧增长、道业增上，世间法所求如愿，随喜赞叹各位伙伴！`;
       } else {
-          return `I have completed ${items} today. Dedicating this to everyone's health, wisdom, and spiritual progress. Rejoicing in everyone's practice!`;
+          return `I have completed ${items} today. Dedicated to everyone’s well-being, blessings, wisdom, and spiritual growth. May all wishes be fulfilled. Rejoicing in all！`;
       }
   }, [completedItems, lang]);
 
