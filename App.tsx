@@ -1249,409 +1249,185 @@ useEffect(() => {
 
   return (
     <>
-    {/* ✅【新增】第一层拦截：如果没有登录，直接显示登录页，不渲染 Layout */}
-    {!currentUser ? (
-      <Login 
-        users={allUsers} 
-        authCode={authCode} 
-        lang={lang} 
-        setLang={setLang} 
-        onLogin={handleLogin} 
-      />
-    ) : (
-      !allUsers ? ( 
-        <div className="flex items-center justify-center h-screen bg-[#F0EEE9] text-[#6D8D9D]">
-          正在同步云端数据...
-        </div>
+      {/* 🟢 第一层：登录拦截 */}
+      {!currentUser ? (
+        <Login users={allUsers} authCode={authCode} lang={lang} setLang={setLang} onLogin={handleLogin} />
       ) : (
-      /* ✅【保留】原有的 Layout 逻辑，放在 else 里 */
-      <Layout currentView={currentView} onNavigate={navigate} onBack={goBack} user={currentUser} onLogout={handleLogout} lang={lang} setLang={setLang}>
-      {currentView === ViewName.HOME && (
-  <div className="home-view-wrapper">
-   <Home
-  onNavigate={navigate}
-  stats={normalizeDailyStats(dailyStats)}
-  lang={lang}
-  user={currentUser}
-  homeQuotes={homeQuotes}
-/>
-
-  </div>
-)}
-        {currentView === ViewName.TOOLS && <ToolsView onNavigate={navigate} setTimerType={setSelectedTimerType} lang={lang} />}
-        {currentView === ViewName.BREATHING && <BreathingView onAddMinutes={(m) => handleAddMinutes(TimerType.BREATH, m)} lang={lang} />}
-        {currentView === ViewName.TIMER && <TimerView type={selectedTimerType} onAddMinutes={(m) => handleAddMinutes(selectedTimerType, m)} lang={lang} />}
-        {currentView === ViewName.STATS && <StatsView
-  stats={normalizeDailyStats(dailyStats)}
-  history={historyStats}
-  lang={lang}
-  user={currentUser}
-  homeQuotes={homeQuotes}
-  allUsersStats={userStatsMap}
-  rankPercentage={rankPercentage}
-/>
-}
-        
-        {currentView === ViewName.DAILY && (
-          <div className="daily-view-wrapper">
-          <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
+        /* 🟢 第二层：数据同步拦截 */
+        !allUsers ? ( 
+          <div className="flex items-center justify-center h-screen bg-[#F0EEE9] text-[#6D8D9D]">
+            正在同步云端数据...
           </div>
-        )}
-        {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
-        {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
-        {currentView === ViewName.ADMIN && (
-          <div className="h-full overflow-y-auto pb-20 custom-scrollbar">
-            <div className="max-w-4xl mx-auto p-4 space-y-4">
-              <div className="bg-[#F8F9FA] rounded-2xl border-2 border-dashed border-primary/20 p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Icons.Calendar size={20} className="text-primary" />
+        ) : (
+          /* 🟢 第三层：主应用 Layout */
+          <Layout 
+            currentView={currentView} onNavigate={navigate} onBack={goBack} 
+            user={currentUser} onLogout={handleLogout} lang={lang} setLang={setLang}
+          >
+            {currentView === ViewName.HOME && (
+              <div className="home-view-wrapper">
+                <Home onNavigate={navigate} stats={normalizeDailyStats(dailyStats)} lang={lang} user={currentUser} homeQuotes={homeQuotes} />
+              </div>
+            )}
+            {currentView === ViewName.TOOLS && <ToolsView onNavigate={navigate} setTimerType={setSelectedTimerType} lang={lang} />}
+            {currentView === ViewName.BREATHING && <BreathingView onAddMinutes={(m) => handleAddMinutes(TimerType.BREATH, m)} lang={lang} />}
+            {currentView === ViewName.TIMER && <TimerView type={selectedTimerType} onAddMinutes={(m) => handleAddMinutes(selectedTimerType, m)} lang={lang} />}
+            {currentView === ViewName.STATS && (
+              <StatsView stats={normalizeDailyStats(dailyStats)} history={historyStats} lang={lang} user={currentUser} homeQuotes={homeQuotes} allUsersStats={userStatsMap} rankPercentage={rankPercentage} />
+            )}
+            {currentView === ViewName.DAILY && (
+              <div className="daily-view-wrapper">
+                <DailyView checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} currentWeek={currentWeek} setCurrentWeek={setCurrentWeek} currentDateStr={currentWeekRangeStr} onNavigate={navigate} setCourseId={setSelectedCourseId} classVersion={currentUser.classVersion} courses={coursesMap[currentUser.classVersion] || []} onUpdateWeeklyState={handleUpdateWeeklyState} checkInConfig={checkInConfig} lang={lang} />
+              </div>
+            )}
+            {currentView === ViewName.COURSE_DETAIL && <CourseDetail courseId={selectedCourseId} content={courseContents[currentContentKey] || ''} courses={coursesMap[currentUser.classVersion] || []} lang={lang} />}
+            {currentView === ViewName.RECORD && <RecordView onOpenInput={openNewRecordModal} records={records} onDelete={handleDeleteRecord} onEdit={openEditModal} onPin={handlePinRecord} lang={lang} />}
+            {currentView === ViewName.ADMIN && (
+              <div className="h-full overflow-y-auto pb-20 custom-scrollbar">
+                <div className="max-w-4xl mx-auto p-4 space-y-4">
+                  <div className="bg-[#F8F9FA] rounded-2xl border-2 border-dashed border-primary/20 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-primary/10 rounded-lg"><Icons.Calendar size={20} className="text-primary" /></div>
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-800">班级学修周期设定</h3>
+                        <p className="text-[10px] text-gray-400">设置后，全班“正知正见”页面的周日期将自动更新</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap md:flex-nowrap gap-3">
+                      <input type="date" className="flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none" value={checkInConfig.weekStartDate || '2026-01-06'} onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })} />
+                      <button onClick={handleSaveGlobalConfigs} className="w-full md:w-auto bg-primary text-white px-8 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all">同步全班周期</button>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800">班级学修周期设定</h3>
-                    <p className="text-[10px] text-gray-400">设置后，全班“正知正见”页面的周日期将自动更新</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap md:flex-nowrap gap-3">
-                  <input 
-                    type="date" 
-                    className="flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                    value={checkInConfig.weekStartDate || '2026-01-06'}
-                    onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
-                  />
-                  <button 
-                    onClick={handleSaveGlobalConfigs}
-                    className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all shadow-md shadow-primary/10"
-                  >
-                    同步全班周期
-                  </button>
+                  <Admin courseContents={courseContents} onUpdateCourseContent={handleUpdateCourseContent} onUpdateCourseStatus={handleUpdateCourseStatus} onUpdateCourseTitle={handleUpdateCourseTitle} allUsers={allUsers} onUpdateUserPermission={handleUpdateUserPermission} coursesMap={coursesMap} onAddCourseWeek={handleAddCourseWeek} onDeleteCourseWeek={handleDeleteCourseWeek} authCode={authCode} setAuthCode={setAuthCode} weeklyStates={weeklyStates} splashQuotes={splashQuotes} setSplashQuotes={setSplashQuotes} homeQuotes={homeQuotes} setHomeQuotes={setHomeQuotes} checkInConfig={checkInConfig} setCheckInConfig={setCheckInConfig} lang={lang} onSaveGlobalConfigs={handleSaveGlobalConfigs} onRefreshUsers={loadAllUsers} onRefreshWeeklyStates={refreshWeeklyStates} />
                 </div>
               </div>
-              <Admin 
-                courseContents={courseContents} 
-                onUpdateCourseContent={handleUpdateCourseContent} 
-                onUpdateCourseStatus={handleUpdateCourseStatus} 
-                onUpdateCourseTitle={handleUpdateCourseTitle} 
-                allUsers={allUsers} 
-                onUpdateUserPermission={handleUpdateUserPermission} 
-                coursesMap={coursesMap} 
-                onAddCourseWeek={handleAddCourseWeek} 
-                onDeleteCourseWeek={handleDeleteCourseWeek} 
-                authCode={authCode} 
-                setAuthCode={setAuthCode} 
-                weeklyStates={weeklyStates} 
-                splashQuotes={splashQuotes} 
-                setSplashQuotes={setSplashQuotes} 
-                homeQuotes={homeQuotes} 
-                setHomeQuotes={setHomeQuotes} 
-                checkInConfig={checkInConfig} 
-                setCheckInConfig={setCheckInConfig} 
-                lang={lang} 
-                onSaveGlobalConfigs={handleSaveGlobalConfigs} 
-                onRefreshUsers={loadAllUsers} 
-                onRefreshWeeklyStates={refreshWeeklyStates} 
-              />
-            </div>
-          </div>
-        )}
-      </Layout>
-      )
-)}
-      {/* 录入日记的弹窗 */}
+            )}
+          </Layout>
+        )
+      )}
+
+      {/* 🟡 独立于 Layout 的弹窗组件 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-{/* --- 1. 搜索按钮 --- */}
-{currentUser && !isSearchOpen && (
-  <button
-    // 1️⃣ 手指按下：这里是震动最灵敏的地方
-    onTouchStart={(e) => {
-      // 🟢 1. 强震动：放在最开头，确保同步触发
-      if (typeof window !== 'undefined' && navigator.vibrate) {
-        // 使用 [20ms 震, 10ms 停, 20ms 震] 的强反馈序列
-        navigator.vibrate([20, 10, 20]); 
-      }
-      
-      (window as any).searchTimer = setTimeout(() => {
-        setIsSearchOpen(true);
-      }, 300); 
-    }}
+      {/* --- 1. 搜索按钮：极致触感增强版 --- */}
+      {currentUser && !isSearchOpen && (
+        <button
+          onTouchStart={() => {
+            if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate([30, 20, 30]);
+            (window as any).searchTimer = setTimeout(() => setIsSearchOpen(true), 300);
+          }}
+          onTouchEnd={() => (window as any).searchTimer && clearTimeout((window as any).searchTimer)}
+          onContextMenu={(e) => e.preventDefault()}
+          onClick={(e) => { if (window.innerWidth > 768) setIsSearchOpen(true); else e.preventDefault(); }}
+          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 shadow-lg active:scale-50 transition-all md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none"
+        >
+          <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
+          <span className="hidden md:inline-block ml-3 text-sm font-medium text-[#6D8D9D]">{lang === 'zh' ? '搜索' : 'Search Terms'}</span>
+        </button>
+      )}
 
-    // 2️⃣ 手指抬起
-    onTouchEnd={(e) => {
-      if ((window as any).searchTimer) {
-        clearTimeout((window as any).searchTimer);
-      }
-    }}
-
-    // 3️⃣ 关键：防止长按弹出系统菜单
-    onContextMenu={(e) => e.preventDefault()}
-
-    // 4️⃣ 电脑端逻辑：增加 e.preventDefault 防止触摸设备重复触发
-    onClick={(e) => {
-      if (window.innerWidth > 768) {
-        setIsSearchOpen(true);
-      } else {
-        // 在手机端屏蔽掉 onClick，全靠上面的 Touch 逻辑，防止逻辑混乱
-        e.preventDefault();
-      }
-    }}
-
-    className={`
-      fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full
-      flex items-center justify-center transition-all 
-      
-      /* 这里的白色透明度我建议降到 40%，科技感更强 */
-      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
-      shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
-      
-      /* 动效：缩放 确实更好，压感更强 */
-      active:scale-50 transition-transform duration-300 ease-out
-      
-      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 
-      md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none md:border-none md:shadow-none
-    `}
-  >
-    <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
-    {/* 电脑端文字保留 */}
-    <span className="hidden md:inline-block ml-3 text-sm font-medium tracking-wide text-[#6D8D9D]">
-      {lang === 'zh' ? '搜索' : 'Search Terms'}
-    </span>
-  </button>
-)}
-
-      {/* --- 2. 全屏毛玻璃搜索层 --- */}
+      {/* --- 2. 全屏毛玻璃搜索层：空间稳定性版 --- */}
       {currentUser && isSearchOpen && (
-  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start md:justify-start pt-12 md:pt-24 pb-12 md:pb-0">
-    
-    {/* 背景层：液态感更强的黑色微透 */}
-    <div 
-      className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-1000 ease-out" 
-      onClick={() => {
-        setIsSearchOpen(false);
-        setSearchQuery('');
-        setSuggestions([]);
-        setSearchResult(null);           
-        setSearchView('list');
-      }}
-    />
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-20 md:pt-32 pb-12">
+          {/* 背景层 */}
+          <div className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-1000" onClick={() => { setIsSearchOpen(false); setSearchView('list'); }} />
           
-   {/* 内容容器：增加 origin-bottom-right 实现从按钮处展开 */}
-
-   <div 
-      className={`
-        relative w-[92%] max-w-lg z-10 
-     
-        animate-in fade-in zoom-in-0 slide-in-from-bottom-64 slide-in-from-right-20
-        duration-700
-         `}
-      style={{
-        /* 2. 苹果级减速曲线：先快后慢，极度丝滑 */
-        animationTimingFunction: 'cubic-bezier(0.15, 1, 0.3, 1)',
-        /* 3. 精准对齐你的右下角按钮位置 (right-6 = 24px, bottom-24 = 96px) */
-        transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' 
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-    {/* 顶部无痕浏览提示（移动端关键引导） */}
-  <div
-  onClick={() => setIsSearchOpen(false)}
-  className="
-    mb-3
-    text-center
-    text-white/70
-    text-[11px]
-    tracking-widest
-    font-light
-    cursor-pointer
-    select-none
-    hover:text-white
-    transition-colors
-  "
->
-  {lang === 'zh'
-    ? '无痕浏览 · 点按此处返回'
-    : 'Private Search · Tap here to return'}
-</div>
-      {/* 搜索框 */}
-      <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] px-4 py-4">
-        <Icons.Search className="text-[#6D8D9D]/70 mr-3" size={24} />
+          {/* 内容容器 */}
+          <div 
+            className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 slide-in-from-bottom-64 duration-700"
+            style={{ animationTimingFunction: 'cubic-bezier(0.15, 1, 0.3, 1)', transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Return'}</div>
+            
+            {/* 搜索框 */}
+            <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl px-4 py-4 shadow-xl">
+              <Icons.Search className="text-[#6D8D9D]/70 mr-3" size={24} />
               <input 
-                type="text"
+                type="text" className="w-full bg-transparent border-none outline-none text-lg text-gray-800 font-light" value={searchQuery}
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
-                className="w-full bg-transparent border-none outline-none text-lg text-gray-800 placeholder:text-gray-400 font-light"
-                value={searchQuery}
                 onChange={(e) => {
-                  const val = e.target.value;
-                
-                  // ✅ 新增：输入即回到列表态
-                  setSearchView('list');
-                  setSearchResult(null);
-                  setSearchQuery(val);
-
+                  const val = e.target.value; setSearchView('list'); setSearchResult(null); setSearchQuery(val);
                   if (val.length >= 1) {
-                    const matches = dictionaryData
-                      .filter((i: any) => i.title.includes(val))
+                    // ✅ 恢复排序算法逻辑
+                    const matches = dictionaryData.filter((i: any) => i.title.includes(val))
                       .sort((a: any, b: any) => {
-                        // 1. 完全一致排第一
-                        if (a.title === val) return -1;
-                        if (b.title === val) return 1;
-                        
-                        // 2. 以关键词开头排第二
-                        const aStarts = a.title.startsWith(val);
-                        const bStarts = b.title.startsWith(val);
-                        if (aStarts && !bStarts) return -1;
-                        if (!aStarts && bStarts) return 1;
-                
-                        // 3. 短的词排前面（更精准）
+                        if (a.title === val) return -1; if (b.title === val) return 1;
+                        const aStarts = a.title.startsWith(val); const bStarts = b.title.startsWith(val);
+                        if (aStarts && !bStarts) return -1; if (!aStarts && bStarts) return 1;
                         return a.title.length - b.title.length;
-                      })
-                      .slice(0, 13);
+                      }).slice(0, 13);
                     setSuggestions(matches);
-                  } else {
-                    setSuggestions([]);
-                  }
+                  } else setSuggestions([]);
                 }}
-                
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchOpen(false);
                   if (e.key === 'Enter') {
-                    // 🚀 优化：如果有联想词，Enter 直接进入第一项
-                    if (suggestions.length > 0) {
-                      const firstItem = suggestions[0];
-                      // 关键：直接用 ID 查找或直接传递对象，避免字符串模糊匹配
-                      setSearchResult(firstItem); 
-                      setSearchView('detail');
-                    } else {
-                      // 只有完全没结果时，才执行原有的模糊搜索（避免出现“尚未收录”）
-                      handleCleanSearch(e.currentTarget.value);
-                    }
+                    if (suggestions.length > 0) { setSearchResult(suggestions[0]); setSearchView('detail'); }
+                    else { handleCleanSearch(e.currentTarget.value); } // ✅ 恢复保底搜索
                   }
                 }}
               />
-              <button
-  onClick={() => {
-    // 1️⃣ 清空搜索内容
-    setSearchQuery('');
-    setSuggestions([]);
-    setSearchResult(null);
-
-    // 2️⃣ 回到列表态
-    setSearchView('list');
-
-    // ❗ 不关闭搜索层
-    // 不要 setIsSearchOpen(false)
-  }}
-  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
->
-  <Icons.X size={20} />
-</button>
-
+              <button onClick={() => { setSearchQuery(''); setSuggestions([]); setSearchView('list'); }} className="p-2 text-gray-400"><Icons.X size={20} /></button>
             </div>
 
-{/* 联想词列表：增加级联淡入效果 */}
-{searchView === 'list' && suggestions.length > 0 && (
-// 关键：增加 duration-700 和 scale-100 的缓冲感
-<div className="absolute top-full left-0 right-0 mt-3 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border border-white/30 z-[100] animate-in fade-in slide-in-from-top-4 duration-500 ease-out">
-{/* ... suggestions.map 逻辑保持不变 ... */}                   {suggestions.map((item: any) => (
- <div 
-                  key={item.id}
-                  className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition-colors"
-                  onClick={() => {
-                    // 🚀 核心修复：直接设置对象，不再通过 title 去 find
-                    setSearchResult(item); 
-                    setSearchQuery(item.title); // 输入框显示点击的词
-
-                    setSearchView('detail');
-                  }}
-                >
-                
-                    <span className="text-gray-600 font-light tracking-wide">{item.title}</span>
-                    <span className="text-xs text-gray-400 truncate ml-4 max-w-[180px] font-light">
-                      {item.content.replace(/【.*?】/g, '').substring(0, 20)}...
-                    </span>
-                  </div>
-                ))}
-                {/* ✨ 刚才插入的省略提示 */}
-{suggestions.length >= 13 && (
-  <div className="relative py-3 text-center text-[10px] text-gray-500 tracking-[1em] border-t border-gray-50 bg-white/30">
-    ···
-  </div>
-)}
-{/* ✨ 插入结束 */}
-
-              </div>
-            )}
-
-            {/* --- 搜索无结果时的引导提示 --- */}
-{searchView === 'list' && searchQuery && suggestions.length === 0 && !isSearching && (
-  <div className="mt-6 px-6 py-5 text-center text-gray-500 bg-white/60 backdrop-blur-md rounded-2xl shadow-inner border border-white/40 animate-in fade-in duration-300">
-    <p className="text-sm leading-relaxed font-light">
-      {lang === 'zh'
-        ? '该完整词条尚未收录'
-        : 'This exact term is not yet in the dictionary.'}
-    </p>
-    <p className="mt-2 text-xs text-gray-400 leading-relaxed">
-      {lang === 'zh'
-        ? '建议拆分关键词重新检索'
-        : 'Try simplifying your keywords and search again.'}
-    </p>
-  </div>
-)}
-
-
-{searchView === 'detail' && searchResult && (
-              <div className="mt-8 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-500 ease-out">               
-              {/* 固定头部 */}
-              <div className="flex justify-between items-center border-b pb-3 mb-4">
-                {/* 标题减细 */}
-              <h3 className="text-xl font-medium text-gray-800">
-                {searchResult.title}
-                </h3>
-              <button 
-                onClick={() => {
-                  setSearchView('list');
-                  setSearchResult(null);
-    // 2. 这里的逻辑确保如果列表丢了，会根据当前输入框内容重新激活列表
-    const inputEl = document.querySelector(
-      'input[placeholder*="搜索"]'
-    ) as HTMLInputElement;
-    if (inputEl && inputEl.value && suggestions.length === 0) {
-      const matches = dictionaryData
-      .filter((i: any) => i.title.includes(inputEl.value)).slice(0, 13);
-      setSuggestions(matches);
-    }
-  }}
-  className="flex items-center text-[10px] text-gray-500 bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-200 transition-all active:scale-95 leading-none"
->
-  <Icons.ChevronLeft size={12} className="mr-1" />
-  {lang === 'zh' ? '返回列表' : 'Back'}
-</button>
-</div>
-{/* 正文滚动区 */}
-<div className="max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
-<div className="text-gray-700 font-light whitespace-pre-wrap text-justify
-                leading-[1.9] tracking-[0.02em]
-                space-y-6
-                max-w-[42rem] mx-auto
-                px-1 md:px-0 pb-24 md:pb-12">
-  {searchResult.content}
-  </div>
-</div>
-
-
-                  {/* 底部点题（可选固定） */}
-                <div className="shrink-0 px-6 py-3 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">
-                  {lang === 'zh' ? '闻 · 思 · 修 · 证' : 'HEAR · THINK · PRACTICE · REALIZE'}
+            {/* 结果容器：确保位置完全重合 */}
+            <div className="relative mt-3 w-full">
+              {/* 联想列表 */}
+              {searchView === 'list' && suggestions.length > 0 && (
+                <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+                  {suggestions.map((item: any) => (
+                    <div key={item.id} className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 flex justify-between items-center transition-colors" onClick={() => { setSearchResult(item); setSearchQuery(item.title); setSearchView('detail'); }}>
+                      <span className="text-gray-600 font-light tracking-wide">{item.title}</span>
+                      <span className="text-xs text-gray-400 truncate ml-4 max-w-[150px] font-light">
+                        {item.content.replace(/【.*?】/g, '').substring(0, 20)}... {/* ✅ 恢复内容过滤 */}
+                      </span>
+                    </div>
+                  ))}
+                  {suggestions.length >= 13 && ( <div className="py-3 text-center text-[10px] text-gray-500 tracking-[1em]">···</div> )}
                 </div>
-              </div>
-            )}
+              )}
 
+              {/* 无结果提示 */}
+              {searchView === 'list' && searchQuery && suggestions.length === 0 && !isSearching && (
+                <div className="relative px-6 py-5 text-center text-gray-500 bg-white/60 backdrop-blur-md rounded-2xl border border-white/40 animate-in fade-in duration-300">
+                  <p className="text-sm font-light">{lang === 'zh' ? '该完整词条尚未收录' : 'Not found.'}</p>
+                </div>
+              )}
 
+              {/* 详情卡片 */}
+              {searchView === 'detail' && searchResult && (
+                <div className="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-500 ease-out">
+                  <div className="flex justify-between items-center border-b pb-3 mb-4">
+                    <h3 className="text-xl font-medium text-gray-800">{searchResult.title}</h3>
+                    <button 
+                      onClick={() => {
+                        setSearchView('list'); setSearchResult(null);
+                        // ✅ 恢复返回时重刷列表功能
+                        if (searchQuery && suggestions.length === 0) {
+                          const matches = dictionaryData.filter((i: any) => i.title.includes(searchQuery)).slice(0, 13);
+                          setSuggestions(matches);
+                        }
+                      }} 
+                      className="flex items-center text-[10px] text-gray-500 bg-gray-100 px-3 py-2 rounded-full active:scale-95"
+                    >
+                      <Icons.ChevronLeft size={12} className="mr-1" />{lang === 'zh' ? '返回列表' : 'Back'}
+                    </button>
+                  </div>
+                  <div className="max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="text-gray-700 font-light whitespace-pre-wrap text-justify leading-[1.9] max-w-[42rem] mx-auto pb-32 px-1">
+                      {searchResult.content}
+                      <div className="h-24 w-full" />
+                    </div>
+                  </div>
+                  <div className="shrink-0 px-6 py-3 border-t border-gray-100 text-[10px] text-gray-400 text-center tracking-[0.5em]">{lang === 'zh' ? '闻 · 思 · 修 · 证' : 'PRACTICE'}</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
     </>
   );
-}; // <--- 补全这个闭合大括号，它是整个 App 函数的结尾
-
+}
 export default App;
