@@ -50,7 +50,7 @@ export const ToolsView: React.FC<ToolsProps> = ({ onNavigate, setTimerType, lang
   };
 
   return (
-<div className="min-h-full overflow-y-auto no-scrollbar p-4 flex flex-col pt-[12vh] pb-32">
+<div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col items-center pt-[10vh] pb-32 px-6">
         <div className="flex flex-col gap-6 w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-center h-full">
             {TIMER_TYPES.map((tool) => (
