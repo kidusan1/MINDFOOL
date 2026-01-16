@@ -328,10 +328,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   return (
 <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
     {/* 1. 顶部固定留白：替代之前的 flex-grow，确保位置下移但不锁死高度 */}
-    <div className="h-[10vh] shrink-0 w-full"></div>
+    <div className="flex-grow shrink-0 min-h-[5vh]"></div>
 
-      <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0">
-        
+    <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0 my-auto pt-8">        
         {/* 正计时卡片 */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
           <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
@@ -393,11 +392,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           </>
         )}
       </div>
-
-      {/* 底部弹性间距：确保在安卓上滑出目录遮挡，高度设为 180px */}
-      <div className="flex-grow shrink-0 min-h-[180px]"></div>
-      {/* 物理占位块：强行撑开滚动区域，确保按钮能滑出遮挡 */}
-      <div className="h-[170px] shrink-0 w-full"></div>
+      <div className="h-[120px] shrink-0 w-full"></div>
     </div>
   );
 };
