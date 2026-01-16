@@ -405,10 +405,22 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                     ) : (
                         <>
                             <button 
-                              onClick={() => { 
-                                // 点击时激活 iPhone 音频环境
-                                if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-                                if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+                              onClick={() => {
+                                // 必须在用户点击的回调函数最顶层执行
+                                if (!audioCtxRef.current) {
+                                  audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+                                }
+                                
+                                // 关键：即使已经创建，也要在每次点击时尝试 resume，并播放一个极短的静音
+                                const ctx = audioCtxRef.current;
+                                if (ctx.state === 'suspended') ctx.resume();
+                                
+                                const buffer = ctx.createBuffer(1, 1, 22050);
+                                const source = ctx.createBufferSource();
+                                source.buffer = buffer;
+                                source.connect(ctx.destination);
+                                source.start(); // 播放一个空白片段，彻底打通浏览器音频通道
+                              
                                 setIsCountdownRunning(!isCountdownRunning); 
                               }}
                               onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
