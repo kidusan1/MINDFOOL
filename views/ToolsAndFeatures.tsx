@@ -331,7 +331,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
               {/* 正计时卡片 */}
         <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
           <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
-          <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8">{formatTime(seconds)}</div>
+          <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8 tabular-nums">{formatTime(seconds)}</div>
           <div className="flex flex-col items-center gap-2">
             <button 
               onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }}
