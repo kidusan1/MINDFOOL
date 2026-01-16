@@ -240,40 +240,50 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   // --- 1. 闹铃核心逻辑：解决停不掉和 iPhone 没声 ---
   const startAlarmSound = () => {
     try {
-      // 1. 确保音频上下文存在
-        if (!audioCtxRef.current) {
+        // 1. 确保拿到最新的 Context
+        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
-        const ctx = audioCtxRef.current;
-        // 2. 第一次立即唤醒（针对未锁屏的情况）
-        if (ctx.state === 'suspended') ctx.resume();
-        setIsAlarmActive(true);
-        // 清除任何可能存在的旧闹铃
-        if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
-        // 3. 开启循环响铃
-        // 每隔1.2秒发出一声，确保物理切断有效
-        alarmIntervalRef.current = setInterval(() => {
-      // 每次循环（每一声响铃前），都检查一次 ctx 是否被系统冻结了
-            // 如果被冻结（例如因为锁屏），立刻唤醒它，然后再发声
-            if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-              audioCtxRef.current.resume();
-          }
-          // 必须重新获取当前的 ctx（以防 ref 变化，虽然概率很低但为了 TS 安全）
+        
+        // 🚨 关键：在外部先 resume 一次
+        if (audioCtxRef.current.state === 'suspended') {
+            audioCtxRef.current.resume();
+        }
 
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
+        setIsAlarmActive(true);
+        if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+
+        alarmIntervalRef.current = setInterval(() => {
+            // 2. 🚨 核心修复：必须在 setInterval 内部 重新获取 ref 的当前值
+            // 否则在 iOS 后台或长时间倒计时后，闭包内的 ctx 会失效
+            const activeCtx = audioCtxRef.current;
+            if (!activeCtx) return;
+
+            // 3. 每次发声前强行 Resume（应对锁屏冻结）
+            if (activeCtx.state === 'suspended') {
+                activeCtx.resume();
+            }
+
+            const osc = activeCtx.createOscillator();
+            const gain = activeCtx.createGain();
+            
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            // 声音渐变（防止爆音）
-            gain.gain.setValueAtTime(0.001, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            // 4. 🚨 关键修复：使用 activeCtx.currentTime 确保时间轴对齐
+            osc.frequency.setValueAtTime(880, activeCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.001, activeCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.4, activeCtx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, activeCtx.currentTime + 0.4);
+            
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(activeCtx.destination);
+            
             osc.start();
-            osc.stop(ctx.currentTime + 0.5);
+            osc.stop(activeCtx.currentTime + 0.5);
         }, 1200);
-    } catch (e) { console.error('Alarm Error', e); }
+    } catch (e) { 
+        console.error('Alarm Error', e); 
+    }
   };
 
   const stopAlarmSound = () => {
