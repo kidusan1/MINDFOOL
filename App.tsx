@@ -1420,7 +1420,7 @@ useEffect(() => {
 
       {/* --- 2. 全屏毛玻璃搜索层 --- */}
       {currentUser && isSearchOpen && (
-  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-end md:justify-start pt-12 md:pt-24 pb-12 md:pb-0">
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start md:justify-start pt-12 md:pt-24 pb-12 md:pb-0">
     
     {/* 背景层：液态感更强的黑色微透 */}
     <div 
