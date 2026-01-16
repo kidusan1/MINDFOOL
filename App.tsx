@@ -1365,9 +1365,10 @@ useEffect(() => {
   <button
     // 1️⃣ 手指按下：这里是震动最灵敏的地方
     onTouchStart={(e) => {
-      // 这里的震动必须是第一行，确保同步触发
+      // 🟢 1. 强震动：放在最开头，确保同步触发
       if (typeof window !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([20, 10, 20]); // 安卓推荐的双震序列，更有质感
+        // 使用 [20ms 震, 10ms 停, 20ms 震] 的强反馈序列
+        navigator.vibrate([20, 10, 20]); 
       }
       
       (window as any).searchTimer = setTimeout(() => {
@@ -1403,8 +1404,8 @@ useEffect(() => {
       bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
-      /* 动效：缩放改为 75 确实更好，压感更强 */
-      active:scale-75 transition-transform duration-300 ease-out
+      /* 动效：缩放 确实更好，压感更强 */
+      active:scale-50 transition-transform duration-300 ease-out
       
       md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 
       md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none md:border-none md:shadow-none
@@ -1424,7 +1425,7 @@ useEffect(() => {
     
     {/* 背景层：液态感更强的黑色微透 */}
     <div 
-      className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-500" 
+      className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-1000 ease-out" 
       onClick={() => {
         setIsSearchOpen(false);
         setSearchQuery('');
@@ -1439,13 +1440,13 @@ useEffect(() => {
    <div 
       className={`
         relative w-[92%] max-w-lg z-10 
-        /* 1. 组合动画：缩放 + 偏移 + 渐入 */
-        animate-in fade-in zoom-in-50 slide-in-from-bottom-32 slide-in-from-right-8
-        duration-500
-      `}
+     
+        animate-in fade-in zoom-in-0 slide-in-from-bottom-64 slide-in-from-right-20
+        duration-700
+         `}
       style={{
         /* 2. 苹果级减速曲线：先快后慢，极度丝滑 */
-        animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        animationTimingFunction: 'cubic-bezier(0.15, 1, 0.3, 1)',
         /* 3. 精准对齐你的右下角按钮位置 (right-6 = 24px, bottom-24 = 96px) */
         transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' 
       }}
