@@ -331,12 +331,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   // --- 4. 终极布局结构：解决居中与滑动 ---
   return (
-      <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
-        {/* 手机版保留 5vh 固定间距，电脑版(md:)变为 flex-grow 自动弹簧实现正居中 */}
-        <div className="flex-grow shrink-0 min-h-[5vh] w-full"></div>
+    <div className="w-full h-full overflow-y-auto no-scrollbar flex flex-col items-center px-6">
+  {/* 手机版固定小高度(h-8)，电脑版变成弹簧(flex-grow)实现居中 */}
+    <div className="h-8 md:flex-grow shrink-0 w-full"></div>
 
-    <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0 my-auto pt-8">        
-        {/* 正计时卡片 */}
+    <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 shrink-0 pt-4 md:pt-0">
+      
+              {/* 正计时卡片 */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
           <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
           <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8">{formatTime(seconds)}</div>
@@ -397,7 +398,10 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           </>
         )}
       </div>
-      <div className="h-[120px] shrink-0 w-full"></div>
+      {/* 电脑端底部弹簧 */}
+      <div className="hidden md:flex md:flex-grow shrink-0 w-full"></div>
+      {/* 手机端安全垫片：确保滑到底部不被放大镜遮挡 */}
+      <div className="h-[140px] md:h-8 shrink-0 w-full"></div>
     </div>
   );
 };
