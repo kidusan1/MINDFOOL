@@ -160,6 +160,12 @@ const App: React.FC = () => {
   };
 
   // --- State Definitions ---
+    // 🟢 就在这里定义，不要放外面
+    const triggerHaptic = (ms = 15) => {
+      if (typeof window !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(ms);
+      }
+    };
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('growth_app_current_user');
     try {
@@ -200,6 +206,7 @@ const [userStatsMap, setUserStatsMap] = useState<Record<string, Partial<DailySta
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
   // 当前搜索输入内容（用于受控 input 和返回列表恢复）
 const [searchQuery, setSearchQuery] = useState('');
+
 
 
   // ✅ 搜索视图状态：列表 / 详情
@@ -1350,24 +1357,27 @@ useEffect(() => {
       </Layout>
       )
 )}
-  
       {/* 录入日记的弹窗 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-      {/* --- 1. 搜索按钮 --- */}
+{/* --- 1. 搜索按钮 --- */}
     
         {currentUser && !isSearchOpen && (
         <button
-          onClick={() => setIsSearchOpen(true)}
-          className={`
-            fixed z-[999] flex items-center justify-center transition-all active:scale-95
-            bg-white/20 backdrop-blur-md border border-white/30 shadow-lg text-[#666666]
-            bottom-24 right-6 w-10 h-10 rounded-full
-            md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:border-none md:shadow-none md:bg-transparent
-            md:hover:bg-[#E8E6E1] md:text-[#6D8D9D]
-          `}
+          onClick={() => {
+            triggerHaptic(15); // 🔥 震动注入成功！
+      setIsSearchOpen(true);
+    }}
+    className={`
+      fixed z-[999] flex items-center justify-center transition-all 
+      bottom-24 right-6 w-12 h-12 rounded-full
+      bg-slate-800/85 backdrop-blur-2xl border border-white/10
+      shadow-[0_15px_35px_rgba(0,0,0,0.2)] text-white/90
+      active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
+      md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:bg-transparent md:text-[#6D8D9D]
+    `}
         >
-          <Icons.Search size={20} strokeWidth={1.5} />
+          <Icons.Search size={22} strokeWidth={2.5} />
           <span className="hidden md:inline-block ml-3 text-sm font-light tracking-wide">
             {lang === 'zh' ? '搜索' : 'Search Terms'}
           </span>
