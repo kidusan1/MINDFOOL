@@ -1363,27 +1363,44 @@ useEffect(() => {
 {/* --- 1. 搜索按钮 --- */}
 {currentUser && !isSearchOpen && (
   <button
-  // 1️⃣ 关键：使用 Touch 事件精确控制
+  // 1️⃣ 手指按下
   onTouchStart={() => {
-    // 按下一瞬间：触发轻微震动 (模拟 Taptic Engine)
-    triggerHaptic(20); 
-  }}
-  onContextMenu={(e) => e.preventDefault()} // 防止弹出系统菜单
-  
-  // 2️⃣ 逻辑触发：建议依然保留 onClick，但配合 transition 延迟感
-    onClick={() => {
-     // 延迟 150ms 执行逻辑，让用户看清楚缩放动画
-     setTimeout(() => {
+    triggerHaptic(20); // 按下即刻震动，给用户反馈
+    
+    // 创建一个定时器，300ms 后自动打开搜索
+    // 这 300ms 就是给用户看“挤压动效”的时间
+    (window as any).searchTimer = setTimeout(() => {
       setIsSearchOpen(true);
-    }, 150);
+      triggerHaptic(30); // 成功唤出时再给一个反馈
+    }, 300); 
+  }}
+
+  // 2️⃣ 手指抬起
+  onTouchEnd={() => {
+    // 如果手指抬起得太快（小于300ms），就取消打开逻辑
+    // 这样就实现了“禁止快速点击跳转”
+    if ((window as any).searchTimer) {
+      clearTimeout((window as any).searchTimer);
+    }
+  }}
+
+  // 3️⃣ 防止移动端弹出系统菜单
+  onContextMenu={(e) => e.preventDefault()}
+
+  // 4️⃣ 电脑端依然保留 onClick 方便鼠标操作
+  onClick={(e) => {
+    // 如果是电脑端（非触摸屏），直接打开
+    if (window.innerWidth > 768) {
+      setIsSearchOpen(true);
+    }
   }}
     className={`
       /* 1. 形状与位置 */
-      fixed z-[999] bottom-24 right-6 w-11 h-11 rounded-full
+      fixed z-[999] bottom-24 right-6 w-13 h-13 rounded-full
       flex items-center justify-center transition-all 
       
       /* 2. 移动端 Tahoe 磨砂白质感 */
-      bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20
+      bg-white/30 backdrop-blur-xl border border-[#6D8D9D]/20
       shadow-[0_8px_20px_rgba(109,141,157,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)]
       
       /* 3. 电脑端样式（修正圆角） */
