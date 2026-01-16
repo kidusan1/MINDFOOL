@@ -1363,10 +1363,20 @@ useEffect(() => {
 {/* --- 1. 搜索按钮 --- */}
 {currentUser && !isSearchOpen && (
   <button
+  // 1️⃣ 关键：使用 Touch 事件精确控制
+  onTouchStart={() => {
+    // 按下一瞬间：触发轻微震动 (模拟 Taptic Engine)
+    triggerHaptic(20); 
+  }}
+  onContextMenu={(e) => e.preventDefault()} // 防止弹出系统菜单
+  
+  // 2️⃣ 逻辑触发：建议依然保留 onClick，但配合 transition 延迟感
     onClick={() => {
-      triggerHaptic(15);
+     // 延迟 150ms 执行逻辑，让用户看清楚缩放动画
+     setTimeout(() => {
       setIsSearchOpen(true);
-    }}
+    }, 150);
+  }}
     className={`
       /* 1. 形状与位置 */
       fixed z-[999] bottom-24 right-6 w-11 h-11 rounded-full
@@ -1381,13 +1391,13 @@ useEffect(() => {
       md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none md:border-none md:shadow-none
       
       /* 4. 视觉反馈：点击时瞬间缩小，模拟压感 */
-      active:scale-90 ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500
+      active:scale-75 transition-transform duration-300 ease-out
     `}
   >
     {/* 图标颜色精准匹配导航文字 #6D8D9D */}
     <Icons.Search 
       style={{ color: '#6D8D9D' }} 
-      size={22} 
+      size={24} 
       strokeWidth={2.5} 
     />
     
