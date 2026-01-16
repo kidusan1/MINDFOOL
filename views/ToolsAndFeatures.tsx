@@ -397,7 +397,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       {/* 底部弹性间距：确保在安卓上滑出目录遮挡，高度设为 180px */}
       <div className="flex-grow shrink-0 min-h-[180px]"></div>
       {/* 物理占位块：强行撑开滚动区域，确保按钮能滑出遮挡 */}
-      <div className="h-[250px] shrink-0 w-full"></div>
+      <div className="h-[170px] shrink-0 w-full"></div>
     </div>
   );
 };
