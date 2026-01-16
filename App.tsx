@@ -1372,10 +1372,10 @@ useEffect(() => {
             </div>
 
             {/* 结果容器：确保位置完全重合 */}
-            <div className="relative mt-3 w-full">
+            <div className="relative mt-3 w-full min-h-[60vh]">
               {/* 联想列表 */}
               {searchView === 'list' && suggestions.length > 0 && (
-                <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="relative mt-2 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
                   {suggestions.map((item: any) => (
                     <div key={item.id} className="px-5 py-3 hover:bg-[#E8E6E1] cursor-pointer border-b border-gray-100 flex justify-between items-center transition-colors" onClick={() => { setSearchResult(item); setSearchQuery(item.title); setSearchView('detail'); }}>
                       <span className="text-gray-600 font-light tracking-wide">{item.title}</span>
@@ -1397,7 +1397,7 @@ useEffect(() => {
 
               {/* 详情卡片 */}
               {searchView === 'detail' && searchResult && (
-                <div className="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-500 ease-out">
+                <div className="relative mt-2 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-500 ease-out">
                   <div className="flex justify-between items-center border-b pb-3 mb-4">
                     <h3 className="text-xl font-medium text-gray-800">{searchResult.title}</h3>
                     <button 
