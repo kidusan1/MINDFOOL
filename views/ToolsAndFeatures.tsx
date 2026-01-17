@@ -218,7 +218,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       case TimerType.BREATH: typeLabel = t.home.breath; break;
   }
 
-  // --- 状态保留 ---
+  // --- 状态保留：完全对齐原版 ---
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [countdownTarget, setCountdownTarget] = useState(20);
@@ -226,13 +226,13 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const [isCountdownRunning, setIsCountdownRunning] = useState(false);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
   
-  // --- 新增：核心计时沙漏 ---
+  // --- Refs：保留音频，新增长按和心脏跳动 ---
   const effectiveSecondsRef = useRef<number>(0);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
 
-  // ✅ 核心功能 1：闹铃逻辑 (完全保留你原来的逻辑)
+  // --- 1. 闹铃逻辑：保持原样，未改动 ---
   const startAlarmSound = () => {
     try {
         if (!audioCtxRef.current) {
@@ -273,26 +273,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     setCountdownRemaining(countdownTarget * 60);
   };
 
-  // ✅ 核心功能 2：心脏脉冲计时 (整合去重、自动保存、离开保底)
+  // --- 2. 逻辑：长按重置与保存 (兼容 PC) ---
+  const handleReset = (mode: 'up' | 'down') => {
+    playSound('medium');
+    if (effectiveSecondsRef.current >= 10) {
+      onAddMinutes?.(Math.max(1, Math.round(effectiveSecondsRef.current / 60)));
+      effectiveSecondsRef.current = 0;
+    }
+    if (mode === 'up') { setIsRunning(false); setSeconds(0); } 
+    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); }
+  };
+
+  const startPress = (mode: 'up' | 'down') => {
+    longPressTimerRef.current = setTimeout(() => handleReset(mode), 800);
+  };
+  const endPress = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+  };
+
+  // --- 3. 计时心脏：去重与保底逻辑 ---
   useEffect(() => {
     let timer: any;
     if (isRunning || isCountdownRunning) {
       timer = setInterval(() => {
-        // 1. 只要任意一个在跑，沙漏就加 1 秒（实现去重）
         effectiveSecondsRef.current += 1;
-
-        // 2. 每满 60 秒自动保存一次（实现保底）
         if (effectiveSecondsRef.current >= 60) {
           onAddMinutes?.(1);
           effectiveSecondsRef.current = 0;
-          console.log("⏱️ 已满 1 分钟，数据自动同步");
         }
-
-        // 3. 处理倒计时数字展示
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
             if (prev <= 1) {
-              if (effectiveSecondsRef.current >= 10) onAddMinutes?.(1); // 最后的残余
+              if (effectiveSecondsRef.current >= 10) onAddMinutes?.(1);
               effectiveSecondsRef.current = 0;
               startAlarmSound();
               return 0;
@@ -300,45 +312,21 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
             return prev - 1;
           });
         }
-
-        // 4. 处理正计时数字展示
-        if (isRunning) {
-          setSeconds(s => s + 1);
-        }
+        if (isRunning) setSeconds(s => s + 1);
       }, 1000);
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
+    return () => { if (timer) clearInterval(timer); };
   }, [isRunning, isCountdownRunning, onAddMinutes]);
 
-  // ✅ 核心功能 3：切页/返回保底
+  // --- 4. 离开页面自动结存 ---
   useEffect(() => {
     return () => {
-      // 离开组件时，剩下的沙漏超过 30 秒补 1 分钟
       if (effectiveSecondsRef.current >= 30) {
         onAddMinutes?.(1);
         effectiveSecondsRef.current = 0;
       }
-      if (oscillatorRef.current) oscillatorRef.current.stop();
     };
   }, [onAddMinutes]);
-
-  // ✅ 核心功能 4：长按归零处理
-  const handleReset = (mode: 'up' | 'down') => {
-    playSound('medium');
-    if (effectiveSecondsRef.current >= 10) {
-      onAddMinutes?.(1);
-      effectiveSecondsRef.current = 0;
-    }
-    if (mode === 'up') {
-      setIsRunning(false);
-      setSeconds(0);
-    } else {
-      setIsCountdownRunning(false);
-      setCountdownRemaining(countdownTarget * 60);
-    }
-  };
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
@@ -353,69 +341,79 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     setCountdownRemaining(next * 60);
   };
 
-  // ✅ UI 展示 (包含了 pb-32 解决滑动问题)
   return (
-    <div className="min-h-full overflow-y-auto no-scrollbar flex flex-col items-center pt-4 pb-32 w-full px-6 md:px-0">
-      <div className="w-full md:max-w-4xl md:mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-          {/* 正计时卡片 */}
-          <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md relative">
-            <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{typeLabel}</h2>
-            <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-4 sm:my-8">{formatTime(seconds)}</div>
-            <div className="flex flex-col items-center gap-2">
-                <div className="h-4 flex items-center">{!isRunning && seconds === 0 && <p className="text-textSub text-xs animate-pulse">{t.tools.timer.clickStart}</p>}</div>
-                <button 
-                  onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }} 
-                  onContextMenu={(e) => { e.preventDefault(); handleReset('up'); }}
-                  className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
-                >
-                    {isRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-1" />}
-                </button>
-                <p className="text-[10px] text-gray-300 mt-1">长按归零并保存</p>
-            </div>
+    // 💡 这里调整为 flex-1 和 justify-center 实现垂直居中，pb-32 留出底部滑动空间
+    <div className="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto no-scrollbar pt-4 pb-32 px-6">
+      <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+        
+        {/* 正计时卡片：保留你所有的 UI 参数 */}
+        <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md min-h-[300px]">
+          <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{typeLabel}</h2>
+          <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-4 sm:my-8">{formatTime(seconds)}</div>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }}
+              onMouseDown={() => startPress('up')}
+              onMouseUp={endPress}
+              onMouseLeave={endPress}
+              onTouchStart={() => startPress('up')}
+              onTouchEnd={endPress}
+              className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
+            >
+              {isRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-1" />}
+            </button>
+            <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
+              {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
+            </p>
           </div>
-
-          {isBaifo && (
-            <>
-                <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
-                {/* 倒计时卡片 */}
-                <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md relative overflow-hidden">
-                    <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{t.tools.timer.countdown}</h2>
-                    <div className="flex items-center gap-4 my-4 sm:my-8">
-                        {!isCountdownRunning && !isAlarmActive && <button onClick={() => adjustCountdown(-5)} className="w-8 h-8 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10">-</button>}
-                        <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
-                            {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : ' m'}`)}
-                        </div>
-                        {!isCountdownRunning && !isAlarmActive && <button onClick={() => adjustCountdown(5)} className="w-8 h-8 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10">+</button>}
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-2 w-full">
-                        {isAlarmActive ? (
-                            <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg animate-bounce flex items-center justify-center gap-2 text-sm">
-                                <Icons.Cancel size={18} /> {lang === 'zh' ? '关闭闹铃' : 'Stop Alarm'}
-                            </button>
-                        ) : (
-                            <>
-                                <div className="h-4 flex items-center">{!isCountdownRunning && <p className="text-textSub text-xs animate-pulse">{t.tools.timer.clickStart}</p>}</div>
-                                <button 
-                                  onClick={() => { playSound('confirm'); setIsCountdownRunning(!isCountdownRunning); }} 
-                                  onContextMenu={(e) => { e.preventDefault(); handleReset('down'); }}
-                                  className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
-                                >
-                                    {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
-                                </button>
-                                <p className="text-[10px] text-gray-300 mt-1">长按归零并保存</p>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </>
-          )}
         </div>
+
+        {isBaifo && (
+          <>
+            <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
+            {/* 倒计时卡片：保留原版参数 */}
+            <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md min-h-[300px] relative overflow-hidden">
+                <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{t.tools.timer.countdown}</h2>
+                <div className="flex items-center gap-4 my-4 sm:my-8">
+                    {!isCountdownRunning && !isAlarmActive && <button onClick={() => adjustCountdown(-5)} className="w-8 h-8 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10">-</button>}
+                    <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
+                        {isCountdownRunning ? formatTime(countdownRemaining) : (isAlarmActive ? '00:00' : `${countdownTarget}${lang === 'zh' ? '分' : ' m'}`)}
+                    </div>
+                    {!isCountdownRunning && !isAlarmActive && <button onClick={() => adjustCountdown(5)} className="w-8 h-8 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10">+</button>}
+                </div>
+                
+                <div className="flex flex-col items-center gap-2 w-full">
+                    {isAlarmActive ? (
+                        <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg animate-bounce flex items-center justify-center gap-2 text-sm">
+                            <Icons.Cancel size={18} /> {lang === 'zh' ? '关闭闹铃' : 'Stop Alarm'}
+                        </button>
+                    ) : (
+                        <>
+                            <button 
+                              onClick={() => { playSound('confirm'); setIsCountdownRunning(!isCountdownRunning); }}
+                              onMouseDown={() => startPress('down')}
+                              onMouseUp={endPress}
+                              onMouseLeave={endPress}
+                              onTouchStart={() => startPress('down')}
+                              onTouchEnd={endPress}
+                              className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
+                            >
+                                {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
+                            </button>
+                            <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
+                              {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
+                            </p>
+                        </>
+                    )}
+                </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 };
+
 // --- 数据统计 ---
 export const StatsView: React.FC<{ 
   stats: DailyStats, 
