@@ -52,7 +52,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
          这样既给顶部留出了呼吸空间，又保证了名句不会和卡片离得太远。
       */}
       <div 
-        className="flex-[35] w-full max-w-[480px] px-4 flex flex-col items-center justify-end pb-6 min-h-0" 
+        className="flex-[45] w-full max-w-[480px] px-4 flex flex-col items-center justify-end pb-6 min-h-0" 
         style={{ 
           opacity: 0,
           animation: 'fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards'
@@ -91,7 +91,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
          效果：占据屏幕中间 50% 的核心区域。
          pt-4 提供了它与上方名句之间的“硬隔离”间距。
       */}
-      <div className="flex-[50] w-full flex flex-col items-center justify-start pt-4 min-h-0">
+      <div className="flex-[40] w-full flex flex-col items-center justify-start pt-4 min-h-0">
         <div 
           onClick={() => onNavigate(ViewName.TOOLS)}
           /* ⚡️ 视觉回归与优化：
