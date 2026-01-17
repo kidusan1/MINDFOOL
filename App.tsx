@@ -1311,10 +1311,9 @@ useEffect(() => {
           onTouchEnd={() => (window as any).searchTimer && clearTimeout((window as any).searchTimer)}
           onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => { if (window.innerWidth > 768) setIsSearchOpen(true); else e.preventDefault(); }}
-          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 shadow-lg active:scale-50 transition-all md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-6 md:py-3 md:rounded-2xl md:bg-white/30 md:hover:bg-white/50 md:border-white/40"
-                  >
+          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-300 active:scale-90 hover:bg-white/50 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"                  >
           <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
-          <span className="hidden md:inline-block ml-3 text-sm font-medium text-[#6D8D9D]">{lang === 'zh' ? '搜索' : 'Search Terms'}</span>
+          <span className="hidden md:inline-block ml-2 text-sm font-light tracking-widest text-[#6D8D9D]/80">{lang === 'zh' ? '搜索' : 'Search Terms'}</span>
         </button>
       )}
 
