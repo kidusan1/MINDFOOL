@@ -115,17 +115,17 @@ export const BreathingView: React.FC<BreathingViewProps> = ({ onAddMinutes, lang
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cycle = useRef([
-    { phase: 'In', duration: 4000, text: lang === 'en' ? 'In' : '吸' },
-    { phase: 'Hold1', duration: 6000, text: lang === 'en' ? 'Hold' : '持' },
-    { phase: 'Out', duration: 4000, text: lang === 'en' ? 'Out' : '呼' },
-    { phase: 'Hold2', duration: 6000, text: lang === 'en' ? 'Hold' : '持' },
+    { phase: 'In', duration: 4000, text: lang === 'en' ? 'Inhale' : '吸气' },
+    { phase: 'Hold1', duration: 6000, text: lang === 'en' ? 'Hold' : '屏息' },
+    { phase: 'Out', duration: 4000, text: lang === 'en' ? 'Exhale' : '呼气' },
+    { phase: 'Hold2', duration: 6000, text: lang === 'en' ? 'Hold' : '屏息' },
   ]).current;
 
   useEffect(() => {
-      cycle[0].text = lang === 'en' ? 'In' : '吸';
-      cycle[1].text = lang === 'en' ? 'Hold' : '持';
-      cycle[2].text = lang === 'en' ? 'Out' : '呼';
-      cycle[3].text = lang === 'en' ? 'Hold' : '持';
+      cycle[0].text = lang === 'en' ? 'Inhale' : '吸气';
+      cycle[1].text = lang === 'en' ? 'Hold' : '屏息';
+      cycle[2].text = lang === 'en' ? 'Exhale' : '呼气';
+      cycle[3].text = lang === 'en' ? 'Hold' : '屏息';
   }, [lang]);
 
   const runCycle = (stepIndex: number) => {
@@ -264,6 +264,12 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   };
 
   const stopAlarmSound = () => {
+    // 核心修改：先清空所有计划中的音频调度
+  if (audioCtxRef.current) {
+    audioCtxRef.current.close().then(() => {
+        audioCtxRef.current = null;
+    });
+}
     if (oscillatorRef.current) {
         try { oscillatorRef.current.stop(); } catch(e) {}
         oscillatorRef.current = null;
@@ -343,8 +349,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   return (
     // 💡 这里调整为 flex-1 和 justify-center 实现垂直居中，pb-32 留出底部滑动空间
-    <div className="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto no-scrollbar pt-4 pb-32 px-6">
+    <div className="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto no-scrollbar pt-4 pb-24 px-6 min-h-screen">
       <div className="w-full md:max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+        {/* 这里的卡片会自动在屏幕上下居中 */}
         
         {/* 正计时卡片：保留你所有的 UI 参数 */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md min-h-[300px]">
