@@ -248,27 +248,21 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
     if (audio) {
       audio.muted = false;
-      audio.volume = 1.0; // 🟢 此时音频一直在后台跑，调大音量即可，不会被拦截
-      // 🟢 最优改动：不论它是否在播，强行再调用一次 play()
-    // 由于开始时已经“握过手”，这里的 play() 极高概率直接成功
-    audio.play().catch(e => {
-      console.error("唤醒失败，显示保底按钮");
-      setNeedUserToStartAlarm(true);
-      
-    });
+      audio.volume = 1.0; 
+      // 🟢 修复：确保使用英文分号 ;
+      audio.play().catch(e => console.log("播放失败", e));
     }
   };
-
   const stopAlarmSound = () => {
-  const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
-  if (audio) {
-    audio.pause(); 
-    audio.currentTime = 0; // 重置进度
-  }
-  setIsAlarmActive(false);
-  setIsCountdownRunning(false);
-  setCountdownRemaining(countdownTarget * 60);
-};
+    const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
+    if (audio) {
+      audio.pause(); 
+      audio.currentTime = 0; 
+    }
+    setIsAlarmActive(false);
+    setIsCountdownRunning(false);
+    setCountdownRemaining(countdownTarget * 60);
+  };
 
   // --- 2. 交互逻辑：长按重置 ---
   const handleReset = (mode: 'up' | 'down') => {
@@ -277,8 +271,15 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       onAddMinutes?.(Math.max(1, Math.round(effectiveSecondsRef.current / 60)));
       effectiveSecondsRef.current = 0;
     }
-    if (mode === 'up') { setIsRunning(false); setSeconds(0); } 
-    else { setIsCountdownRunning(false); setCountdownRemaining(countdownTarget * 60); stopAlarmSound(); setNeedUserToStartAlarm(false);}
+    if (mode === 'up') {
+      setIsRunning(false);
+      setSeconds(0);
+    } else {
+      setIsCountdownRunning(false);
+      setCountdownRemaining(countdownTarget * 60);
+      stopAlarmSound();
+      // 如果你有这个状态变量就保留，没有可以删掉这行
+    }
   };
 
   const startPress = (mode: 'up' | 'down') => {
@@ -350,7 +351,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
           <>
             <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
 
-            {/* 倒计时卡片 */}
+{/* 倒计时卡片 */}
             <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
                 <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
                 <div className="flex items-center gap-4 my-8">
@@ -383,81 +384,67 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     </div>
   )}
 </div>
-                    {!isCountdownRunning && !isAlarmActive && (
+
+{!isCountdownRunning && !isAlarmActive && (
   <button 
     onClick={() => {
       // 逻辑：如果当前是 1分，直接跳到 5分；否则加 5
       const next = countdownTarget === 1 ? 5 : countdownTarget + 5;
       setCountdownTarget(next);
       setCountdownRemaining(next * 60);
-    }} 
-    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
-  >
-    +
-  </button>
+}} 
+className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+>
++
+</button>
 )}
-                </div>
+</div>               
+<div className="flex flex-col items-center gap-2 w-full">
                 
-                <div className="flex flex-col items-center gap-2 w-full">
-                {needUserToStartAlarm && !isAlarmActive ? (
-  <button
-    onClick={() => {
-      startAlarmSound();           // ✅ 用户手势
-      setNeedUserToStartAlarm(false);
-    }}
-    className="w-full max-w-[200px] py-4 bg-red-500 text-white rounded-full font-bold shadow-lg animate-pulse"
-  >
-    {lang === 'zh' ? '点此响铃' : 'Tap to Ring'}
-  </button>
-) : isAlarmActive ? (
-                        <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse">
-                            <Icons.Cancel size={18} /> {lang === 'zh' ? '停止' : 'Stop Alarm'}
-                        </button>
-                    ) : (
-                        <>
-                            <button 
-                             onClick={() => {
-                              const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
-                              if (audio && !isCountdownRunning) {
-                                // 🟢 预热激活：在点击开始的瞬间，让它以极小音量播一下
-                                audio.muted = false;
-                                audio.volume = 0.001; 
-                                audio.play().then(() => {
-                                    // 0.1秒后把音量降到 0，但保持它在 play 状态跑着
-                                    setTimeout(() => { 
-                                      if (!isAlarmActive) audio.volume = 0; 
-                                    }, 100);
-                                }).catch(e => console.log("预热被拦截", e));
-                              } else if (audio && isCountdownRunning) {
-                                // 🔴 如果是点击暂停，就暂停音频
-                                audio.pause();
-                              }
-                              
-                              setIsCountdownRunning(!isCountdownRunning); 
-                            }}
-                                
-                              onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
-                              className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
-                            >
-                                {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
-                            </button>
-                            <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
-                              {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
-                            </p>
-                        </>
-                    )}
+{isAlarmActive ? (
+<button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse">
+<Icons.Cancel size={18} /> {lang === 'zh' ? '停止' : 'Stop Alarm'}
+</button>
+) : (
+<>
+
+<button 
+onClick={() => {
+const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
+if (audio && !isCountdownRunning) {
+ // 🟢 预热激活：在点击开始的瞬间，让它以极小音量播一下
+audio.muted = true;
+audio.play().then(() => {
+// 保持 play 状态，但声音关死
+audio.volume = 0; 
+  }).catch(e => console.log("预热被拦截", e));
+}else if (audio && isCountdownRunning) {
+  audio.pause();
+}
+setIsCountdownRunning(!isCountdownRunning); 
+}}
+onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
+className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
+>
+{isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
+ </button>
+   <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
+       {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
+        </p>
+        </>
+         )}
                 </div>
             </div>
           </>
         )}
       </div>
-      {/* 电脑端底部弹簧 */}
+{/* 电脑端底部弹簧 */}
       <div className="hidden md:flex md:flex-grow shrink-0 w-full"></div>
       {/* 手机端安全垫片：确保滑到底部不被放大镜遮挡 */}
       <div className="flex-grow shrink-0 w-full"></div>
       <div className="h-32 shrink-0 md:hidden"></div>
-{/* loop 属性让它无限循环，muted={false} 配合 volume=0 躲避拦截 */}
-<audio id="alarm-audio" preload="auto" loop src="alarm.mp3"></audio>
+    {/* loop 属性让它无限循环，muted={false} 配合 volume=0 躲避拦截 */}
+  <audio id="alarm-audio" preload="auto" loop src="alarm.mp3"></audio>
     </div>
   );
 };

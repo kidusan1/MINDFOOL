@@ -850,16 +850,8 @@ if (!currentUser || minutes < 1) {
             : type === TimerType.BAIFO ? 'baifo'
             : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
 
-  // 定义响铃函数
- 
-  const playAlarm = () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
-    audio.play().catch(e => console.log("浏览器拦截了自动播放，需点击页面"));
-  };
- if (shouldPlayAlarm) {
-    playAlarm();
-  }
-  // 2. 计算新数据
+
+  // . 计算新数据
   const currentStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
   const updatedStats = {
     ...currentStats,
@@ -1319,8 +1311,8 @@ useEffect(() => {
           onTouchEnd={() => (window as any).searchTimer && clearTimeout((window as any).searchTimer)}
           onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => { if (window.innerWidth > 768) setIsSearchOpen(true); else e.preventDefault(); }}
-          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 shadow-lg active:scale-50 transition-all md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2.5 md:rounded-xl md:bg-[#E8E6E1]/50 md:backdrop-blur-none"
-        >
+          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/40 backdrop-blur-xl border border-[#6D8D9D]/20 shadow-lg active:scale-50 transition-all md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-6 md:py-3 md:rounded-2xl md:bg-white/30 md:hover:bg-white/50 md:border-white/40"
+                  >
           <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
           <span className="hidden md:inline-block ml-3 text-sm font-medium text-[#6D8D9D]">{lang === 'zh' ? '搜索' : 'Search Terms'}</span>
         </button>
