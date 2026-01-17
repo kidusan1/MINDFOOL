@@ -206,13 +206,6 @@ interface TimerViewProps {
   lang: Language;
 }
 
-// --- 功课计时 ---
-interface TimerViewProps {
-  type: TimerType;
-  onAddMinutes?: (minutes: number) => void;
-  lang: Language;
-}
-
 export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }) => {
   const t = TRANSLATIONS[lang];
   const isBaifo = type === TimerType.BAIFO;
@@ -225,61 +218,49 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       case TimerType.BREATH: typeLabel = t.home.breath; break;
   }
 
+  // --- 状态保留 ---
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const sessionStartRef = useRef<number>(0);
-
   const [countdownTarget, setCountdownTarget] = useState(20);
   const [countdownRemaining, setCountdownRemaining] = useState(20 * 60);
   const [isCountdownRunning, setIsCountdownRunning] = useState(false);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
-  const countdownSessionStartRef = useRef<number>(0);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
-  // 闹铃相关 Ref
+  // --- 新增：核心计时沙漏 ---
+  const effectiveSecondsRef = useRef<number>(0);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
 
-  // 1. 修复闹铃逻辑：增加 resume 防止无声
+  // ✅ 核心功能 1：闹铃逻辑 (完全保留你原来的逻辑)
   const startAlarmSound = () => {
     try {
         if (!audioCtxRef.current) {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         const ctx = audioCtxRef.current;
-        // 关键修复：如果状态是挂起，必须恢复
-        if (ctx.state === 'suspended') {
-            ctx.resume();
-        }
-
+        if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, ctx.currentTime); 
-        
         const now = ctx.currentTime;
         gain.gain.setValueAtTime(0, now);
-        
         for (let i = 0; i < 120; i++) {
             const start = now + i * 1.2;
             gain.gain.setValueAtTime(0, start);
             gain.gain.linearRampToValueAtTime(0.4, start + 0.05);
             gain.gain.linearRampToValueAtTime(0, start + 0.15);
-            
             gain.gain.setValueAtTime(0, start + 0.25);
             gain.gain.linearRampToValueAtTime(0.4, start + 0.3);
             gain.gain.linearRampToValueAtTime(0, start + 0.4);
         }
-
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
         oscillatorRef.current = osc;
         setIsAlarmActive(true);
-    } catch (e) {
-        console.error('Failed to start alarm sound', e);
-    }
+    } catch (e) { console.error('Failed to start alarm', e); }
   };
 
   const stopAlarmSound = () => {
@@ -290,100 +271,74 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     setIsAlarmActive(false);
     setIsCountdownRunning(false);
     setCountdownRemaining(countdownTarget * 60);
-    if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-    }
   };
 
-  const commitTime = (durationSec: number) => { 
-    // 此时 durationSec 是总秒数
-    console.log("DEBUG: 收到原始秒数 =", durationSec);
-  
-    // 1. 门槛：55 秒
-    if (onAddMinutes && durationSec >= 55) { 
-      // 2. 核心计算：秒转分钟
-      const minsToSave = Math.max(1, Math.round(durationSec / 60));
-      console.log("DEBUG: 发送给数据库的整数分钟 =", minsToSave);
-      onAddMinutes(minsToSave); 
-    } else {
-      console.log("⏱️ 计时太短，不予计入");
-    }
-  };
-
-  // 正计时逻辑
+  // ✅ 核心功能 2：心脏脉冲计时 (整合去重、自动保存、离开保底)
   useEffect(() => {
-    let interval: any;
-    if (isRunning) {
-      sessionStartRef.current = Date.now();
-      interval = setInterval(() => setSeconds(s => s + 1), 1000);
-    } else {
-      if (sessionStartRef.current > 0) {
-        commitTime((Date.now() - sessionStartRef.current) / 1000);
-        sessionStartRef.current = 0;
-      }
-    }
-    return () => clearInterval(interval);
-  }, [isRunning]);
+    let timer: any;
+    if (isRunning || isCountdownRunning) {
+      timer = setInterval(() => {
+        // 1. 只要任意一个在跑，沙漏就加 1 秒（实现去重）
+        effectiveSecondsRef.current += 1;
 
-  // 2. 修复倒计时逻辑：解决 5 分钟变 1 分钟的问题
-  useEffect(() => {
-    if (isCountdownRunning) {
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-      if (countdownRemaining <= 0) {
-        setIsCountdownRunning(false);
-        return;
-      }
-      // 记录开始时间
-      countdownSessionStartRef.current = Date.now();
-      
-      countdownIntervalRef.current = setInterval(() => {
-        setCountdownRemaining(prev => {
+        // 2. 每满 60 秒自动保存一次（实现保底）
+        if (effectiveSecondsRef.current >= 60) {
+          onAddMinutes?.(1);
+          effectiveSecondsRef.current = 0;
+          console.log("⏱️ 已满 1 分钟，数据自动同步");
+        }
+
+        // 3. 处理倒计时数字展示
+        if (isCountdownRunning) {
+          setCountdownRemaining(prev => {
             if (prev <= 1) {
-              // 倒计时自然结束：计算总耗时
-              if (countdownSessionStartRef.current > 0) {
-                const elapsed = (Date.now() - countdownSessionStartRef.current) / 1000;
-                commitTime(elapsed);
-                countdownSessionStartRef.current = 0; 
-              }
-                setIsCountdownRunning(false);
-                startAlarmSound();
-                return 0;
+              if (effectiveSecondsRef.current >= 10) onAddMinutes?.(1); // 最后的残余
+              effectiveSecondsRef.current = 0;
+              startAlarmSound();
+              return 0;
             }
             return prev - 1;
-        });
-      }, 1000);
-    } else {
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
-          countdownIntervalRef.current = null;
+          });
         }
-        // 手动暂停/停止：计算已过时间
-        if (countdownSessionStartRef.current > 0) {
-            const elapsed = (Date.now() - countdownSessionStartRef.current) / 1000;
-            commitTime(elapsed);
-            countdownSessionStartRef.current = 0;
-        }
-    }
-    return () => { 
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-    };
-  }, [isCountdownRunning]); // 依赖项只有 isCountdownRunning
 
-  // 清理音频
+        // 4. 处理正计时数字展示
+        if (isRunning) {
+          setSeconds(s => s + 1);
+        }
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isRunning, isCountdownRunning, onAddMinutes]);
+
+  // ✅ 核心功能 3：切页/返回保底
   useEffect(() => {
     return () => {
-        if (oscillatorRef.current) {
-            try { oscillatorRef.current.stop(); } catch(e) {}
-        }
+      // 离开组件时，剩下的沙漏超过 30 秒补 1 分钟
+      if (effectiveSecondsRef.current >= 30) {
+        onAddMinutes?.(1);
+        effectiveSecondsRef.current = 0;
+      }
+      if (oscillatorRef.current) oscillatorRef.current.stop();
     };
-  }, []);
+  }, [onAddMinutes]);
+
+  // ✅ 核心功能 4：长按归零处理
+  const handleReset = (mode: 'up' | 'down') => {
+    playSound('medium');
+    if (effectiveSecondsRef.current >= 10) {
+      onAddMinutes?.(1);
+      effectiveSecondsRef.current = 0;
+    }
+    if (mode === 'up') {
+      setIsRunning(false);
+      setSeconds(0);
+    } else {
+      setIsCountdownRunning(false);
+      setCountdownRemaining(countdownTarget * 60);
+    }
+  };
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
@@ -393,37 +348,38 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const adjustCountdown = (delta: number) => {
     if (isCountdownRunning || isAlarmActive) return;
-    let next;
-    if (delta < 0) {
-      if (countdownTarget <= 5 && countdownTarget > 1) next = 1;
-      else if (countdownTarget === 1) next = 1;
-      else next = countdownTarget + delta;
-    } else {
-      if (countdownTarget === 1) next = 5;
-      else next = Math.min(120, countdownTarget + delta);
-    }
+    let next = Math.max(1, Math.min(120, countdownTarget + delta));
     setCountdownTarget(next);
     setCountdownRemaining(next * 60);
   };
 
+  // ✅ UI 展示 (包含了 pb-32 解决滑动问题)
   return (
-    <div className="h-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center w-full px-6 md:px-0">
+    <div className="min-h-full overflow-y-auto no-scrollbar flex flex-col items-center pt-4 pb-32 w-full px-6 md:px-0">
       <div className="w-full md:max-w-4xl md:mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-          <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] flex-1 border border-white/60 shadow-sm transition-all hover:shadow-md">
+          {/* 正计时卡片 */}
+          <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md relative">
             <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{typeLabel}</h2>
             <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-4 sm:my-8">{formatTime(seconds)}</div>
             <div className="flex flex-col items-center gap-2">
                 <div className="h-4 flex items-center">{!isRunning && seconds === 0 && <p className="text-textSub text-xs animate-pulse">{t.tools.timer.clickStart}</p>}</div>
-                <button onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }} className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform">
+                <button 
+                  onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }} 
+                  onContextMenu={(e) => { e.preventDefault(); handleReset('up'); }}
+                  className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
+                >
                     {isRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-1" />}
                 </button>
+                <p className="text-[10px] text-gray-300 mt-1">长按归零并保存</p>
             </div>
           </div>
+
           {isBaifo && (
             <>
                 <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
-                <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] flex-1 border border-white/60 shadow-sm transition-all hover:shadow-md relative overflow-hidden">
+                {/* 倒计时卡片 */}
+                <div className="flex flex-col items-center justify-center w-full md:w-1/2 p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm transition-all hover:shadow-md relative overflow-hidden">
                     <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mt-2 mb-2">{t.tools.timer.countdown}</h2>
                     <div className="flex items-center gap-4 my-4 sm:my-8">
                         {!isCountdownRunning && !isAlarmActive && <button onClick={() => adjustCountdown(-5)} className="w-8 h-8 rounded-full border border-secondary text-secondary flex items-center justify-center active:bg-secondary/10">-</button>}
@@ -435,35 +391,20 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
                     
                     <div className="flex flex-col items-center gap-2 w-full">
                         {isAlarmActive ? (
-                            <button 
-                                onClick={stopAlarmSound}
-                                className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg shadow-red-200 animate-bounce active:scale-95 transition-transform flex items-center justify-center gap-2 text-sm"
-                            >
-                                <Icons.Cancel size={18} />
-                                {lang === 'zh' ? '关闭闹铃' : 'Stop Alarm'}
+                            <button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg animate-bounce flex items-center justify-center gap-2 text-sm">
+                                <Icons.Cancel size={18} /> {lang === 'zh' ? '关闭闹铃' : 'Stop Alarm'}
                             </button>
                         ) : (
                             <>
                                 <div className="h-4 flex items-center">{!isCountdownRunning && <p className="text-textSub text-xs animate-pulse">{t.tools.timer.clickStart}</p>}</div>
-                                <button onClick={() => { 
-                                    playSound('confirm'); 
-                                    if (!isCountdownRunning) {
-                                        if (countdownIntervalRef.current) {
-                                            clearInterval(countdownIntervalRef.current);
-                                            countdownIntervalRef.current = null;
-                                        }
-                                        if (countdownRemaining > 0) {
-                                            setIsCountdownRunning(true);
-                                        } else {
-                                            setCountdownRemaining(countdownTarget * 60);
-                                            setIsCountdownRunning(true);
-                                        }
-                                    } else {
-                                        setIsCountdownRunning(false);
-                                    }
-                                }} className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-xl active:scale-95 transition-transform">
+                                <button 
+                                  onClick={() => { playSound('confirm'); setIsCountdownRunning(!isCountdownRunning); }} 
+                                  onContextMenu={(e) => { e.preventDefault(); handleReset('down'); }}
+                                  className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl active:scale-95 transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
+                                >
                                     {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
                                 </button>
+                                <p className="text-[10px] text-gray-300 mt-1">长按归零并保存</p>
                             </>
                         )}
                     </div>
