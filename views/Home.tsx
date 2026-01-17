@@ -44,10 +44,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   }, [dailyQuote]);
 
   return (
-    /* 外层容器：确保整体不滚动，改为 flex 分布 */
+    /* 外层容器：使用 Flex 列布局，高度占满，禁止滚动 */
     <div className="h-full w-full flex flex-col items-center px-6 md:px-12 animate-fade-in overflow-hidden relative">
       
-      {/* 1. 佛法名句区域 - 占据上部约 1/3 空间 (flex-1) */}
+      {/* 🟢 区域 1：佛法名句 (权重 flex-[2]) 
+          作用：占据约 33% 的高度，内容垂直居中
+      */}
       <div 
         className="flex-[2] w-full max-w-[480px] px-4 flex flex-col items-center justify-center min-h-0" 
         style={{ 
@@ -62,49 +64,51 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           }
         `}</style>
         
-        {/* 上分隔线 -  */}
-        <div className="w-24 h-[1px] bg-black/[0.05] mb-4 shrink-0"></div>
+        {/* 上分隔线：间距由 mb-6 极大缩小为 mb-3，更紧凑 */}
+        <div className="w-20 h-[1px] bg-black/[0.05] mb-3 shrink-0"></div>
         
         <div className="w-full flex flex-col">
-          {/* 名句内容 - 严格保持 13px/15px 和 0.3em 间距 */}
+          {/* 名句内容：保留字号，但增加一点行高 */}
           <p className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.6] tracking-[0.3em] text-justify font-light">
             {text}
           </p>
           
-          {/* 出处 - 严格保持 13px/15px */}
+          {/* 出处：紧贴名句 */}
           {source && (
-            <p className="text-textMain/80 text-[13px] md:text-[15px] text-right mt-4 tracking-[0.3em] text-justify font-light">
+            <p className="text-textMain/80 text-[12px] md:text-[14px] text-right mt-2 tracking-[0.2em] font-light">
               <span className="mr-1 tracking-[-0.15em] font-extralight inline-block">——</span> {source}
             </p>
           )}
         </div>
 
-        {/* 下分隔线 - 保持 mt-6 */}
-        <div className="w-24 h-[1px] bg-black/[0.05] mt-4 shrink-0"></div>
+        {/* 下分隔线：间距缩小为 mt-3 */}
+        <div className="w-20 h-[1px] bg-black/[0.05] mt-3 shrink-0"></div>
       </div>
 
-      {/* 2. 今日功课时长卡片 - 占据中部核心空间 (flex-[1.5]) */}
-      {/* justify-start 确保它紧跟在名句下方，pt-2 提供一点微小的呼吸感 */}
-      <div className="flex-[3] w-full flex flex-col items-center justify-start min-h-0 pt-0">
+      {/* 🟢 区域 2：今日功课卡片 (权重 flex-[3]) 
+          作用：占据约 50% 的高度。
+          关键修改：内容 justify-start (靠上对齐)，避免被挤到下面去。
+      */}
+      <div className="flex-[3] w-full flex flex-col items-center justify-start min-h-0 pt-1">
         <div 
           onClick={() => onNavigate(ViewName.TOOLS)}
-          /* 严格保留：rounded-[2.5rem], p-6, 阴影和边框设置 */
+          /* ⚡️ 卡片大瘦身：内边距减小 (p-4)，圆角微调，整体更扁平 */
           className="w-full max-w-lg bg-cloud rounded-[2rem] p-5 md:p-8 flex flex-col items-center justify-center transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer shadow-none border border-white/40"
         >
-          {/* 标题：间距缩小 mb-4 -> mb-2 */}
+          {/* 标题：极小化，mb-2 */}
           <h2 className="text-textSub text-[10px] md:text-xs font-medium tracking-[0.2em] mb-2 uppercase">
             {t.durationLabel}
           </h2>
           
-          {/* 时长数字：字号缩小 text-6xl -> text-5xl，间距缩小 mb-8 -> mb-5 */}
-          <div className="flex items-baseline gap-2 mb-5">
+          {/* 时长数字：从 text-6xl 降为 text-5xl，mb-4 */}
+          <div className="flex items-baseline gap-2 mb-4">
             <span className="text-5xl md:text-6xl font-semibold text-primary leading-none tabular-nums tracking-tighter">
               {totalMinutes}
             </span>
             <span className="text-[10px] font-medium text-textSub tracking-widest">{t.minutes}</span>
           </div>
 
-          {/* 四项功课状态点 */}
+          {/* 四项功课状态点：整体更紧凑 */}
           <div className="flex w-full justify-between items-center px-1">
             {[
               { label: t.nianfo, val: stats.nianfo },
@@ -112,8 +116,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
               { label: t.zenghui, val: stats.zenghui }, 
               { label: t.breath, val: stats.breath },
             ].map((item, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-2 w-1/4">
-                {/* 圆圈缩小：w-11 -> w-10 */}
+              <div key={idx} className="flex flex-col items-center gap-1.5 w-1/4">
+                {/* 圆圈缩小：w-10 (40px) */}
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/[0.03] border border-black/[0.01] flex items-center justify-center transition-all">
                   {item.val > 0 && (
                     <span className="text-[10px] font-bold text-primary">
@@ -121,8 +125,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
                     </span>
                   )}
                 </div>
-                {/* 标签字号微调 */}
-                <span className="text-[10px] text-textSub font-medium tracking-tight whitespace-nowrap">
+                {/* 标签文字缩小 */}
+                <span className="text-[9px] md:text-[10px] text-textSub font-medium tracking-tight whitespace-nowrap">
                   {item.label}
                 </span>
               </div>
@@ -131,8 +135,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
         </div>
       </div>
 
-      {/* 3. 底部微小垫片 (flex-0.2) 防止贴底 */}
-      <div className="flex-[0.2] shrink-0 w-full"></div>
+      {/* 🟢 区域 3：底部安全缓冲 (权重 flex-[1]) 
+          作用：占据约 16% 的高度。
+          这块区域是空的，专门用来放置“放大镜”按钮，确保卡片永远不会和它重叠。
+      */}
+      <div className="flex-[1] shrink-0 w-full"></div>
+
     </div>
   );
 };
