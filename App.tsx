@@ -81,13 +81,13 @@ const DEFAULT_HOME_QUOTES = [
   "我观是阎浮众生，举心动念，无非是罪。脱获善利，多退初心。—— 《地藏菩萨本愿经》",
   "凡所有相，皆是虚妄，若见诸相非相，即见如来。—— 《金刚经》",
   "是诸众生无复我相、人相、众生相、寿者相，无法相、亦无非法相。—— 《金刚经》",
-  "如是施福非有聚处、非有形相，如是施已，施者身亡，施福不离，如影随形。是名施者得福报果，果福不失。”—— 《毘耶娑问经》",
+  "如是施福非有聚处、非有形相，如是施已，施者身亡，施福不离，如影随形。是名施者得福报果，果福不失。—— 《毘耶娑问经》",
   "若于色，说是生厌、离欲、灭尽、寂静法者，是名“法师”。若于受、想、行、识，说是生厌、离欲、灭尽、寂静法者，是名“法师”。是名如来所说“法师”。—— 《杂阿含经》",
   "一切法者，略有五种：一者心法、二者心所有法、三者色法、四者心不相应行法、五者无为法。一切最胜故，与此相应故，二所现影故，三分位差别故，四所显示故，如是次第。—— 《大乘百法明门论》",
   "佛法在世间，不离世间觉；离世觅菩提，恰如求兔角。—— 《六祖坛经》",
   "迦叶！譬如高原陆地不生莲花；菩萨亦复如是，于无为中不生佛法。迦叶！譬如卑湿淤泥中乃生莲花；菩萨亦尔，生死淤泥邪定众生能生佛法。—— 《大宝积经》",
   "诸佛如来但教化菩萨，诸有所作常为一事，唯以佛之知见示悟众众生。舍利弗！如来但以一佛乘故为众生说法，无有余乘若二若三。舍利弗！一切十方诸佛，法亦如是。—— 《妙法莲华经》",
-  "若人造重罪，作已深自责，忏悔更不造，能拔根本业。”—— 《佛为首迦长者说业报差别经》",
+  "若人造重罪，作已深自责，忏悔更不造，能拔根本业。—— 《佛为首迦长者说业报差别经》",
   "觉了二谛：世谛、真谛，名三藐三佛陀。—— 《优婆塞戒经》",
   "知一切法及一切行，故名为佛。—— 《优婆塞戒经》",
   "如来从观不净，乃至得阿耨多罗三藐三菩提；从庄严地至解脱地，胜于声闻辟支佛等，是故如来名无上尊。—— 《优婆塞戒经》",
@@ -1301,21 +1301,29 @@ useEffect(() => {
       {/* 🟡 独立于 Layout 的弹窗组件 */}
       {currentView === ViewName.RECORD_INPUT && <RecordInputModal onClose={goBack} onSave={handleSaveRecord} initialData={editingRecord} lang={lang} />}
 
-      {/* --- 1. 搜索按钮：极致触感增强版 --- */}
-      {currentUser && !isSearchOpen && (
-        <button
-          onTouchStart={() => {
-            if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate([30, 20, 30]);
-            (window as any).searchTimer = setTimeout(() => setIsSearchOpen(true), 300);
-          }}
-          onTouchEnd={() => (window as any).searchTimer && clearTimeout((window as any).searchTimer)}
-          onContextMenu={(e) => e.preventDefault()}
-          onClick={(e) => { if (window.innerWidth > 768) setIsSearchOpen(true); else e.preventDefault(); }}
-          className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-300 active:scale-90 hover:bg-white/50 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"                  >
-          <Icons.Search style={{ color: '#6D8D9D' }} size={24} strokeWidth={2.5} />
-          <span className="hidden md:inline-block ml-2 text-sm font-light tracking-widest text-[#6D8D9D]/80">{lang === 'zh' ? '搜索' : 'Search Terms'}</span>
-        </button>
-      )}
+{/* --- 搜索按钮：彻底移除长按，改为双击 --- */}
+{currentUser && !isSearchOpen && (
+  <button
+    // 1. 核心交互：双击唤起
+    onDoubleClick={() => {
+      if (navigator.vibrate) navigator.vibrate(10); // 短促震动反馈
+      setIsSearchOpen(true);
+    }}
+    // 2. 电脑端单击依然保留（方便操作），手机端单击不触发进入
+    onClick={(e) => {
+      if (window.innerWidth > 768) setIsSearchOpen(true);
+    }}
+    // 3. 关键：禁止系统默认的长按弹出菜单（防止选中空字符）
+    onContextMenu={(e) => e.preventDefault()}
+    // 4. 样式：苹果级变暗挤压效果
+    className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-200 active:scale-90 active:brightness-75 hover:bg-white/50 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"
+  >
+    <Icons.Search style={{ color: '#6D8D9D' }} size={22} strokeWidth={2} />
+    <span className="hidden md:inline-block ml-2 text-sm font-extralight tracking-[0.2em] text-[#6D8D9D]/70">
+      {lang === 'zh' ? '搜索' : 'SEARCH'}
+    </span>
+  </button>
+)}
 
       {/* --- 2. 全屏毛玻璃搜索层：空间稳定性版 --- */}
       {currentUser && isSearchOpen && (
