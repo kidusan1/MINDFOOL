@@ -66,7 +66,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           
           <div className="relative w-full overflow-hidden text-center py-1">
           <p 
-  className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation text-justify"
+  /* 1. text-justify: 两端对齐
+     2. break-all: 确保中英文或长句在行末能正确换行，不留大空白
+     3. w-full: 撑满容器空间
+  */
+  className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation text-justify break-all w-full"
   style={{
     WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
     maskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
@@ -75,8 +79,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
     WebkitMaskPosition: '0 100%',
     maskPosition: '0 100%',
     WebkitBackfaceVisibility: 'hidden',
-    /* 🔴 强制最后一行也居中或分散，防止单行文字缩在左边 */
-    textAlignLast: 'center', 
+    
+    /* 🔴 核心：标准正文排版逻辑 */
+    textAlign: 'justify',    // 两端对齐
+    textAlignLast: 'left',   // 强制最后一行靠左（不居中，不拉伸）
   }}
 >
   {text}
