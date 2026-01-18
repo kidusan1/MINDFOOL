@@ -65,17 +65,17 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   @keyframes appleSpringDown {
     0% { 
       opacity: 0; 
-      transform: translateY(-80px) scaleY(1.2) scaleX(0.8); /* 落下前拉长 */
+      transform: translateY(-50px) scale(0.98); /* 掉落起点：形变极小 */
     }
-    40% {
+    50% {
       opacity: 1;
-      transform: translateY(12px) scaleY(0.9) scaleX(1.1); /* 落地：压扁回弹 */
+      transform: translateY(6px) scale(1.005); /* 落地：过冲仅6px，比例变化仅0.5% */
     }
-    65% {
-      transform: translateY(-5px) scaleY(1.03) scaleX(0.97); /* 二次回弹：轻微拉长 */
+    75% {
+      transform: translateY(-2px) scale(0.998); /* 二次回弹：肉眼难察的轻微震颤 */
     }
-    85% {
-      transform: translateY(2px) scaleY(0.99) scaleX(1.01); /* 三次微调：归位前震颤 */
+    90% {
+      transform: translateY(0.5px); /* 三次余震：模拟物理惯性 */
     }
     100% { 
       opacity: 1; 
@@ -84,8 +84,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   }
 
   .apple-spring {
-    /* 0.6s 是关键，让动作更利落；cubic-bezier 控制初速度爆发 */
-    animation: appleSpringDown 0.6s cubic-bezier(0.2, 1.2, 0.5, 1.2) 0.2s forwards;
+    /* 时间控制在 0.55s，利落且富有生命力 */
+    animation: appleSpringDown 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.2s forwards;
   }
 `}</style>
           
