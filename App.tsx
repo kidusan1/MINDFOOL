@@ -1387,12 +1387,20 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* 无结果提示 */}
-              {searchView === 'list' && searchQuery && suggestions.length === 0 && !isSearching && (
-                <div className="relative px-6 py-5 text-center text-gray-500 bg-white/60 backdrop-blur-md rounded-2xl border border-white/40 animate-in fade-in duration-300">
-                  <p className="text-sm font-light">{lang === 'zh' ? '该完整词条尚未收录' : 'Not found.'}</p>
-                </div>
-              )}
+            {/* 无结果提示 */}
+{searchView === 'list' && searchQuery && suggestions.length === 0 && !isSearching && (
+  <div className="relative px-6 py-8 text-center bg-white/60 backdrop-blur-md rounded-2xl border border-white/40 animate-in fade-in duration-300">
+    {/* 第一行：主要状态 - 保持 text-sm 和 font-light (或微调为 font-medium 增加可读性) */}
+    <p className="text-sm font-light text-gray-600 tracking-wide">
+      {lang === 'zh' ? '该词条尚未收录' : 'Term not found'}
+    </p>
+    
+    {/* 第二行：引导建议 - 使用更小的 text-[11px] 和更淡的 text-gray-400，形成层级感 */}
+    <p className="text-[11px] font-extralight text-gray-400 mt-2 tracking-wider">
+      {lang === 'zh' ? '请调整关键词再试' : 'Refine keywords and try again'}
+    </p>
+  </div>
+)}
 
               {/* 详情卡片 */}
               {searchView === 'detail' && searchResult && (
