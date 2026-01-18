@@ -62,12 +62,32 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           }}
         >
           <style>{`
-            @keyframes appleSpringDown {
-              0% { opacity: 0; transform: translateY(-50px) scale(0.96); }
-              70% { transform: translateY(4px) scale(1.01); }
-              100% { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
+  @keyframes appleSpringDown {
+    0% { 
+      opacity: 0; 
+      transform: translateY(-80px) scaleY(1.2) scaleX(0.8); /* 落下前拉长 */
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(12px) scaleY(0.9) scaleX(1.1); /* 落地：压扁回弹 */
+    }
+    65% {
+      transform: translateY(-5px) scaleY(1.03) scaleX(0.97); /* 二次回弹：轻微拉长 */
+    }
+    85% {
+      transform: translateY(2px) scaleY(0.99) scaleX(1.01); /* 三次微调：归位前震颤 */
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+
+  .apple-spring {
+    /* 0.6s 是关键，让动作更利落；cubic-bezier 控制初速度爆发 */
+    animation: appleSpringDown 0.6s cubic-bezier(0.2, 1.2, 0.5, 1.2) 0.2s forwards;
+  }
+`}</style>
           
           <div className="w-16 h-[1px] bg-black/[0.05] mb-6 md:mb-8 shrink-0"></div>
           <div className="w-full flex flex-col">
