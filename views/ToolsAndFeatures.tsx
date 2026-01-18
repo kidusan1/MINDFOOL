@@ -235,6 +235,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const [isAlarmUnlocked, setIsAlarmUnlocked] = useState(false);
   
   const effectiveSecondsRef = useRef<number>(0);
+  // 🔴 新增：记录点击开始时的精确物理时刻
+  const physicalStartTimeRef = useRef<number | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -293,24 +295,35 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   useEffect(() => {
     let timer: any;
     if (isRunning || isCountdownRunning) {
+      // 🔴 只要开始计时，且之前没记录过起点，就记下当前时刻
+      if (!physicalStartTimeRef.current) {
+        physicalStartTimeRef.current = Date.now();
+      }
+  
       timer = setInterval(() => {
-        effectiveSecondsRef.current += 1;
-        if (effectiveSecondsRef.current >= 60) {
-          onAddMinutes?.(1);
-          effectiveSecondsRef.current = 0;
-        }
+        // 1. 保留你原有的 UI 跳动
+        if (isRunning) setSeconds(s => s + 1);
+        
+        // 2. 保留你原有的倒计时和闹铃逻辑
         if (isCountdownRunning) {
           setCountdownRemaining(prev => {
             if (prev <= 1 && !isAlarmActive) {
-                startAlarmSound();
+              startAlarmSound();
               return 0;
             }
             return prev - 1;
           });
         }
-            
-        if (isRunning) setSeconds(s => s + 1);
+  
+        // 3. 逻辑步进（原有逻辑，保持兼容）
+        effectiveSecondsRef.current += 1;
+        if (effectiveSecondsRef.current >= 60) {
+          onAddMinutes?.(1);
+          effectiveSecondsRef.current = 0;
+        }
       }, 1000);
+    } else {
+      // 停止时，不要立即清空起点，留给 handleReset 结算用
     }
     return () => clearInterval(timer);
   }, [isRunning, isCountdownRunning]);
@@ -643,18 +656,21 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
               </button>
 
               <div className="relative w-full overflow-hidden rounded-lg shadow-2xl">
-                  {imageUri ? (
-                      <img 
-                          src={imageUri} 
-                          alt="Practice Summary Poster" 
-                          className="w-full h-auto select-all"
-                          style={{ pointerEvents: 'auto' }}
-                      />
-                  ) : (
-                      <div className="w-full aspect-[9/12] bg-[#F9F8F6] flex items-center justify-center">
-                          <span className="text-primary text-xs animate-bounce font-medium uppercase tracking-widest">Generating Poster...</span>
-                      </div>
-                  )}
+  {imageUri ? (
+    <img 
+      src={imageUri} 
+      alt="Practice Summary Poster" 
+      className="w-full h-auto select-all"
+      style={{ pointerEvents: 'auto' }}
+    />
+  ) : (
+    <div className="w-full aspect-[9/12] bg-[#F9F8F6] flex items-center justify-center">
+      <span className="text-primary text-[10px] md:text-xs animate-bounce font-medium tracking-widest uppercase">
+        {/* ⚡️ 修复点：直接写逻辑，不要再套一层 {} */}
+        {lang === 'zh' ? '分享海报生成中...' : 'Generating Poster...'}
+      </span>
+    </div>
+  )}
 
                   {/* --- 这里是生成的实际海报节点 --- */}
                   <div className="absolute top-0 left-0 -z-50 opacity-0 pointer-events-none" style={{ width: '450px' }}>
