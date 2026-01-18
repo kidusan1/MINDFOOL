@@ -1333,7 +1333,7 @@ useEffect(() => {
             style={{ animationTimingFunction: 'cubic-bezier(0.15, 1, 0.3, 1)', transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Return'}</div>
+            <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Tap here to return'}</div>
             
             {/* 搜索框 */}
             <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl px-4 py-4 shadow-xl">
