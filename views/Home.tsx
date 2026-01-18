@@ -61,21 +61,30 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
             animation: 'appleSpringDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards'
           }}
         >
-          <style>{`
+  <style>{`
   @keyframes appleSpringDown {
     0% { 
       opacity: 0; 
-      transform: translateY(-50px) scale(0.98); /* 掉落起点：形变极小 */
+      transform: translateY(-80px) scale(0.99); 
+      /* 起始速度极慢 */
+      animation-timing-function: cubic-bezier(0.5, 0, 0.7, 0.5); 
+    }
+    35% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      /* 触地：加速坠落完成 */
     }
     50% {
-      opacity: 1;
-      transform: translateY(6px) scale(1.005); /* 落地：过冲仅6px，比例变化仅0.5% */
+      transform: translateY(8px) scale(1.002); 
+      /* 过冲：果冻受力向下压 8px */
     }
-    75% {
-      transform: translateY(-2px) scale(0.998); /* 二次回弹：肉眼难察的轻微震颤 */
+    70% {
+      transform: translateY(-3px) scale(0.999);
+      /* 回弹：向上反弹 3px */
     }
-    90% {
-      transform: translateY(0.5px); /* 三次余震：模拟物理惯性 */
+    85% {
+      transform: translateY(1px);
+      /* 二次微调：极小的颤动 */
     }
     100% { 
       opacity: 1; 
@@ -84,8 +93,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   }
 
   .apple-spring {
-    /* 时间控制在 0.55s，利落且富有生命力 */
-    animation: appleSpringDown 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.2s forwards;
+    /* 0.75s 给了“慢启动”足够的展示时间 */
+    animation: appleSpringDown 0.75s forwards;
+    /* 初始等待一点点时间，让用户有心理预期 */
+    animation-delay: 0.3s;
   }
 `}</style>
           
