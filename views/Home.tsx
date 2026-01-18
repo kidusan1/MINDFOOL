@@ -33,8 +33,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
       hash |= 0;
     }
     const index = Math.abs(hash) % homeQuotes.length;
-    return homeQuotes[index];
-  }, [user.id, homeQuotes]);
+    return homeQuotes[index] || '';
+  }, [user.id, homeQuotes, homeQuotes.length]); // 🔴 补上长度依赖
 
   // 解析名句 and 出处
   const { text, source } = useMemo(() => {
@@ -65,16 +65,19 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           <div className="w-16 h-[1px] bg-black/[0.05] mb-8"></div>
           
           <div className="relative w-full overflow-hidden text-center py-1">
-                        <p 
+      <p 
               className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation"
               style={{
                 WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 0%, transparent 0%)',
                 WebkitMaskSize: '100% 200%',
+                WebkitMaskPosition: '0 100%', // 🔴 强制初始状态为底部（透明）
+                maskPosition: '0 100%',
                 maskImage: 'linear-gradient(to bottom, black 0%, black 0%, transparent 0%)',
                 maskSize: '100% 200%',
+
               }}
             >
-              {text}
+              {text || " "}
             </p>
           </div>
 
