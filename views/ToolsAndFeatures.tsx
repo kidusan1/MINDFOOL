@@ -274,7 +274,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
     if (physicalStartTimeRef.current) {
       const now = Date.now();
       const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
-      
+      const minutes = Math.max(1, Math.round(elapsedSecs / 60));
       // 如果物理经过的时间（秒）比已经存下的分钟数多，则补齐差额
       // 我们直接按总物理时间结算最稳妥
       if (elapsedSecs >= 10) { 
