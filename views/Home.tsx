@@ -65,20 +65,27 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           <div className="w-16 h-[1px] bg-black/[0.05] mb-8"></div>
           
           <div className="relative w-full overflow-hidden text-center py-1">
-      <p 
-              className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 0%, transparent 0%)',
-                WebkitMaskSize: '100% 200%',
-                WebkitMaskPosition: '0 100%', // 🔴 强制初始状态为底部（透明）
-                maskPosition: '0 100%',
-                maskImage: 'linear-gradient(to bottom, black 0%, black 0%, transparent 0%)',
-                maskSize: '100% 200%',
-
-              }}
-            >
-              {text || " "}
-            </p>
+          <p 
+  className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation"
+  style={{
+    /* 1. 重新定义渐变：上半部分纯黑，下半部分纯透明 */
+    WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
+    maskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
+    
+    /* 2. 放大遮罩尺寸：高度设为 200%，确保有一半是黑的一半是空的 */
+    WebkitMaskSize: '100% 200%',
+    maskSize: '100% 200%',
+    
+    /* 3. 初始位置：设为底部 (0 100%)，此时显示的是透明的那一半 */
+    WebkitMaskPosition: '0 100%',
+    maskPosition: '0 100%',
+    
+    /* 4. 强制继承：确保有些浏览器不会重置这些属性 */
+    WebkitBackfaceVisibility: 'hidden',
+  }}
+>
+  {text}
+</p>
           </div>
 
           {source && (
