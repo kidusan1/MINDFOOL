@@ -38,11 +38,18 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
 
   // 解析名句 and 出处
   const { text, source } = useMemo(() => {
+    // 🔴 增加判空保护，确保解析失败时也有内容
+    if (!dailyQuote) return { text: '...', source: '' }; 
     if (!dailyQuote.includes('——')) return { text: dailyQuote, source: '' };
+    
     const parts = dailyQuote.split('——');
-    return { text: parts[0].trim(), source: parts[1].trim() };
+    return { 
+      // 🔴 确保 parts[0] 存在，否则回退到原始字符串
+      text: parts[0] ? parts[0].trim() : dailyQuote, 
+      source: parts[1] ? parts[1].trim() : '' 
+    };
   }, [dailyQuote]);
-  
+
   return (
     /* 1. 外层容器：精准扣除顶部装饰栏和底部导航栏的总高度 */
     <div className="h-[calc(100vh-140px)] w-full flex flex-col items-center px-6 md:px-12 animate-fade-in overflow-hidden relative">
@@ -51,8 +58,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           手机端：flex-[90] 配合 justify-around 动态分配名句与卡片间距
           电脑端：md:flex-1 配合 md:justify-center 确保整体处于屏幕垂直中点
       */}
-      <div className="flex-[90] md:flex-1 w-full flex flex-col items-center justify-around md:justify-center md:gap-16 min-h-0 relative py-4">
-        
+{/* 🟢 修改点：增加 md:flex-1 确保在电脑端占据全部高度从而实现垂直居中 */}
+<div className="flex-[90] md:flex-1 w-full flex flex-col items-center justify-around md:justify-center md:gap-16 min-h-0 relative py-4">        
         {/* A. 名句展示区（扫描动效沙盒化，不溢出，不挤压） */}
         <div className="w-full max-w-[480px] px-4 flex flex-col items-center justify-center shrink-0">
           <div className="w-16 h-[1px] bg-black/[0.05] mb-8"></div>
