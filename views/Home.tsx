@@ -45,65 +45,61 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
   
   return (
     /* 外层容器：
-       - md:justify-center：电脑端垂直居中
-       - overflow-y-auto：手机端超长时可滑动
+       md:justify-center 是关键，它确保电脑端内容整体在屏幕中心
     */
-    <div className="h-[calc(100vh-140px)] w-full flex flex-col md:justify-center items-center px-6 md:px-12 animate-fade-in overflow-y-auto no-scrollbar relative">
+    <div className="h-[calc(100vh-140px)] w-full flex flex-col md:justify-center items-center px-6 md:px-12 animate-fade-in overflow-hidden relative">
       
-      {/* 🟢 整体包裹区 */}
-      <div className="w-full flex flex-col items-center pb-24 md:pb-0">
+      {/* 🟢 手机端采用 90% 逻辑，电脑端维持自然居中 */}
+      <div className="flex-[90] md:flex-none w-full flex flex-col items-center justify-center min-h-0 relative">
         
-        {/* 1. 名句区：
-           - max-h-[45vh] / max-h-[50dvh]：核心改动，锁定最大高度，防止大字体撑爆
-           - overflow-y-auto：如果字体实在太大，允许在名句区域内微滚，不挤压下方卡片
-        */}
+        {/* 1. 名句区：带 Apple Spring 果冻动效 */}
         <div 
-          className="w-full max-w-[480px] px-4 flex flex-col items-center justify-center py-6 md:py-12 shrink-0 max-h-[50dvh] overflow-y-auto no-scrollbar" 
+          className="w-full max-w-[480px] px-4 flex flex-col items-center justify-center shrink-1" 
           style={{ 
             opacity: 0,
-            animation: 'fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards'
+            /* 苹果风格：从上方掉落 + 阻尼回弹 */
+            animation: 'appleSpringDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards'
           }}
         >
           <style>{`
-            @keyframes fadeInUp {
-              0% { opacity: 0; transform: translateY(40px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            /* 优化建议：针对大字体系统，限制最大渲染字号，防止UI崩坏 */
-            .quote-text {
-              font-size: clamp(12px, 4vw, 15px); /* 👈 更好的优化建议：最小12px，最大15px，随屏幕自适应 */
+            @keyframes appleSpringDown {
+              0% { opacity: 0; transform: translateY(-50px) scale(0.96); }
+              70% { transform: translateY(4px) scale(1.01); }
+              100% { opacity: 1; transform: translateY(0) scale(1); }
             }
           `}</style>
           
-          <div className="w-24 h-[1px] bg-black/[0.05] mb-4 shrink-0"></div>
-          
+          <div className="w-16 h-[1px] bg-black/[0.05] mb-6 md:mb-8 shrink-0"></div>
           <div className="w-full flex flex-col">
-            {/* 严格保留您的字号 text-[13px] md:text-[15px] */}
-            <p className="quote-text text-textMain/80 text-[13px] md:text-[15px] leading-[1.6] tracking-[0.3em] text-justify font-light">
+            <p className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.7] tracking-[0.3em] text-justify font-light">
               {text}
             </p>
             {source && (
-              <p className="quote-text text-textMain/80 text-[13px] md:text-[15px] text-right mt-3 tracking-[0.2em] font-light">
+              <p className="text-textMain/80 text-[13px] md:text-[15px] text-right mt-4 tracking-[0.2em] font-light">
                 <span className="mr-1 tracking-[-0.15em] font-extralight inline-block">——</span> {source}
               </p>
             )}
           </div>
-          
-          <div className="w-24 h-[1px] bg-black/[0.05] mt-4 shrink-0"></div>
+          <div className="w-16 h-[1px] bg-black/[0.05] mt-6 md:mt-8 shrink-0"></div>
         </div>
 
-        {/* 2. 卡片区：自然跟随 */}
-        <div className="w-full flex flex-col items-center justify-start shrink-0 mt-4 md:mt-8">
+        {/* ⚡️ 间距控制：
+            - 手机端: flex-grow 自动撑开，保证在 90% 空间内平衡
+            - 电脑端: md:h-12 固定间距，防止两个组件离得太远，保持之前满意的紧凑感
+        */}
+        <div className="flex-grow md:flex-none md:h-12 max-h-[60px] min-h-[20px] w-full"></div>
+
+        {/* 2. 卡片区：严格保持原本样式 */}
+        <div className="w-full flex flex-col items-center shrink-0">
           <div 
             onClick={() => onNavigate(ViewName.TOOLS)}
-            /* 严格保留：p-5, rounded-[2.5rem], bg-cloud */
-            className="w-full max-w-lg bg-cloud rounded-[2.5rem] p-5 md:p-8 flex flex-col items-center justify-center transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer shadow-none border border-white/40"
+            className="w-full max-w-lg bg-cloud rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center transition-all hover:scale-[1.01] active:scale-[0.95] cursor-pointer shadow-none border border-white/40"
           >
-            <h2 className="text-textSub text-[10px] md:text-xs font-medium tracking-[0.2em] mb-2 uppercase">
+            <h2 className="text-textSub text-[10px] md:text-xs font-medium tracking-[0.2em] mb-3 uppercase">
               {t.durationLabel}
             </h2>
             
-            <div className="flex items-baseline gap-2 mb-5">
+            <div className="flex items-baseline gap-2 mb-6">
               <span className="text-5xl md:text-6xl font-semibold text-primary leading-none tabular-nums tracking-tighter">
                 {totalMinutes}
               </span>
@@ -118,9 +114,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
                 { label: t.breath, val: stats.breath },
               ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center gap-2 w-1/4">
-                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-black/[0.03] border border-black/[0.01] flex items-center justify-center transition-all">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/[0.03] border border-black/[0.01] flex items-center justify-center transition-all">
                     {item.val > 0 && (
-                      <span className="text-[10px] md:text-[11px] font-bold text-primary">
+                      <span className="text-[10px] md:text-[12px] font-bold text-primary">
                         {item.val}
                       </span>
                     )}
@@ -135,11 +131,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
         </div>
       </div>
 
-      {/* 3. 安全垫片：
-         - 手机端：pb-24 (在上面包裹层) + 此处 flex-[10] 双重保险，避开放大镜
-         - 电脑端：hidden 直接移除
+      {/* 🟢 安全区 (10%)：
+          md:hidden 确保电脑端完全不加载这个占位符，从而让内容真正垂直居中
       */}
-      <div className="flex-[10] shrink-0 w-full md:hidden"></div>
+      <div className="flex-[10] md:hidden shrink-0 w-full min-h-[70px]"></div>
 
     </div>
   );
