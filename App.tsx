@@ -1045,12 +1045,8 @@ if (!currentUser || minutes < 1) {
      if (found) {
        setSearchResult({ title: found.title, content: found.content });
      } else {
-       // 👈 这里加入了英文版找不到词条时的提示
-       setSearchResult({ 
-         title: lang === 'zh' ? "未找到相关词条" : "No results found", 
-         content: lang === 'zh' ? "抱歉，词典中暂时没有收录该词条。" : "Sorry, this term is not yet in the dictionary."
-       });
-     }
+      setSearchResult(null);
+    }
      setIsSearching(false);
    }, 200);
  }, [lang]); // 依赖 lang 确保语言切换时提示同步
