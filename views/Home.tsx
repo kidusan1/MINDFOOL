@@ -57,8 +57,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
         <div className="w-full max-w-[480px] px-4 flex flex-col items-center justify-center shrink-0">
           <div className="w-16 h-[1px] bg-black/[0.05] mb-8"></div>
           
-          <div className="relative w-full overflow-hidden text-center">
-            <p 
+          <div className="relative w-full overflow-hidden text-center py-1">
+                        <p 
               className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation"
               style={{
                 WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 0%, transparent 0%)',
@@ -113,8 +113,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-textSub font-medium tracking-tight text-center whitespace-nowrap overflow-hidden text-ellipsis w-full">
-                    {item.label}
+                  <span className="text-[10px] text-textSub font-medium tracking-tight text-center whitespace-nowrap">
+                  {item.label}
                   </span>
                 </div>
               ))}
