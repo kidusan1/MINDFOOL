@@ -144,15 +144,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           100% { -webkit-mask-position: 0 0%; mask-position: 0 0%; }
         }
         .quote-reveal-animation {
-          animation: quoteReveal 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          animation-delay: 0.5s;
+          animation: quoteReveal 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation-delay: 0.2s;
         }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
         }
         .animate-source-fade-in {
-          animation: fadeIn 1.5s ease-out 3.5s forwards;
+          animation: fadeIn 1s ease-out 1.5s forwards;
         }
       `}</style>
     </div>
