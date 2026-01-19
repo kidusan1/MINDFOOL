@@ -637,19 +637,25 @@ const PosterModal: React.FC<{ onClose: () => void, lang: Language, stats: DailyS
         return phrasesZh[(hash + new Date().getDate()) % phrasesZh.length];
     }, [user.name]);
 
-    useEffect(() => {
-        if (posterRef.current) {
-            setTimeout(() => {
-                toPng(posterRef.current!, { cacheBust: true, pixelRatio: 2.5 })
-                    .then((dataUrl) => {
-                        setImageUri(dataUrl);
-                    })
-                    .catch((err) => {
-                        console.error('oops, something went wrong!', err);
-                    });
-            }, 500);
-        }
-    }, [showDetails, lang]);
+   // 底纹
+useEffect(() => {
+  if (posterRef.current) {
+      setTimeout(() => {
+          toPng(posterRef.current!, { 
+              cacheBust: true, 
+              pixelRatio: 3, // 提高采样率，确保细微底纹被抓取
+              backgroundColor: '#F9F8F6', // 强制指定背景色
+              style: { fontFamily: "'xingkai', serif" } // 再次注入字体
+          })
+          .then((dataUrl) => {
+              setImageUri(dataUrl);
+          })
+          .catch((err) => {
+              console.error('oops, something went wrong!', err);
+          });
+      }, 800); // 延迟稍微拉长到 800ms，给字体留足时间
+  }
+}, [showDetails, lang]);
 
     const blueBoxText = useMemo(() => {
       const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
