@@ -1332,7 +1332,7 @@ useEffect(() => {
           
           {/* 内容容器 */}
 <div 
-  className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 duration-500" // 🔴 删掉了 slide-in
+  className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 duration-700" // 🔴 删掉了 slide-in
   style={{
     // 🟢 动画曲线：使用带回弹效果的贝塞尔
     animationTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',

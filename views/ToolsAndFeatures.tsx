@@ -790,8 +790,10 @@ useEffect(() => {
                                       ))}
                                   </div>
                                   {/* 蓝色回向框 */}
-                                  <div className="bg-primary/90 p-5 text-white rounded-2xl shadow-lg"> 
-                                      <p className="text-base leading-relaxed font-medium">{blueBoxText}</p> 
+                                  <div className="bg-primary/10 backdrop-blur-sm p-6 rounded-3xl border border-primary/20"> 
+    <p className="text-[15px] leading-relaxed font-extralight text-primary tracking-wide italic opacity-90">
+        {blueBoxText}
+    </p>
                                   </div>
                               </div>
                               )}
