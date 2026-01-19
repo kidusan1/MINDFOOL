@@ -292,74 +292,86 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const endPress = () => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
   };
-// --- 3. 计时器心脏 (精准修复版) ---
+
+  // 🟢 统合后的唯一计时心脏：处理 UI、自动存分、唤醒对账、退出补录
 useEffect(() => {
-  let timer: any; // 定义在最顶层，确保 return 能拿到
+  let timer: any;
 
-  // 只有在其中一个计时器运行时才开启定时器
-  if (isRunning || isCountdownRunning) {
-    // 初始化物理起点
-    if (!physicalStartTimeRef.current) {
-      physicalStartTimeRef.current = Date.now();
-    }
-
-    timer = setInterval(() => {
-      if (physicalStartTimeRef.current) {
-        const now = Date.now();
-        const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
-        
-        // 1. UI 同步
-        if (isRunning) setSeconds(elapsedSecs); 
-        
-        if (isCountdownRunning) {
-          const remain = (countdownTarget * 60) - elapsedSecs;
-          if (remain <= 0) {
-            setCountdownRemaining(0);
-            if (!isAlarmActive) startAlarmSound();
-          } else {
-            setCountdownRemaining(remain);
-          }
-        }
+  const syncMinutes = () => {
+    // 只要有任何一个计时器在跑，就根据物理时间对账
+    const isAnyActive = isRunning || isCountdownRunning;
     
-        // 2. 自动存分逻辑 (每物理分钟存一次)
-        const totalMins = Math.floor(elapsedSecs / 60);
-        if (totalMins > accumulatedMinsRef.current) {
-          onAddMinutes?.(1); 
-          accumulatedMinsRef.current += 1;
-        }
-      }
-    }, 1000);
-  } 
-
-  // 清理函数：停止 setInterval，防止内存泄漏和报错
-  return () => {
-    if (timer) clearInterval(timer);
-  };
-}, [isRunning, isCountdownRunning, countdownTarget, isAlarmActive]);
-
-// 🟢 精准插入：处理暂停或退出时的 55秒 补录逻辑
-useEffect(() => {
-  return () => {
-    if (physicalStartTimeRef.current) {
+    if (isAnyActive && physicalStartTimeRef.current) {
       const now = Date.now();
       const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
-      const extra = (elapsedSecs % 60) >= 55 ? 1 : 0;
-      const totalMinsEligible = Math.floor(elapsedSecs / 60) + extra;
+      const totalMinsEligible = Math.floor(elapsedSecs / 60);
       const gap = totalMinsEligible - accumulatedMinsRef.current;
       
       if (gap > 0) {
         onAddMinutes?.(gap);
-        accumulatedMinsRef.current += gap;
-      }
-      
-      // 只有在确定停止时才重置起点
-      if (!isRunning && !isCountdownRunning) {
-        physicalStartTimeRef.current = null;
-        accumulatedMinsRef.current = 0;
+        accumulatedMinsRef.current = totalMinsEligible;
       }
     }
   };
-}, [isRunning, isCountdownRunning]);
+
+  if (isRunning || isCountdownRunning) {
+    if (!physicalStartTimeRef.current) {
+      physicalStartTimeRef.current = Date.now();
+    }
+    
+    timer = setInterval(() => {
+      // --- UI 同步逻辑 ---
+      const now = Date.now();
+      const elapsedSecs = Math.floor((now - physicalStartTimeRef.current!) / 1000);
+      
+      if (isRunning) setSeconds(elapsedSecs);
+      
+      if (isCountdownRunning) {
+        const remain = (countdownTarget * 60) - elapsedSecs;
+        if (remain <= 0) {
+          setCountdownRemaining(0);
+          if (!isAlarmActive) startAlarmSound();
+        } else {
+          setCountdownRemaining(remain);
+        }
+      }
+      // --- 自动对账 ---
+      syncMinutes(); 
+    }, 1000);
+  }
+
+  const handleVisibility = () => {
+    if (document.visibilityState === 'visible') syncMinutes();
+  };
+  document.addEventListener('visibilitychange', handleVisibility);
+
+  // 🔴 退出补录逻辑：只在这里处理一次，最干净
+  return () => {
+    if (timer) clearInterval(timer);
+    document.removeEventListener('visibilitychange', handleVisibility);
+    
+    if (physicalStartTimeRef.current) {
+      const now = Date.now();
+      const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
+      
+      // 55秒补偿原则
+      const extra = (elapsedSecs % 60 >= 55) ? 1 : 0;
+      const finalMins = Math.floor(elapsedSecs / 60) + extra;
+      const finalGap = finalMins - accumulatedMinsRef.current;
+      
+      if (finalGap > 0) {
+        onAddMinutes?.(finalGap);
+      }
+      
+      // 如果此时没有计时器在跑了（即用户点击了停止），才清空锚点
+      // 如果用户只是切换页面但计时器没停，锚点会保留（取决于你 App 的 State 结构）
+      if (!isRunning && !isCountdownRunning) {
+         physicalStartTimeRef.current = null;
+         accumulatedMinsRef.current = 0;
+      }
+    }
+  };
+}, [isRunning, isCountdownRunning, countdownTarget, isAlarmActive, onAddMinutes]);
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
