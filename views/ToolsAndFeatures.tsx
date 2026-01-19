@@ -65,9 +65,9 @@ return (
                   setTimerType(tool.type);
                   onNavigate(ViewName.TIMER);
               }}
-              className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-100 active:scale-95 active:brightness-95"
+              className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-75 active:scale-95 active:brightness-95 touch-manipulation relative"
 >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${tool.color}33`, color: tool.color }}>
+              <div className="pointer-events-none w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${tool.color}33`, color: tool.color }}>
               <Icons.Play size={20} fill="currentColor" />
               </div>
               <span className="text-textSub font-medium text-sm tracking-[0.3em]">{getToolLabel(tool.type)}</span>
@@ -79,9 +79,9 @@ return (
               playSound('medium');
               onNavigate(ViewName.BREATHING);
           }}
-          className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-100 active:scale-95 active:brightness-95"
+          className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-75 active:brightness-95 touch-manipulation relative"
           >
-          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-primary mb-2">
+          <div className="pointer-events-none w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-primary mb-2">
               <Icons.Breathing size={20} />
           </div>
           <span className="text-textSub font-medium text-sm tracking-[0.3em]">{t.tools.breathing}</span>
