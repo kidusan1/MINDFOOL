@@ -237,6 +237,8 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const effectiveSecondsRef = useRef<number>(0);
   // 🔴 新增：记录点击开始时的精确物理时刻
   const physicalStartTimeRef = useRef<number | null>(null);
+  // 🟢 精准新增：记录这一段计时中已经存入数据库的分钟数
+  const accumulatedMinsRef = useRef<number>(0); 
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -269,27 +271,11 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   // --- 2. 交互逻辑：长按重置 ---
   const handleReset = (mode: 'up' | 'down') => {
     playSound('medium');
-    
-    // 🔴 核心修复：物理时钟结算
-    if (physicalStartTimeRef.current) {
-      const now = Date.now();
-      const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
-      const minutes = Math.max(1, Math.round(elapsedSecs / 60));
-      // 如果物理经过的时间（秒）比已经存下的分钟数多，则补齐差额
-      // 我们直接按总物理时间结算最稳妥
-      if (elapsedSecs >= 10) { 
-        const totalMins = Math.max(1, Math.round(elapsedSecs / 60));
-        // 假设之前 setInterval 已经存了一部分，这里我们只需补齐差额，或者重新覆盖结算
-        // 最简单不影响已有逻辑的办法：直接计算物理时长并对比已加分钟，这里我们用更稳妥的直接计算
-        onAddMinutes?.(totalMins); 
-        console.log(`物理结算：实际经过 ${totalMins} 分钟`);
-      }
-    }
-  
     // 重置所有状态
     physicalStartTimeRef.current = null; // 🔴 清除锚点
     effectiveSecondsRef.current = 0;   // 🔴 清除累加器
-  
+    effectiveSecondsRef.current = 0;
+
     if (mode === 'up') {
       setIsRunning(false);
       setSeconds(0);
@@ -306,43 +292,74 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   const endPress = () => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
   };
+// --- 3. 计时器心脏 (精准修复版) ---
+useEffect(() => {
+  let timer: any; // 定义在最顶层，确保 return 能拿到
 
-  // --- 3. 计时器心脏 (已跑通逻辑) ---
-  useEffect(() => {
-    let timer: any;
-    if (isRunning || isCountdownRunning) {
-      // 🔴 只要开始计时，且之前没记录过起点，就记下当前时刻
-      if (!physicalStartTimeRef.current) {
-        physicalStartTimeRef.current = Date.now();
-      }
-  
-      timer = setInterval(() => {
-        // 1. 保留你原有的 UI 跳动
-        if (isRunning) setSeconds(s => s + 1);
-        
-        // 2. 保留你原有的倒计时和闹铃逻辑
-        if (isCountdownRunning) {
-          setCountdownRemaining(prev => {
-            if (prev <= 1 && !isAlarmActive) {
-              startAlarmSound();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }
-  
-        // 3. 逻辑步进（原有逻辑，保持兼容）
-        effectiveSecondsRef.current += 1;
-        if (effectiveSecondsRef.current >= 60) {
-          onAddMinutes?.(1);
-          effectiveSecondsRef.current = 0;
-        }
-      }, 1000);
-    } else {
-      // 停止时，不要立即清空起点，留给 handleReset 结算用
+  // 只有在其中一个计时器运行时才开启定时器
+  if (isRunning || isCountdownRunning) {
+    // 初始化物理起点
+    if (!physicalStartTimeRef.current) {
+      physicalStartTimeRef.current = Date.now();
     }
-    return () => clearInterval(timer);
-  }, [isRunning, isCountdownRunning]);
+
+    timer = setInterval(() => {
+      if (physicalStartTimeRef.current) {
+        const now = Date.now();
+        const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
+        
+        // 1. UI 同步
+        if (isRunning) setSeconds(elapsedSecs); 
+        
+        if (isCountdownRunning) {
+          const remain = (countdownTarget * 60) - elapsedSecs;
+          if (remain <= 0) {
+            setCountdownRemaining(0);
+            if (!isAlarmActive) startAlarmSound();
+          } else {
+            setCountdownRemaining(remain);
+          }
+        }
+    
+        // 2. 自动存分逻辑 (每物理分钟存一次)
+        const totalMins = Math.floor(elapsedSecs / 60);
+        if (totalMins > accumulatedMinsRef.current) {
+          onAddMinutes?.(1); 
+          accumulatedMinsRef.current += 1;
+        }
+      }
+    }, 1000);
+  } 
+
+  // 清理函数：停止 setInterval，防止内存泄漏和报错
+  return () => {
+    if (timer) clearInterval(timer);
+  };
+}, [isRunning, isCountdownRunning, countdownTarget, isAlarmActive]);
+
+// 🟢 精准插入：处理暂停或退出时的 55秒 补录逻辑
+useEffect(() => {
+  return () => {
+    if (physicalStartTimeRef.current) {
+      const now = Date.now();
+      const elapsedSecs = Math.floor((now - physicalStartTimeRef.current) / 1000);
+      const extra = (elapsedSecs % 60) >= 55 ? 1 : 0;
+      const totalMinsEligible = Math.floor(elapsedSecs / 60) + extra;
+      const gap = totalMinsEligible - accumulatedMinsRef.current;
+      
+      if (gap > 0) {
+        onAddMinutes?.(gap);
+        accumulatedMinsRef.current += gap;
+      }
+      
+      // 只有在确定停止时才重置起点
+      if (!isRunning && !isCountdownRunning) {
+        physicalStartTimeRef.current = null;
+        accumulatedMinsRef.current = 0;
+      }
+    }
+  };
+}, [isRunning, isCountdownRunning]);
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
