@@ -791,7 +791,7 @@ useEffect(() => {
                                   </div>
                                   {/* 蓝色回向框 */}
                                   <div className="bg-primary/10 backdrop-blur-sm p-6 rounded-3xl border border-primary/20"> 
-    <p className="text-[15px] leading-relaxed font-extralight text-primary tracking-wide italic opacity-90">
+    <p className="text-[15px] leading-relaxed font-light text-primary tracking-wide opacity-90">
         {blueBoxText}
     </p>
                                   </div>
