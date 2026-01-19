@@ -389,17 +389,17 @@ useEffect(() => {
       
               {/* 正计时卡片 */}
         <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px]">
-          <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
-          <div className="text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8 tabular-nums">{formatTime(seconds)}</div>
+          <h2 className="select-none text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{typeLabel}</h2>
+          <div className="select-none text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8 tabular-nums">{formatTime(seconds)}</div>
           <div className="flex flex-col items-center gap-2">
             <button 
               onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }}
               onMouseDown={() => startPress('up')} onMouseUp={endPress} onTouchStart={() => startPress('up')} onTouchEnd={endPress}
-              className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
+              className={`select-none touch-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
             >
               {isRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-1" />}
             </button>
-            <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
+            <p className="select-none text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
               {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
             </p>
           </div>
@@ -411,7 +411,7 @@ useEffect(() => {
 
 {/* 倒计时卡片 */}
             <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
-                <h2 className="text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
+                <h2 className="select-none text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
                 <div className="flex items-center gap-4 my-8">
                 {!isCountdownRunning && !isAlarmActive && (
   <button 
@@ -421,12 +421,12 @@ useEffect(() => {
       setCountdownTarget(next);
       setCountdownRemaining(next * 60);
     }} 
-    className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+    className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
   >
     -
   </button>
 )}
- <div className={`text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
+ <div className={`select-none text-6xl font-semibold tracking-tighter tabular-nums ${isAlarmActive ? 'text-red-500 animate-pulse' : 'text-primary'}`}>
   {isCountdownRunning ? (
     formatTime(countdownRemaining)
   ) : isAlarmActive ? (
@@ -451,7 +451,7 @@ useEffect(() => {
       setCountdownTarget(next);
       setCountdownRemaining(next * 60);
 }} 
-className="w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
 >
 +
 </button>
@@ -481,12 +481,17 @@ audio.volume = 0;
 }
 setIsCountdownRunning(!isCountdownRunning); 
 }}
-onMouseDown={() => startPress('down')} onMouseUp={endPress} onTouchStart={() => startPress('down')} onTouchEnd={endPress}
-className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
+onMouseDown={() => startPress('down')} 
+onMouseUp={endPress} 
+onTouchStart={() => startPress('down')} 
+onTouchEnd={endPress}
+onContextMenu={(e) => e.preventDefault()}
+className={`select-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
 >
+  
 {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}
  </button>
-   <p className="text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
+   <p className="select-none text-[10px] text-gray-400 font-light tracking-widest uppercase mt-1">
        {lang === 'zh' ? '长按归零' : 'Hold to Reset'}
         </p>
         </>
