@@ -1311,9 +1311,11 @@ useEffect(() => {
     }}
     // 3. 关键：禁止系统默认的长按弹出菜单（防止选中空字符）
     onContextMenu={(e) => e.preventDefault()}
-    // 4. 样式：苹果级变暗挤压效果
-    className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-200 active:scale-90 active:brightness-75 hover:bg-white/50 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"
+
+    // 🟢 重点：确保 active:scale 存在，这是 iOS 的“触感”核心
+    className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-300 active:scale-90 active:brightness-90 hover:scale-105 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"
   >
+
     <Icons.Search style={{ color: '#6D8D9D' }} size={22} strokeWidth={2} />
     <span className="hidden md:inline-block ml-2 text-sm font-extralight tracking-[0.2em] text-[#6D8D9D]/70">
       {lang === 'zh' ? '搜索' : 'SEARCH'}
@@ -1330,7 +1332,11 @@ useEffect(() => {
           {/* 内容容器 */}
           <div 
             className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 slide-in-from-bottom-64 duration-700"
-            style={{ animationTimingFunction: 'cubic-bezier(0.15, 1, 0.3, 1)', transformOrigin: 'calc(100% - 24px) calc(100% - 96px)' }}
+            style={{
+              // 🟢 核心修改：让动画起点对准右下角悬浮按钮的位置
+            // 手机端：bottom-24(96px) right-6(24px)
+            transformOrigin: window.innerWidth > 768 ? 'left center' : 'calc(100% - 24px) calc(100% - 96px)' 
+          }}
             onClick={(e) => e.stopPropagation()}
           >
             <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Tap here to return'}</div>
