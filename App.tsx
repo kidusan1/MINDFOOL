@@ -1313,7 +1313,7 @@ useEffect(() => {
     onContextMenu={(e) => e.preventDefault()}
 
     // 🟢 重点：确保 active:scale 存在，这是 iOS 的“触感”核心
-    className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-300 active:scale-90 active:brightness-90 hover:scale-105 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"
+    className="fixed z-[999] bottom-24 right-6 w-12 h-12 rounded-full flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/60 shadow-sm transition-all duration-300 active:scale-90 active:brightness-75 hover:scale-105 md:bottom-48 md:left-10 md:right-auto md:w-auto md:h-auto md:px-5 md:py-2 md:rounded-xl"
   >
 
     <Icons.Search style={{ color: '#6D8D9D' }} size={22} strokeWidth={2} />
@@ -1327,18 +1327,20 @@ useEffect(() => {
       {currentUser && isSearchOpen && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-20 md:pt-32 pb-12">
           {/* 背景层 */}
-          <div className="absolute inset-0 bg-black/15 backdrop-blur-[45px] animate-in fade-in duration-1000" onClick={() => { setIsSearchOpen(false); setSearchView('list'); }} />
+          <div className="absolute inset-0 bg-black/15 backdrop-blur-[20px] animate-in fade-in duration-300" 
+          onClick={() => { setIsSearchOpen(false); setSearchView('list'); }} />
           
           {/* 内容容器 */}
-          <div 
-            className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 slide-in-from-bottom-64 duration-700"
-            style={{
-              // 🟢 核心修改：让动画起点对准右下角悬浮按钮的位置
-            // 手机端：bottom-24(96px) right-6(24px)
-            transformOrigin: window.innerWidth > 768 ? 'left center' : 'calc(100% - 24px) calc(100% - 96px)' 
-          }}
-            onClick={(e) => e.stopPropagation()}
-          >
+<div 
+  className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 duration-500" // 🔴 删掉了 slide-in
+  style={{
+    // 🟢 动画曲线：使用带回弹效果的贝塞尔
+    animationTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    // 🟢 动态计算起点
+    transformOrigin: window.innerWidth > 768 ? 'left center' : 'calc(100% - 24px) calc(100% - 96px)' 
+  }}
+  onClick={(e) => e.stopPropagation()}
+>
             <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Tap here to return'}</div>
             
             {/* 搜索框 */}
