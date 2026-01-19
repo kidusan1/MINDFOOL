@@ -754,9 +754,9 @@ useEffect(() => {
           <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden h-full">
                               {/* A. 引用名句区域 */}
                               <div className="pt-2">
-                                  <p className="text-lg text-textMain/80 leading-loose text-left font-light tracking-wide">{quoteText}</p>
+                                  <p className="text-lg text-textMain/80 leading-loose text-left font-extralight tracking-wide">{quoteText}</p>
                                   {quoteSource && (
-                                      <p className="text-base text-textMain/80 text-right mt-1 font-light">
+                                      <p className="text-base text-textMain/80 text-right mt-1 font-extralight">
                                           <span className="tracking-[-0.15em] font-thin inline-block mr-1">——</span> {quoteSource.replace('—— ', '')}
                                       </p>
                                   )}
@@ -790,10 +790,10 @@ useEffect(() => {
                                       ))}
                                   </div>
                                   {/* 蓝色回向框 */}
-                                  <div className="bg-primary/10 backdrop-blur-sm p-6 rounded-3xl border border-primary/20"> 
-    <p className="text-[15px] leading-relaxed font-light text-primary tracking-wide opacity-90">
-        {blueBoxText}
-    </p>
+                                  <div className="bg-primary/10 backdrop-blur-sm p-6 rounded-3xl border border-primary/20 justify-center"> 
+                                  <p className="inline-block mx-auto text-[14px] leading-relaxed font-light text-primary tracking-wide opacity-90 text-left">
+                                  {blueBoxText}
+                                   </p>
                                   </div>
                               </div>
                               )}
