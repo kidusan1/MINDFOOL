@@ -65,8 +65,8 @@ return (
                   setTimerType(tool.type);
                   onNavigate(ViewName.TIMER);
               }}
-              className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
-          >
+              className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-100 active:scale-95 active:brightness-95"
+>
               <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${tool.color}33`, color: tool.color }}>
               <Icons.Play size={20} fill="currentColor" />
               </div>
@@ -92,8 +92,8 @@ return (
               playSound('medium');
               onNavigate(ViewName.STATS);
           }}
-          className="col-span-2 md:col-span-4 bg-gradient-to-r from-[#E8F1F5] to-cloud rounded-2xl p-4 flex items-center justify-between shadow-sm border border-white/50 mt-1"
-          >
+          className="col-span-2 md:col-span-4 bg-gradient-to-r from-[#E8F1F5] to-cloud rounded-2xl p-4 flex items-center justify-between shadow-sm border border-white/50 mt-1 transition-all duration-100 active:brightness-95"
+>
           <span className="text-textSub font-medium ml-2 text-sm tracking-[0.3em]">{t.tools.stats}</span>
           <div className="w-8 h-8 rounded-full bg-cloud flex items-center justify-center text-primary shadow-sm mr-2">
               <Icons.Stats size={16} />

@@ -705,15 +705,15 @@ export const RecordInputModal: React.FC<RecordInputModalProps> = ({ onClose, onS
                             onClick={() => { playSound('light'); setSelectedType(t); }}
                             className={`px-4 py-3 rounded-xl text-xs font-bold shrink-0 transition-all duration-200 ${
                                 isSelected 
-                                ? 'shadow-inner scale-95 opacity-100 ring-2' // Selected: Pressed in, fully opaque
-                                : 'shadow-sm hover:shadow-md scale-100 opacity-60 hover:opacity-100' // Unselected: Floating, slightly transparent
+                                ? 'scale-95 opacity-100 shadow-inner border-black/5 bg-white/20' // Selected: Pressed in, fully opaque
+                                : 'scale-100 opacity-60 border-transparent' // Unselected: Floating, slightly transparent
                             }`}
                             style={{ 
-                                backgroundColor: t.bg, 
+                                backgroundColor: isSelected ? t.bg : 'transparent', // 选中才显色，未选中透明 
                                 color: t.text,
-                                '--tw-ring-color': isSelected ? t.color : 'transparent' 
+                                boxShadow: isSelected ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' : 'none'
             } as React.CSSProperties}
-        >
+            >
                             {getDisplayLabel(t.label)}
                         </button>
                     )
