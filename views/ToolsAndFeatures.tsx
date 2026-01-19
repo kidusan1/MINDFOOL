@@ -79,7 +79,7 @@ return (
               playSound('medium');
               onNavigate(ViewName.BREATHING);
           }}
-          className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow border border-white/50"
+          className="aspect-square bg-cloud rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm border border-white/50 transition-all duration-100 active:scale-95 active:brightness-95"
           >
           <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-primary mb-2">
               <Icons.Breathing size={20} />
@@ -227,6 +227,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
 
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [isLongPressing, setIsLongPressing] = useState(false); // 防护盾状态
   const [countdownTarget, setCountdownTarget] = useState(20);
   const [countdownRemaining, setCountdownRemaining] = useState(20 * 60);
   const [isCountdownRunning, setIsCountdownRunning] = useState(false);
@@ -271,6 +272,7 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
   // --- 2. 交互逻辑：长按重置 ---
   const handleReset = (mode: 'up' | 'down') => {
     playSound('medium');
+    setIsLongPressing(true); // 🛡️ 开启防护盾：告诉程序刚才发生了长按
     // 重置所有状态
     physicalStartTimeRef.current = null; // 🔴 清除锚点
     effectiveSecondsRef.current = 0;   // 🔴 清除累加器
@@ -284,7 +286,9 @@ export const TimerView: React.FC<TimerViewProps> = ({ type, onAddMinutes, lang }
       setCountdownRemaining(countdownTarget * 60);
       stopAlarmSound();
     }
-  };
+    // 🛡️ 0.5秒后自动关闭防护盾，不影响下次操作
+    setTimeout(() => setIsLongPressing(false), 500);
+};
 
   const startPress = (mode: 'up' | 'down') => {
     longPressTimerRef.current = setTimeout(() => handleReset(mode), 800);
@@ -393,7 +397,10 @@ useEffect(() => {
           <div className="select-none text-6xl font-semibold text-primary tracking-tighter tabular-nums my-8 tabular-nums">{formatTime(seconds)}</div>
           <div className="flex flex-col items-center gap-2">
             <button 
-              onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }}
+              onClick={() => { 
+                if (isLongPressing) return; // 🛡️ 如果是长按归零，直接拦截，不准切换开始/暂停
+                playSound('confirm'); 
+                  setIsRunning(!isRunning); }}
               onMouseDown={() => startPress('up')} onMouseUp={endPress} onTouchStart={() => startPress('up')} onTouchEnd={endPress}
               className={`select-none touch-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all duration-100 active:scale-95 ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
             >
@@ -409,13 +416,14 @@ useEffect(() => {
           <>
             <div className="hidden md:block w-px h-64 bg-gray-200 shrink-0"></div>
 
-{/* 倒计时卡片 */}
+        {/* 倒计时卡片 */}
             <div className="flex flex-col items-center justify-center w-full md:flex-1 md:max-w-[420px] md:h-[380px] p-6 md:p-8 bg-cloud rounded-[2.5rem] border border-white/60 shadow-sm min-h-[300px] relative">
                 <h2 className="select-none text-sm md:text-base font-medium text-textSub tracking-[0.2em] mb-2">{t.tools.timer.countdown}</h2>
                 <div className="flex items-center gap-4 my-8">
                 {!isCountdownRunning && !isAlarmActive && (
   <button 
     onClick={() => {
+
       // 逻辑：如果当前 <= 5分，直接降到 1分；否则减 5
       const next = countdownTarget <= 5 ? 1 : countdownTarget - 5;
       setCountdownTarget(next);
@@ -460,7 +468,8 @@ className="select-none w-8 h-8 rounded-full border border-secondary flex items-c
 <div className="flex flex-col items-center gap-2 w-full">
                 
 {isAlarmActive ? (
-<button onClick={stopAlarmSound} className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse">
+<button onClick={stopAlarmSound} 
+className="w-full max-w-[200px] py-4 bg-red-600 text-white rounded-full font-bold shadow-lg flex items-center justify-center gap-2 text-sm animate-pulse transition-all active:scale-95">
 <Icons.Cancel size={18} /> {lang === 'zh' ? '停止' : 'Stop Alarm'}
 </button>
 ) : (
@@ -468,6 +477,8 @@ className="select-none w-8 h-8 rounded-full border border-secondary flex items-c
 
 <button 
 onClick={() => {
+  // 🛡️ 核心：防护盾判断。如果是长按归零刚结束，直接拦截
+  if (isLongPressing) return;
 const audio = document.getElementById('alarm-audio') as HTMLAudioElement;
 if (audio && !isCountdownRunning) {
  // 🟢 预热激活：在点击开始的瞬间，让它以极小音量播一下
