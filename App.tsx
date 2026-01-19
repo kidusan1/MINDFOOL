@@ -1420,7 +1420,7 @@ useEffect(() => {
                           setSuggestions(matches);
                         }
                       }} 
-                      className="flex items-center text-[10px] text-gray-500 bg-gray-100 px-3 py-2 rounded-full active:scale-95"
+                      className="flex items-center text-[10px] text-gray-500 bg-gray-100 px-3 py-2 rounded-full transition-all active:scale-90"
                     >
                       <Icons.ChevronLeft size={12} className="mr-1" />{lang === 'zh' ? '返回列表' : 'Back'}
                     </button>

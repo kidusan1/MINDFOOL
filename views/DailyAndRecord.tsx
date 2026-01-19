@@ -136,6 +136,7 @@ export const DailyView: React.FC<DailyProps> = ({
       setIsRevokeModalOpen(false);
   };
 
+//撤回请假
   const renderCurrentWeekCard = () => {
       const data = currentWeek;
       return (
@@ -163,7 +164,7 @@ export const DailyView: React.FC<DailyProps> = ({
                                 playSound('light');
                                 setIsRevokeModalOpen(true);
                             }}
-                            className="text-xs bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors shadow-sm ml-2"
+                            className="text-xs bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-full hover:bg-red-50 transition-all duration-100 active:scale-95 active:bg-red-50"
                         >
                             {t.revokeLeave}
                         </button>
@@ -183,7 +184,7 @@ export const DailyView: React.FC<DailyProps> = ({
                             setIsLeaveModalOpen(true); 
                             setLeaveReason(''); 
                         }}
-                        className="text-xs text-textSub bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                        className="text-xs text-textSub bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full transition-all duration-100 active:scale-95 active:bg-gray-200"
                     >
                         {t.wantLeave}
                     </button>
@@ -193,6 +194,7 @@ export const DailyView: React.FC<DailyProps> = ({
       );
   };
 
+//取消签到
   const CheckInSection = () => (
     <div className={`bg-cloud rounded-2xl p-4 shadow-sm border border-white/50 w-full mb-4 transition-opacity ${currentWeek.hasLeft ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
         <div className="flex justify-between items-center mb-3">
@@ -202,7 +204,8 @@ export const DailyView: React.FC<DailyProps> = ({
                     playSound('light');
                     setCheckInStatus(CheckInType.NONE);
                     onUpdateWeeklyState(currentDateStr, { checkInStatus: '' });
-                }} className="text-xs text-red-400 flex items-center gap-1">
+                }} 
+                className="text-xs text-red-400 flex items-center gap-1 transition-all duration-100 active:scale-95">
                 <Icons.Cancel size={12} /> {tApp.cancel}
                 </button>
             )}
@@ -213,14 +216,14 @@ export const DailyView: React.FC<DailyProps> = ({
                 <button 
                     onClick={handleOfflineCheckIn}
                     disabled={isLocating || !canCheckIn}
-                    className="flex-1 py-3 rounded-xl bg-secondary/20 text-primary text-sm font-medium flex items-center justify-center gap-2 hover:bg-secondary/30 transition-colors disabled:opacity-50 disabled:grayscale"
-                >
+                    className="flex-1 py-3 rounded-xl bg-bgMain text-textSub text-sm font-medium flex items-center justify-center gap-2 transition-all duration-100 active:scale-95 disabled:active:scale-100 disabled:opacity-50"
+>
                     {isLocating ? <span className="animate-pulse">{t.locating}</span> : <><Icons.Location size={16} /> {t.offlineCheckIn}</>}
                 </button>
                 <button 
                     onClick={handleOnlineCheckIn}
                     disabled={!canCheckIn}
-                    className="flex-1 py-3 rounded-xl bg-bgMain text-textSub text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 rounded-xl bg-bgMain text-textSub text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-100 active:scale-95"
                 >
                     {t.onlineCheckIn}
                 </button>
@@ -267,8 +270,8 @@ if (course.status === CourseStatus.IN_PROGRESS) {
                         setCourseId(course.id); 
                         onNavigate(ViewName.COURSE_DETAIL); 
                     }}
-                    className="bg-cloud p-3 rounded-xl border border-white/50 flex items-start gap-3 active:scale-[0.99] transition-transform cursor-pointer hover:shadow-md"
-                >
+                    className="bg-cloud p-3 rounded-xl border border-white/50 flex items-start gap-3 transition-all duration-200 cursor-pointer active:bg-gray-200/50"
+>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
                         course.status === CourseStatus.IN_PROGRESS ? 'bg-primary text-white' : 'bg-bgMain text-textSub'
                     }`}>
@@ -362,8 +365,10 @@ if (course.status === CourseStatus.IN_PROGRESS) {
                         onChange={(e) => setLeaveReason(e.target.value)}
                     />
                     <div className="flex gap-2">
-                        <button onClick={() => { playSound('light'); setIsLeaveModalOpen(false); }} className="flex-1 py-2 rounded-lg bg-gray-200 text-textSub text-sm">{tApp.cancel}</button>
-                        <button onClick={handleSubmitLeave} className="flex-1 py-2 rounded-lg bg-primary text-white text-sm">{tApp.submit}</button>
+                        <button onClick={() => { playSound('light'); setIsLeaveModalOpen(false); }} 
+                        className="flex-1 py-2 rounded-lg bg-gray-200 text-textSub text-sm transition-all duration-100 active:scale-95">{tApp.cancel}</button>
+                        <button onClick={handleSubmitLeave} 
+                        className="flex-1 py-2 rounded-lg bg-primary text-white text-sm transition-all duration-100 active:scale-95">{tApp.submit}</button>
                     </div>
                 </div>
             </div>
@@ -380,8 +385,9 @@ if (course.status === CourseStatus.IN_PROGRESS) {
                         {t.revokeLeaveConfirmContent}
                     </p>
                     <div className="flex gap-2">
-                        <button onClick={() => { playSound('light'); setIsRevokeModalOpen(false); }} className="flex-1 py-2.5 rounded-xl bg-gray-200 text-textSub text-sm font-medium">{tApp.cancel}</button>
-                        <button onClick={handleRevokeLeave} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-md shadow-primary/20">{tApp.confirm}</button>
+                        <button onClick={() => { playSound('light'); setIsRevokeModalOpen(false); }} className="flex-1 py-2.5 rounded-xl bg-gray-200 text-textSub text-sm font-medium transition-all duration-100 active:scale-95">{tApp.cancel}</button>
+                        <button onClick={handleRevokeLeave} 
+                        className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-md shadow-primary/20 transition-all duration-100 active:scale-95">{tApp.confirm}</button>
                     </div>
                 </div>
             </div>
@@ -504,8 +510,7 @@ const RecordItem: React.FC<{
                 {/* Delete Action */}
                 <div className="h-full flex items-center pr-2 justify-end w-1/2 ml-auto">
                     <button 
-                        className={`w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-500 shadow-sm active:scale-90 transition-transform ${offset < -20 ? 'opacity-100' : 'opacity-0'}`}
-                        onTouchEnd={(e) => e.stopPropagation()} 
+                        className={`w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-500 shadow-sm transition-all duration-100 active:scale-95 active:bg-red-200 ${offset < -20 ? 'opacity-100' : 'opacity-0'}`}                        onTouchEnd={(e) => e.stopPropagation()} 
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation(); 
@@ -521,7 +526,7 @@ const RecordItem: React.FC<{
             {/* Foreground Card */}
             <div 
                 ref={itemRef}
-                className={`relative z-10 rounded-2xl p-4 shadow-sm border border-white/60 group transition-transform duration-300 ease-out`}
+                className={`relative z-10 rounded-2xl p-4 shadow-sm border border-white/60 group transition-all duration-200 active:brightness-95`}
                 style={{ 
                     backgroundColor: cardBgColor,
                     transform: `translateX(${offset}px)`,
@@ -551,14 +556,14 @@ const RecordItem: React.FC<{
                     <div className="hidden md:flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity pl-4 z-20">
                         <button 
                             onClick={(e) => { e.stopPropagation(); playSound('confirm'); onPin(rec.id); }} 
-                            className={`hover:scale-110 transition-transform ${rec.isPinned ? 'text-white' : 'text-gray-300 hover:text-primary'}`}
+                            className={`transition-all duration-100 hover:scale-110 active:scale-90 ${rec.isPinned ? 'text-white' : 'text-gray-300 hover:text-primary'}`}
                             title={rec.isPinned ? t.unpin : t.pin}
                         >
                             {rec.isPinned ? <Icons.Check size={18} /> : <div className="w-4 h-4 rounded-full border-2 border-current"></div>}
                         </button>
                         <button 
                             onClick={(e) => { e.stopPropagation(); playSound('confirm'); onDelete(rec.id); }} 
-                            className={`hover:scale-110 transition-transform ${rec.isPinned ? 'text-white/70 hover:text-white' : 'text-gray-300 hover:text-red-400'}`}
+                            className={`transition-all duration-100 hover:scale-110 active:scale-90 ${rec.isPinned ? 'text-white/70 hover:text-white' : 'text-gray-300 hover:text-red-400'}`}
                             title={TRANSLATIONS[lang].app.delete}
                         >
                             <Icons.Cancel size={18} />
@@ -604,7 +609,7 @@ export const RecordView: React.FC<RecordViewProps> = ({ onOpenInput, records, on
            playSound('confirm'); 
            onOpenInput(); 
          }}
-         className={`fixed bottom-40 md:bottom-12 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-40 active:scale-95 transition-transform ${
+         className={`fixed bottom-40 md:bottom-12 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center z-40 transition-all duration-100 active:scale-95 active:brightness-90 ${
            isMaxRecords 
              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
              : 'bg-primary text-white hover:bg-primary/90'
@@ -661,6 +666,7 @@ const RECORD_TYPES = [
     { label: '懈怠/掉举', color: '#B97A7A', bg: '#F8F1F1', text: '#4A3535' }  // Soft Muted Red (High transparency feel)
 ];
 
+//记录成长
 export const RecordInputModal: React.FC<RecordInputModalProps> = ({ onClose, onSave, initialData, lang }) => {
   const t = TRANSLATIONS[lang].record;
   const tApp = TRANSLATIONS[lang].app;
@@ -683,7 +689,8 @@ export const RecordInputModal: React.FC<RecordInputModalProps> = ({ onClose, onS
             
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-textMain">{initialData ? t.editRecord : t.newRecord}</h3>
-                <button onClick={() => { playSound('light'); onClose(); }} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-textSub">
+                <button onClick={() => { playSound('light'); onClose(); }} 
+                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 text-textSub transition-all duration-100 active:scale-90 active:bg-gray-200">
                     <Icons.Cancel size={20} />
                 </button>
             </div>
@@ -698,14 +705,15 @@ export const RecordInputModal: React.FC<RecordInputModalProps> = ({ onClose, onS
                             onClick={() => { playSound('light'); setSelectedType(t); }}
                             className={`px-4 py-3 rounded-xl text-xs font-bold shrink-0 transition-all duration-200 ${
                                 isSelected 
-                                ? 'shadow-inner scale-95 opacity-100' // Selected: Pressed in, fully opaque
+                                ? 'shadow-inner scale-95 opacity-100 ring-2' // Selected: Pressed in, fully opaque
                                 : 'shadow-sm hover:shadow-md scale-100 opacity-60 hover:opacity-100' // Unselected: Floating, slightly transparent
                             }`}
                             style={{ 
                                 backgroundColor: t.bg, 
                                 color: t.text,
-                            }}
-                        >
+                                '--tw-ring-color': isSelected ? t.color : 'transparent' 
+            } as React.CSSProperties}
+        >
                             {getDisplayLabel(t.label)}
                         </button>
                     )
@@ -730,7 +738,7 @@ export const RecordInputModal: React.FC<RecordInputModalProps> = ({ onClose, onS
                         textColor: selectedType.text
                     });
                 }}
-                className="w-full py-4 rounded-xl bg-primary text-white font-medium shadow-lg shadow-primary/20 active:scale-95 transition-transform"
+                className="w-full py-4 rounded-xl bg-primary text-white font-medium shadow-lg shadow-primary/20 transition-all duration-100 active:scale-95 active:brightness-90"
             >
                 {tApp.save}
             </button>

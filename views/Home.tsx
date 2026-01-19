@@ -103,7 +103,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
         <div className="w-full flex flex-col items-center shrink-0 z-10">
           <div 
             onClick={() => onNavigate(ViewName.TOOLS)}
-            className="w-full max-w-lg bg-cloud rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center border border-white/40 shadow-sm"
+            className="w-full max-w-lg bg-cloud rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center border border-white/40 shadow-sm transition-all duration-200 cursor-pointer active:brightness-95"
           >
             <h2 className="text-textSub text-[10px] md:text-xs font-medium tracking-[0.2em] mb-3 uppercase text-center">
               {t.durationLabel}

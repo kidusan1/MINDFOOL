@@ -395,7 +395,7 @@ useEffect(() => {
             <button 
               onClick={() => { playSound('confirm'); setIsRunning(!isRunning); }}
               onMouseDown={() => startPress('up')} onMouseUp={endPress} onTouchStart={() => startPress('up')} onTouchEnd={endPress}
-              className={`select-none touch-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
+              className={`select-none touch-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all duration-100 active:scale-95 ${isRunning ? 'bg-primary' : 'bg-gray-400'}`}
             >
               {isRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-1" />}
             </button>
@@ -421,7 +421,7 @@ useEffect(() => {
       setCountdownTarget(next);
       setCountdownRemaining(next * 60);
     }} 
-    className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+    className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center transition-all duration-100 active:scale-90 active:bg-gray-100"
   >
     -
   </button>
@@ -451,7 +451,7 @@ useEffect(() => {
       setCountdownTarget(next);
       setCountdownRemaining(next * 60);
 }} 
-className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center"
+className="select-none w-8 h-8 rounded-full border border-secondary flex items-center justify-center transition-all duration-100 active:scale-90 active:bg-gray-100"
 >
 +
 </button>
@@ -486,7 +486,7 @@ onMouseUp={endPress}
 onTouchStart={() => startPress('down')} 
 onTouchEnd={endPress}
 onContextMenu={(e) => e.preventDefault()}
-className={`select-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
+className={`select-none w-16 h-16 rounded-full text-white flex items-center justify-center shadow-xl transition-all duration-100 active:scale-95 ${isCountdownRunning ? 'bg-primary' : 'bg-gray-400'}`}
 >
   
 {isCountdownRunning ? <Icons.Pause size={28} /> : <Icons.Play size={28} className="ml-0.5" />}

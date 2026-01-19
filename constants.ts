@@ -260,7 +260,7 @@ export const TRANSLATIONS = {
       types: {
         good: 'Good Deed',
         balance: 'Balance',
-        sloth: 'Sloth/Distraction'
+        sloth: 'Slackness'
       },
       placeholder: 'Record your current realizations, thoughts, worries...',
       empty: 'No records yet. Tap + to add.',
