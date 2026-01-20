@@ -59,7 +59,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
           电脑端：md:flex-1 配合 md:justify-center 确保整体处于屏幕垂直中点
       */}
 {/* 🟢 修改点：增加 md:flex-1 确保在电脑端占据全部高度从而实现垂直居中 */}
-<div className="flex-[90] md:flex-1 w-full flex flex-col items-center justify-around md:justify-center md:gap-16 min-h-0 relative py-4">        
+<div className="flex-[90] md:flex-1 w-full flex flex-col items-center justify-center md:justify-center gap-y-12 md:gap-16 min-h-0 relative py-4">        
         {/* A. 名句展示区（扫描动效沙盒化，不溢出，不挤压） */}
         <div className="w-full max-w-[480px] px-4 flex flex-col items-center justify-center shrink-0">
           <div className="w-16 h-[1px] bg-black/[0.05] mb-8"></div>
@@ -96,7 +96,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
               </p>
             </div>
           )}
-          <div className="w-16 h-[1px] bg-black/[0.05] mt-4"></div>
+          <div className="w-16 h-[1px] bg-black/[0.05] mt-8"></div>
         </div>
 
         {/* B. 功课卡片：严格使用你原本的 t 对象变量，不干涉翻译 */}
