@@ -71,14 +71,29 @@ export const DailyView: React.FC<DailyProps> = ({
       ? `${statusLabel} · ${resumeLabel}: ${checkInConfig.resumeDate}`
       : `${statusLabel} · ${noticeLabel}`;
   
-    return (
-      <div className="bg-cloud rounded-2xl py-3 px-4 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
-        <p className="text-sm font-bold text-textMain/80 leading-none">
-          🏖️ {fullMessage}
-        </p>
-      </div>
-    );
-  };
+      return (
+        <div className="bg-cloud rounded-2xl shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in
+          p-4 md:p-10"> {/* 💻 电脑端内边距加大，更显庄重 */}
+          
+          {/* 标题：双端统一 80% 深度 */}
+          <h3 className="text-textMain/80 font-bold tracking-wider
+            text-sm md:text-2xl md:mb-4"> {/* 💻 电脑端字号放大到 2xl，更具视觉冲击力 */}
+            🏖️ {statusLabel}
+          </h3>
+    
+          {/* 装饰线：仅在电脑端显示，增加精致感 */}
+          <div className="hidden md:block w-16 h-[1px] bg-black/[0.08] mx-auto mb-6"></div>
+          
+          {/* 描述：双端统一使用较深的颜色，确保在浅色背景上清晰可见 */}
+          <p className="text-textMain/70 font-medium tracking-wide
+            text-[11px] md:text-base"> {/* 💻 电脑端字号使用标准 16px (base) */}
+            {checkInConfig?.resumeDate 
+              ? `${resumeLabel}：${checkInConfig.resumeDate.replace(/-/g, '/')}`
+              : noticeLabel}
+          </p>
+        </div>
+      );
+    };
 
   // Revoke Leave State
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
