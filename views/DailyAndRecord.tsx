@@ -60,17 +60,26 @@ export const DailyView: React.FC<DailyProps> = ({
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [leaveReason, setLeaveReason] = useState('');
   // 插入在 const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false); 之后
-  const VacationCard = () => (
-    <div className="bg-cloud rounded-2xl p-4 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
-      
-      <h3 className="text-lg font-bold text-textMain mb-2">🏖️ {lang === 'zh' ? '假期中' : 'In Recess'}</h3>
-      <p className="text-[11px] text-textSub leading-relaxed block"> {/* 添加 block 确保它是块级元素 */}
-  {checkInConfig?.resumeDate
-          ? `${lang === 'zh' ? '预计复课时间：' : 'Resumes on: '}${checkInConfig.resumeDate}`
-          : (lang === 'zh' ? '请留意班级公告' : 'Follow class notifications')}
-      </p>
-    </div>
-  );
+  const VacationCard = () => {
+    // 预设文案
+    const statusLabel = lang === 'zh' ? '假期中' : 'In Recess';
+    const resumeLabel = lang === 'zh' ? '预计复课时间' : 'Resumes on';
+    const noticeLabel = lang === 'zh' ? '请留意班级公告' : 'Follow class notifications';
+  
+    // 合并逻辑：如果有日期就显示日期，没日期就显示公告
+    const fullMessage = checkInConfig?.resumeDate 
+      ? `${statusLabel} · ${resumeLabel}: ${checkInConfig.resumeDate}`
+      : `${statusLabel} · ${noticeLabel}`;
+  
+    return (
+      <div className="bg-cloud rounded-2xl py-3 px-4 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
+        <p className="text-sm font-bold text-textMain leading-none">
+          🏖️ {fullMessage}
+        </p>
+      </div>
+    );
+  };
+  
   // Revoke Leave State
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
 
