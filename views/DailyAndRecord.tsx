@@ -61,15 +61,13 @@ export const DailyView: React.FC<DailyProps> = ({
   const [leaveReason, setLeaveReason] = useState('');
   // 插入在 const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false); 之后
   const VacationCard = () => (
-    <div className="bg-cloud rounded-2xl p-6 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
-      <div className="mb-4 text-primary bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-        <Icons.Record size={32} />
-      </div>
-      <h3 className="text-lg font-bold text-textMain mb-2">🏖️ {lang === 'zh' ? '修学假期中' : 'In Vacation'}</h3>
-      <p className="text-sm text-textSub mb-4 leading-relaxed">
-        {checkInConfig?.resumeDate 
-          ? `${lang === 'zh' ? '预计复课时间：' : 'Resume Date: '}${checkInConfig.resumeDate}`
-          : (lang === 'zh' ? '假期期间暂停打卡，请留意班级公告' : 'Check-in paused during vacation')}
+    <div className="bg-cloud rounded-2xl p-4 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
+      
+      <h3 className="text-lg font-bold text-textMain mb-2">🏖️ {lang === 'zh' ? '假期中' : 'In Recess'}</h3>
+      <p className="text-[11px] text-textSub leading-relaxed block"> {/* 添加 block 确保它是块级元素 */}
+  {checkInConfig?.resumeDate
+          ? `${lang === 'zh' ? '预计复课时间：' : 'Resumes on: '}${checkInConfig.resumeDate}`
+          : (lang === 'zh' ? '请留意班级公告' : 'Follow class notifications')}
       </p>
     </div>
   );
