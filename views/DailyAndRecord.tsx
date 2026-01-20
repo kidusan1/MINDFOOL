@@ -73,13 +73,13 @@ export const DailyView: React.FC<DailyProps> = ({
   
     return (
       <div className="bg-cloud rounded-2xl py-3 px-4 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
-        <p className="text-sm font-bold text-textMain leading-none">
+        <p className="text-sm font-bold text-textMain/80 leading-none">
           🏖️ {fullMessage}
         </p>
       </div>
     );
   };
-  
+
   // Revoke Leave State
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
 
