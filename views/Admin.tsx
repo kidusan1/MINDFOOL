@@ -343,10 +343,11 @@ const Admin: React.FC<AdminProps> = ({
                 </div>
             </div>
         )}
-
-        {activeTab === 'config' && (
+{activeTab === 'config' && (
             <div className="space-y-6 pb-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {/* 左侧栏：系统参数 */}
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-2xl space-y-5 shadow-sm border border-white/50">
                             <h3 className="text-sm font-bold text-primary flex items-center gap-2 border-b border-gray-50 pb-3"><Icons.Tools size={16}/> 系统参数设置</h3>
@@ -376,7 +377,68 @@ const Admin: React.FC<AdminProps> = ({
                         </div>
                     </div>
 
+                    {/* 右侧栏：状态设置 + 位置设置 */}
                     <div className="space-y-6">
+                        
+                        {/* 🟢 正知正见状态设置 (修复了 Icon 报错) */}
+                        <div className="bg-white p-6 rounded-2xl space-y-5 shadow-sm border border-white/50">
+                            <h3 className="text-sm font-bold text-primary flex items-center gap-2 border-b border-gray-50 pb-3">
+                                <Icons.Daily size={16}/> 正知正见状态设置
+                            </h3>
+
+                            {/* 状态切换开关 */}
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold text-textSub uppercase tracking-wider">当前修学状态</label>
+                                <div className="flex bg-gray-50 p-1 rounded-xl w-full border border-gray-100">
+                                    <button
+                                        onClick={() => setCheckInConfig({ ...checkInConfig, isVacationMode: false })}
+                                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${!checkInConfig.isVacationMode ? 'bg-white text-primary shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        📚 正常上课
+                                    </button>
+                                    <button
+                                        onClick={() => setCheckInConfig({ ...checkInConfig, isVacationMode: true })}
+                                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${checkInConfig.isVacationMode ? 'bg-white text-orange-500 shadow-sm border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        🏖️ 假期模式
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 根据状态显示不同的输入项 */}
+                            {!checkInConfig.isVacationMode ? (
+                                // 上课模式
+                                <div className="space-y-2 animate-fade-in">
+                                    <label className="text-[10px] font-bold text-textSub uppercase tracking-wider">本周起始日期 (用于周次计算)</label>
+                                    <input
+                                        type="date"
+                                        value={checkInConfig.weekStartDate || ''}
+                                        onChange={(e) => setCheckInConfig({ ...checkInConfig, weekStartDate: e.target.value })}
+                                        className="w-full p-3 bg-gray-50 rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 text-gray-700 font-mono"
+                                    />
+                                    <p className="text-[10px] text-gray-400">设置后，所有学员端将以此日期开始打卡。</p>
+                                </div>
+                            ) : (
+                                // 假期模式
+                                <div className="space-y-2 animate-fade-in">
+                                    <label className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">预计复课说明</label>
+                                    <input
+                                        type="text"
+                                        placeholder="例如：2月15日 (初八)"
+                                        value={checkInConfig.resumeDate || ''}
+                                        onChange={(e) => setCheckInConfig({ ...checkInConfig, resumeDate: e.target.value })}
+                                        className="w-full p-3 bg-orange-50 rounded-xl text-xs outline-none focus:ring-2 focus:ring-orange-200 text-orange-800 placeholder-orange-300 border border-orange-100"
+                                    />
+                                    <p className="text-[10px] text-orange-400">假期模式下，学员端将隐藏打卡按钮，仅显示此提示。</p>
+                                </div>
+                            )}
+                            
+                            <button onClick={async () => { await onSaveGlobalConfigs(); showToast('修学状态已保存'); }} className="w-full py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md hover:bg-primary/90 transition-colors">
+                                保存状态设置
+                            </button>
+                        </div>
+
+                        {/* 位置设置 */}
                         <div className="bg-white p-6 rounded-2xl space-y-5 shadow-sm border border-white/50">
                             <h3 className="text-sm font-bold text-primary flex items-center gap-2 border-b border-gray-50 pb-3"><Icons.Location size={16}/> {t.locationConfig}</h3>
                             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">

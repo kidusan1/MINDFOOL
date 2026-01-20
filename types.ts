@@ -103,6 +103,9 @@ export interface CheckInConfig {
   enabled: boolean;
   locationName?: string;
   weekStartDate?: string;
+// 🟢 确保新增这三个字段：
+isVacationMode?: boolean;  // 是否假期模式
+resumeDate?: string;       // 复课说明
 }
 
 // Map course ID to content string. 
