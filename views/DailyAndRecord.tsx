@@ -87,7 +87,7 @@ export const DailyView: React.FC<DailyProps> = ({
           )}
     
           {/* 第三行：公告提示（始终显示，或者作为保底） */}
-          <p className="text-textSub/60 text-[10px] md:text-sm italic">
+          <p className="text-textSub/60 text-[10px] md:text-sm">
             {noticeLabel}
           </p>
     
