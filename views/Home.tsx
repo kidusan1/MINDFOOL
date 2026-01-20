@@ -90,13 +90,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
 </div>
 
           {source && (
-            <div className="w-full text-right mt-6 opacity-0 animate-source-fade-in">
+            <div className="w-full text-right mt-4 opacity-0 animate-source-fade-in">
               <p className="text-textMain/60 text-[12px] md:text-[13px] tracking-[0.2em] font-light">
                 <span className="mr-1 tracking-[-0.15em] font-extralight inline-block">——</span> {source}
               </p>
             </div>
           )}
-          <div className="w-16 h-[1px] bg-black/[0.05] mt-8"></div>
+          <div className="w-16 h-[1px] bg-black/[0.05] mt-5"></div>
         </div>
 
         {/* B. 功课卡片：严格使用你原本的 t 对象变量，不干涉翻译 */}
