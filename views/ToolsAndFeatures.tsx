@@ -687,8 +687,8 @@ useEffect(() => {
   if (posterRef.current) {
       setTimeout(() => {
           toPng(posterRef.current!, { 
-              cacheBust: true, 
-              pixelRatio: 3, // 提高采样率，确保细微底纹被抓取
+              cacheBust: false, 
+              pixelRatio: 2, // 提高采样率，确保细微底纹被抓取
               backgroundColor: '#F9F8F6', // 强制指定背景色
               style: { fontFamily: "'xingkai', serif" } // 再次注入字体
           })
@@ -746,7 +746,7 @@ useEffect(() => {
                           className="bg-[#F9F8F6] flex flex-col overflow-hidden border-[15px] border-white h-auto relative"
                       >
                          {/* 书法底纹层 (恢复旧版隶书位移) */}
-                         <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.035] z-0 px-2 overflow-hidden"style={{ fontFamily: "'xingkai', serif" }}>
+                         <div className="absolute inset-0 pointer-events-none select-none flex items-center justify-center opacity-[0.035] z-0 px-2 overflow-hidden" style={{ fontFamily: "'xingkai', serif" }}>
                               <div className="flex flex-col items-center justify-center leading-none tracking-tighter -space-y-32">
                                   {zenText.length === 3 ? (
                                       zenText.split('').map((char, i) => (
@@ -807,7 +807,7 @@ useEffect(() => {
                                   </div>
                                   {/* 蓝色回向框 */}
                                   <div className="bg-primary/80 backdrop-blur-sm p-6 rounded-3xl border border-primary/20 justify-center"> 
-                                  <p className="inline-block mx-auto text-[14px] leading-relaxed font-light text-white text-primary tracking-wide opacity-90 text-left">
+                                  <p className="inline-block mx-auto text-[14px] leading-relaxed font-light text-white tracking-wide opacity-90 text-left">
                                   {blueBoxText}
                                    </p>
                                   </div>
@@ -836,10 +836,6 @@ useEffect(() => {
                   </div> {/* 5. 闭合 absolute -z-50 (隐藏生成区) */}
             </div> {/* 6. 闭合 relative overflow-hidden (图片展示区) */}
 
-            {/* 在 PosterModal 组件返回的 JSX 中 */}
-<div className="relative w-full overflow-hidden rounded-lg shadow-2xl">
-    {/* ... 图片显示逻辑 ... */}
-</div> 
 
 {/* 文字提示贴在这里 */}
 <p className="text-white/60 text-[11px] text-center px-10 animate-pulse tracking-widest uppercase mt-4">
