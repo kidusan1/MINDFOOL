@@ -59,7 +59,20 @@ export const DailyView: React.FC<DailyProps> = ({
   const [geoError, setGeoError] = useState<string | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [leaveReason, setLeaveReason] = useState('');
-  
+  // 插入在 const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false); 之后
+  const VacationCard = () => (
+    <div className="bg-cloud rounded-2xl p-6 shadow-sm border border-white/50 w-full mb-4 text-center animate-fade-in">
+      <div className="mb-4 text-primary bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+        <Icons.Record size={32} />
+      </div>
+      <h3 className="text-lg font-bold text-textMain mb-2">🏖️ {lang === 'zh' ? '修学假期中' : 'In Vacation'}</h3>
+      <p className="text-sm text-textSub mb-4 leading-relaxed">
+        {checkInConfig?.resumeDate 
+          ? `${lang === 'zh' ? '预计复课时间：' : 'Resume Date: '}${checkInConfig.resumeDate}`
+          : (lang === 'zh' ? '假期期间暂停打卡，请留意班级公告' : 'Check-in paused during vacation')}
+      </p>
+    </div>
+  );
   // Revoke Leave State
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
 
@@ -295,8 +308,14 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 <div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
   {/* 左侧固定 */}
   <div className="shrink-0 w-80">
-    {renderCurrentWeekCard()}
-    <CheckInSection />
+    {checkInConfig?.isVacationMode ? (
+      <VacationCard />
+    ) : (
+      <>
+        {renderCurrentWeekCard()}
+        <CheckInSection />
+      </>
+    )}
   </div>
 
   {/* 右侧课程卡片：这里的 flex flex-col 和 min-h-0 是关键 */}
@@ -325,14 +344,15 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 {/* 改为 h-[100dvh] 以适配 Safari 底部工具栏 */}
 <div className="md:hidden flex flex-col h-[100dvh] overflow-hidden bg-[#E8E6E1]">
   
-  {/* 顶部固定区域 */}
-  <div className="shrink-0 px-4 pt-2">
-    {renderCurrentWeekCard()}
+{/* 顶部固定区域 */}
+<div className="shrink-0 px-4 pt-2">
+    {checkInConfig?.isVacationMode ? <VacationCard /> : renderCurrentWeekCard()}
   </div>
 
-  {/* 中间滚动区 */}
-  <div className="flex-1 overflow-y-auto no-scrollbar px-4">
-    <CheckInSection />
+{/* 中间滚动区 */}
+<div className="flex-1 overflow-y-auto no-scrollbar px-4">
+    {!checkInConfig?.isVacationMode && <CheckInSection />}
+    
     
     {/* 课程列表头 */}
     <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">
