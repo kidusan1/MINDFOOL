@@ -797,7 +797,7 @@ useEffect(() => {
                                           <div key={idx} className="flex flex-col items-center">
                                               <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
                                               <div className="flex items-baseline gap-1">
-                                                  <span className="text-4xl font-light text-textmain tracking-tighter leading-none">{item.val}</span>
+                                                  <span className="text-4xl font-light text-gray-600 tracking-tighter leading-none">{item.val}</span>
                                                   <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
                                                       {lang === 'zh' ? '分' : 'MINS'}
                                                   </span>
