@@ -233,7 +233,7 @@ export const TRANSLATIONS = {
       hideDetails: 'Hide Details'
     },
     daily: {
-      weekStatus: 'Week Status',
+      weekStatus: 'Weekly Attendance',
       leave: 'On Leave',
       normal: 'Active',
       checkInHint: 'Please check-in on time',
