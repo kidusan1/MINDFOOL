@@ -1373,7 +1373,6 @@ useEffect(() => {
     // 🟢 动态计算起点
     transformOrigin: window.innerWidth > 768 ? 'left center' : 'calc(100% - 24px) calc(100% - 96px)' 
   }}
- 
 >
 <div 
   onClick={() => { setIsSearchOpen(false); setSearchView('list'); }}
@@ -1434,7 +1433,7 @@ useEffect(() => {
             </div>
 
             {/* 结果容器：确保位置完全重合 */}
-            <div className="relative mt-3 w-full min-h-[60vh]">
+            <div className="relative mt-3 w-full">
               {/* 联想列表 */}
               {searchView === 'list' && suggestions.length > 0 && (
                 <div className="relative mt-2 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-[60vh] border border-white/30 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
