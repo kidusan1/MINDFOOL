@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import * as Icons from 'lucide-react';
 import Layout from './components/Layout';
 import { ViewName, TimerType, CheckInType, DailyStats, GrowthRecord, User, LeaveState, CourseContentMap, CourseScheduleMap, CourseWeek, CourseStatus, UserWeeklyState, CheckInConfig, Language } from './types';
@@ -12,6 +12,7 @@ import Splash from './views/Splash';
 import { COURSE_SCHEDULE, SPLASH_QUOTES as DEFAULT_SPLASH_QUOTES } from './constants';
 import { supabase } from './src/supabaseClient';
 import dictionaryDataRaw from './app_dictionary.json';
+
 // ✅ 把不完整的 DailyStats 补齐成完整结构（给 UI 用）
 // ===== 工具函数：补齐 DailyStats，供 UI 使用 =====
 
@@ -206,12 +207,31 @@ const [userStatsMap, setUserStatsMap] = useState<Record<string, Partial<DailySta
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
   // 当前搜索输入内容（用于受控 input 和返回列表恢复）
 const [searchQuery, setSearchQuery] = useState('');
-
+const searchInputRef = useRef<HTMLInputElement>(null); // 🟢 增加这一行
 
 
   // ✅ 搜索视图状态：列表 / 详情
   const [searchView, setSearchView] = useState<'list' | 'detail'>('list');
+// 🟢 搜索交互增强：处理 Esc 退出与自动聚焦
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isSearchOpen) {
+      setIsSearchOpen(false);
+      setSearchView('list');
+    }
+  };
+  window.addEventListener('keydown', handleKeyDown);
 
+  if (isSearchOpen) {
+    // 这里的延迟是为了避开搜索框弹出的动画时间，确保聚焦成功
+    const timer = setTimeout(() => searchInputRef.current?.focus(), 200);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
+  }
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, [isSearchOpen]);
 
 
   // 保存数据到 Supabase
@@ -1358,7 +1378,9 @@ useEffect(() => {
             <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl px-4 py-4 shadow-xl">
               <Icons.Search className="text-[#6D8D9D]/70 mr-3" size={24} />
               <input 
-                type="text" className="w-full bg-transparent border-none outline-none text-lg text-gray-800 font-light" value={searchQuery}
+              ref={searchInputRef} // 🟢 绑定 ref
+                type="text" 
+                className="w-full bg-transparent border-none outline-none text-lg text-gray-800 font-light" value={searchQuery}
                 placeholder={lang === 'zh' ? '搜索名词名相...' : 'Search terms...'}
                 onChange={(e) => {
                   const val = e.target.value; setSearchView('list'); setSearchResult(null); setSearchQuery(val);
@@ -1382,7 +1404,11 @@ useEffect(() => {
                   }
                 }}
               />
-              <button onClick={() => { setSearchQuery(''); setSuggestions([]); setSearchView('list'); }} className="p-2 text-gray-400"><Icons.X size={20} /></button>
+              <button onClick={() => { setSearchQuery(''); setSuggestions([]); setSearchView('list');
+                // 🟢 清空后立即强制聚焦，保持键盘弹出状态
+  setTimeout(() => searchInputRef.current?.focus(), 0);
+               }} 
+               className="p-2 text-gray-400"><Icons.X size={20} /></button>
             </div>
 
             {/* 结果容器：确保位置完全重合 */}
