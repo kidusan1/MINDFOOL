@@ -122,7 +122,7 @@ export const TRANSLATIONS = {
         balance: '感理平衡',
         sloth: '懈怠/掉举'
       },
-      placeholder: '记录你当下的感悟、想法、烦恼……',
+      placeholder: '记录你当下万千念头里的一念……',
       empty: '暂无记录，点击右下角添加',
       swipeHint: '- 右滑置顶 左滑删除 -',
       pin: '置顶',

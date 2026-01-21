@@ -1363,18 +1363,37 @@ useEffect(() => {
           
           {/* 内容容器 */}
 <div 
-  className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 duration-700" // 🔴 删掉了 slide-in
+  className="relative w-[92%] max-w-lg z-10 animate-in fade-in zoom-in-0 duration-700 pointer-events-none" // 🔴 删掉了 slide-in
   style={{
     // 🟢 动画曲线：使用带回弹效果的贝塞尔
     animationTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
     // 🟢 动态计算起点
     transformOrigin: window.innerWidth > 768 ? 'left center' : 'calc(100% - 24px) calc(100% - 96px)' 
   }}
-  onClick={(e) => e.stopPropagation()}
+ 
 >
-            <div onClick={() => setIsSearchOpen(false)} className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer">{lang === 'zh' ? '无痕浏览 · 点按此处返回' : 'Private Search · Tap here to return'}</div>
+<div 
+  onClick={() => { setIsSearchOpen(false); setSearchView('list'); }}
+  className="mb-3 text-center text-white/70 text-[11px] tracking-widest cursor-pointer transition-colors pointer-events-auto"
+>
+            {lang === 'zh' ? (
+    <>
+      {/* 📱 手机端显示 */}
+      <span className="md:hidden">无痕浏览 · 点按此处返回</span>
+      {/* 💻 电脑端显示 */}
+      <span className="hidden md:inline">无痕浏览 · 点按此处或ESC键返回</span>
+    </>
+  ) : (
+    <>
+      <span className="md:hidden">Private Search · Tap here to return</span>
+      <span className="hidden md:inline">Private Search · Tap here or press ESC to return</span>
+    </>
+  )}
+</div>
+           {/* --- C. 搜索实体区：恢复 pointer-events-auto 让卡片变“坚实” --- */}
+      <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}> 
             
-            {/* 搜索框 */}
+            {/* 搜索卡片框 */}
             <div className="flex items-center bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl px-4 py-4 shadow-xl">
               <Icons.Search className="text-[#6D8D9D]/70 mr-3" size={24} />
               <input 
@@ -1473,6 +1492,7 @@ useEffect(() => {
               )}
             </div>
           </div>
+        </div>
         </div>
       )}
     </>
