@@ -1381,14 +1381,14 @@ useEffect(() => {
             {lang === 'zh' ? (
     <>
       {/* 📱 手机端显示 */}
-      <span className="md:hidden">无痕浏览 · 点按此处返回</span>
+      <span className="md:hidden">无痕浏览 · 点按空白处返回</span>
       {/* 💻 电脑端显示 */}
-      <span className="hidden md:inline">无痕浏览 · 点按此处或ESC键返回</span>
+      <span className="hidden md:inline">无痕浏览 · 点按空白处或ESC键返回</span>
     </>
   ) : (
     <>
-      <span className="md:hidden">Private Search · Tap here to return</span>
-      <span className="hidden md:inline">Private Search · Tap here or press ESC to return</span>
+      <span className="md:hidden">Private Search · Tap any place to return</span>
+      <span className="hidden md:inline">Private Search · Tap any place or press ESC to return</span>
     </>
   )}
 </div>
