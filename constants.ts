@@ -234,8 +234,8 @@ export const TRANSLATIONS = {
     },
     daily: {
       weekStatus: 'Weekly Attendance',
-      leave: 'On Leave',
-      normal: 'Active',
+      leave: 'Absent',
+      normal: 'Present',
       checkInHint: 'Please check-in on time',
       wantLeave: 'Request Leave',
       revokeLeave: 'Cancel Leave',
