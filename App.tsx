@@ -1356,7 +1356,10 @@ useEffect(() => {
 
       {/* --- 2. 全屏毛玻璃搜索层：空间稳定性版 --- */}
       {currentUser && isSearchOpen && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-20 md:pt-32 pb-12">
+        <div 
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-20 md:pt-32 pb-12"
+        onClick={() => { setIsSearchOpen(false); setSearchView('list'); }} // ✅ 正确：它是 div 的属性
+      >
           {/* 背景层 */}
           <div className="absolute inset-0 bg-black/15 backdrop-blur-[20px] animate-in fade-in duration-300" 
           onClick={() => { setIsSearchOpen(false); setSearchView('list'); }} />
@@ -1492,7 +1495,7 @@ useEffect(() => {
               )}
             </div>
           </div>
-        </div>
+          </div>
         </div>
       )}
     </>
