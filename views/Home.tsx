@@ -70,7 +70,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
      2. break-all: 确保中英文或长句在行末能正确换行，不留大空白
      3. w-full: 撑满容器空间
   */
-  className="text-textMain/80 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation text-justify break-all w-full"
+  className="text-textMain/70 text-[13px] md:text-[15px] leading-[1.8] tracking-[0.3em] font-light quote-reveal-animation text-justify break-all w-full"
   style={{
     WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
     maskImage: 'linear-gradient(to bottom, black 50%, transparent 50%)',
@@ -91,7 +91,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, stats, lang, user, homeQuotes }
 
           {source && (
             <div className="w-full text-right mt-3 opacity-0 animate-source-fade-in">
-              <p className="text-textMain/60 text-[12px] md:text-[13px] tracking-[0.2em] font-light">
+              <p className="text-textMain/70 text-[12px] md:text-[13px] tracking-[0.2em] font-light">
                 <span className="mr-1 tracking-[-0.15em] font-extralight inline-block">——</span> {source}
               </p>
             </div>
