@@ -767,9 +767,9 @@ useEffect(() => {
                           </div>
 
           {/* 内容展示层 */}
-          <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden h-full">
+          <div className="p-10 flex flex-col relative z-10 overflow-hidden h-full justify-between">
                               {/* A. 引用名句区域 */}
-                              <div className="pt-2">
+                              <div className="pt-2 flex-1 flex flex-col justify-center min-h-0 mb-4">
                                   <p className="text-base text-textMain/80 leading-relaxed text-justify font-extralight tracking-wide">{quoteText}</p>
                                   {quoteSource && (
                                       <p className="text-base text-textMain/80 text-right mt-1 font-extralight">
@@ -779,7 +779,7 @@ useEffect(() => {
                               </div>
                             
                               {/* B. 慢心障道装饰栏 */}
-                              <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-3">
+                              <div className="flex flex-col items-center justify-center bg-white/5 rounded-lg py-3 shrink-0">
                                   <span className="text-[15px] tracking-[0.4em] font-medium text-textMain mb-1 opacity-80 uppercase whitespace-nowrap">
                                       慢心障道
                                   </span>
@@ -790,7 +790,7 @@ useEffect(() => {
 
                               {/* C. 功课数据 + 回向文字区域 */}
                               {showDetails && (
-                              <div className="flex flex-col justify-center gap-8">
+                              <div className="flex flex-col justify-center gap-8 shrink-0">
                                   {/* 功课详情：横向平铺布局 */}
                                   <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
                                       {completedItems.map((item, idx) => ( 
