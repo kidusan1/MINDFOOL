@@ -790,12 +790,12 @@ useEffect(() => {
 
                               {/* C. 功课数据 + 回向文字区域 */}
                               {showDetails && (
-                              <div className="flex flex-col justify-center gap-8 shrink-0">
+                              <div className="flex flex-col justify-center gap-8 mb-10 shrink-0">
                                   {/* 功课详情：横向平铺布局 */}
                                   <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
                                       {completedItems.map((item, idx) => ( 
                                           <div key={idx} className="flex flex-col items-center">
-                                              <span className="text-[11px] text-primary font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
+                                              <span className="text-[11px] text-textMain font-bold uppercase tracking-widest leading-none mb-2 whitespace-nowrap">{item.name}</span>
                                               <div className="flex items-baseline gap-1">
                                                   <span className="text-4xl font-light text-black tracking-tighter leading-none">{item.val}</span>
                                                   <span className="text-[11px] text-gray-400 font-medium tracking-tighter uppercase">
@@ -815,7 +815,7 @@ useEffect(() => {
                               )}
 
                               {/* D. 底部签名区域 (紧凑对齐) */}
-                              <div className="flex justify-between items-end pb-3 border-b border-black/[0.05] mt-auto">
+                              <div className="flex justify-between items-end pb-3 border-b border-black/[0.05]">
                                   <div className="flex flex-col items-start">
                                       <h3 className="text-2xl font-light text-textMain/80 tracking-tighter leading-none">
                                           {user.name}
