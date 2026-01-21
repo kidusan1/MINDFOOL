@@ -770,7 +770,7 @@ useEffect(() => {
           <div className="p-10 flex flex-col gap-8 relative z-10 overflow-hidden h-full">
                               {/* A. 引用名句区域 */}
                               <div className="pt-2">
-                                  <p className="text-lg text-textMain/80 leading-loose text-left font-extralight tracking-wide">{quoteText}</p>
+                                  <p className="text-lg text-textMain/80 leading-loose text-justify font-extralight tracking-wide">{quoteText}</p>
                                   {quoteSource && (
                                       <p className="text-base text-textMain/80 text-right mt-1 font-extralight">
                                           <span className="tracking-[-0.15em] font-thin inline-block mr-1">——</span> {quoteSource.replace('—— ', '')}
