@@ -789,9 +789,9 @@ useEffect(() => {
                               </div>
 
                               {/* C. 功课数据 + 回向文字区域 */}
-                              {showDetails && (
+                              
                               <div className="flex flex-col justify-center gap-8 mb-10 shrink-0">
-                                  {/* 功课详情：横向平铺布局 */}
+                              {showDetails && (
                                   <div className="flex flex-row flex-wrap justify-center gap-x-10 gap-y-4 px-2">
                                       {completedItems.map((item, idx) => ( 
                                           <div key={idx} className="flex flex-col items-center">
@@ -805,6 +805,7 @@ useEffect(() => {
                                           </div> 
                                       ))}
                                   </div>
+                                  )}
                                   {/* 蓝色回向框 */}
                                   <div className="bg-primary/80 backdrop-blur-sm p-6 rounded-3xl border border-primary/20 justify-center"> 
                                   <p className="inline-block mx-auto text-[14px] leading-relaxed font-normal text-white tracking-wide opacity-90 text-left">
@@ -812,7 +813,7 @@ useEffect(() => {
                                    </p>
                                   </div>
                               </div>
-                              )}
+                             
 
                               {/* D. 底部签名区域 (紧凑对齐) */}
                               <div className="flex justify-between items-end pb-3 border-b border-black/[0.05]">
