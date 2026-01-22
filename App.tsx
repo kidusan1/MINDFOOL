@@ -714,6 +714,8 @@ useEffect(() => {
   if (yStats) {
     const total = (yStats.nianfo || 0) + (yStats.baifo || 0) + (yStats.zenghui || 0) + (yStats.breath || 0);
     if (total > 0) {
+      // 🛡️ 最稳健处理：暂时注释掉这个会报错的备份逻辑
+      /*
       try {
         // 将昨天的数据备份到数据库趋势表
         await supabase.from('growth_records').upsert({
@@ -725,6 +727,8 @@ useEffect(() => {
           
         }, { onConflict: 'user_id,date' });
       } catch (e) { console.error("跨天备份失败", e); }
+       */
+      console.log("检测到跨天，本地状态即将重置");
     }
   }
   // 3. 🔥 静默重置：直接修改 React 状态，不刷新页面
@@ -736,9 +740,6 @@ useEffect(() => {
   // 更新本地存储（防止刷新后读旧值）
   const newMap = { ...statsMap, [myId]: resetStats };
   localStorage.setItem('growth_app_stats', JSON.stringify(newMap));
-
-  // 更新日期标记，完成这一天的交接
-  localStorage.setItem('growth_app_stats', JSON.stringify({ ...statsMap, [myId]: resetStats }));
   localStorage.setItem(dateKey, todayStr);
   // ✅【在此处插入】强制归零数据库，防止刷新后旧数据回流
   try {

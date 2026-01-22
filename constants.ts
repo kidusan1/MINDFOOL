@@ -255,8 +255,8 @@ export const TRANSLATIONS = {
       alreadyLeft: 'On leave this week'
     },
     record: {
-      newRecord: 'New Entry',
-      editRecord: 'Edit Entry',
+      newRecord: 'Add New',
+      editRecord: 'Edit Record',
       types: {
         good: 'Good Deed',
         balance: 'Balance',
