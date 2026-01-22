@@ -803,6 +803,15 @@ useEffect(() => {
         setCheckInStatus(CheckInType.NONE);
         return;
     }
+    if (checkInConfig?.isVacationMode) {
+      setCurrentWeek({
+          hasLeft: true,
+          leaveReason: checkInConfig.resumeDate || '假期模式',
+          hasRevokedLeave: false
+      });
+      setCheckInStatus(CheckInType.NONE);
+      return; // 强制拦截，不走下面的个人周数据逻辑
+  }
     const thisWeekKey = `${currentUser.id}_${currentWeekRangeStr}`;
     const thisWeekData = weeklyStates[thisWeekKey];
     if (thisWeekData) {
@@ -815,8 +824,7 @@ useEffect(() => {
         else if (thisWeekData.checkInStatus === '线上打卡') setCheckInStatus(CheckInType.ONLINE);
         else setCheckInStatus(CheckInType.NONE);
     } else {
-        setCurrentWeek(initialLeaveState);
-        setCheckInStatus(CheckInType.NONE);
+      console.log("上课期间暂无本周记录，不重置 UI 状态");
     }
   }, [currentUser, weeklyStates, weekShift, currentWeekRangeStr]);
 
