@@ -262,7 +262,7 @@ export const TRANSLATIONS = {
         balance: 'Balance',
         sloth: 'Slackness'
       },
-      placeholder: 'Record your current realizations, thoughts, worries...',
+      placeholder: 'Note down your insights, observations...',
       empty: 'No records yet. Tap + to add.',
       swipeHint: '- Swipe Right to Pin, Swipe Left to Delete -',
       pin: 'Pin',
