@@ -325,7 +325,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   return (
       <>
-      <div className="min-h-screen">
+      <div className="min-h-full">
    {/* --- 电脑端布局 --- */}
 <div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
   {/* 左侧固定 */}
