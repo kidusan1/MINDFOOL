@@ -325,7 +325,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   return (
       <>
-      <div className="min-h-full">
+      <div className="h-full overflow-hidden">
    {/* --- 电脑端布局 --- */}
 <div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
   {/* 左侧固定 */}
@@ -363,7 +363,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 </div>
 {/* --- 手机端布局 --- */}
-{/* 改为 h-[100dvh] 以适配 Safari 底部工具栏 */}
+{/* 适配 Safari 底部工具栏 */}
 <div className="md:hidden flex flex-col h-full overflow-hidden bg-[#E8E6E1]">
   
 {/* 顶部固定区域 */}

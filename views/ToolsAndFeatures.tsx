@@ -600,7 +600,12 @@ const weeklyData = Array.from({length: 7}, (_, i) => {
         </div>
         <div className="mt-4 pt-4 border-t border-white text-center">
             <div className="inline-block text-left max-w-full">
-                <p className="text-xs text-textSub leading-relaxed">{t.ranking.replace('%s', rankPercentage.toString())}</p>
+                <p className="text-xs text-textSub leading-relaxed">
+                  {/* ✨ 逻辑判断：如果排名百分比大于 0 则显示百分比，否则显示空提示 */}
+                  {totalMinutes > 0
+                  ? t.ranking.replace('%s', rankPercentage.toString())
+                  : t.ranking_empty}
+                  </p>
             </div>
         </div>
       </div>
