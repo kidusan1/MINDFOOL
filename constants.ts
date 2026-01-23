@@ -205,7 +205,7 @@ export const TRANSLATIONS = {
       admin: 'Admin'
     },
     home: {
-      durationLabel: 'Practice Duration',
+      durationLabel: 'Daily Practice',
       minutes: 'Min',
       start: 'Start',
       nianfo: 'Chanting',
