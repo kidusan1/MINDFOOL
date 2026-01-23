@@ -171,15 +171,15 @@ const isTimerPage = [ViewName.TIMER, ViewName.BREATHING].includes(currentView);
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden pb-24 md:pb-8 relative w-full flex flex-col">
+        <main className="flex-1 overflow-hidden md:pb-8 relative w-full flex flex-col">
           <div className="max-w-md mx-auto md:max-w-5xl h-full w-full">
             {children}
           </div>
         </main>
 
      {/* --- MOBILE BOTTOM NAV --- */}
-<nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 w-full z-30 flex safe-area-bottom">
-  {[
+     <nav className="md:hidden h-20 bg-cloud border-t border-white/50 fixed bottom-0 left-0 right-0 z-30 flex">
+       {[
     { view: ViewName.HOME, icon: Icons.Home, label: t.nav.home },
     { view: ViewName.TOOLS, icon: Icons.Tools, label: t.nav.tools },
     { view: ViewName.DAILY, icon: Icons.Daily, label: t.nav.daily },
