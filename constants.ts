@@ -222,7 +222,7 @@ export const TRANSLATIONS = {
       }
     },
     stats: {
-      encouragement_prefix: 'Completed: ',
+      encouragement_prefix: 'You have completed ',
       encouragement_suffix: '. Keep it up!',
       encouragement_empty: 'No practice yet today. Time to begin!',
       ranking: 'Your practice time is ahead of %s% of your peers. Let\'s keep growing together.',
