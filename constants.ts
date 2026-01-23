@@ -226,6 +226,7 @@ export const TRANSLATIONS = {
       encouragement_suffix: '. Keep it up!',
       encouragement_empty: 'No practice yet today. Time to begin!',
       ranking: 'You have surpassed %s% of students in practice time. Keep improving together!',
+      ranking_empty: 'You haven\'t started today\'s practice yet. Time to begin your mindful journey!',
       trend: '7-Day Trend',
       today: 'Today',
       share: 'SHARE',
