@@ -362,9 +362,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 <div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
   {/* 左侧固定 */}
   <div className="shrink-0 w-80">
-    {checkInConfig?.isVacationMode ? (
-      <VacationCard />
-    ) : (
+    {checkInConfig?.isVacationMode ? <VacationCard /> : (
       <>
         {renderCurrentWeekCard()}
         <CheckInSection />
@@ -411,8 +409,14 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 ref={mobileScrollRef}
 onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
 className="flex-1 overflow-y-auto no-scrollbar px-4">
-    {!checkInConfig?.isVacationMode && <CheckInSection />}
-    
+    {checkInConfig?.isVacationMode ? (
+            /* 🚩 假期模式下，卡片放在这里，保证它能滚 */
+            <div className="pt-2 pb-20">
+              <VacationCard />
+            </div>
+          ) : (
+            <>
+              <CheckInSection />
     
     {/* 课程列表头 */}
     <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">
@@ -424,11 +428,14 @@ className="flex-1 overflow-y-auto no-scrollbar px-4">
       {renderCourses()}
       {/* 1. 增加底部的提示文字，确保它在滚动区域内 */}
       <div className="pt-8 pb-4 flex justify-center items-center">  
+        
         <p className="text-[10px] text-gray-400 opacity-80">{t.courseHint}</p>
       </div>
       {/* 增加一个隐形的占位块，确保最后一节课能推到导航栏上方 */}
       <div className="h-32 w-full" />
     </div>
+    </>
+    )}
   </div>
   </div>
 </div>
