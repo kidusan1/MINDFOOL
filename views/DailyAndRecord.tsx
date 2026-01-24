@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect} from 'react';
 import { Icons } from '../components/Icons';
 import { CheckInType, GrowthRecord, ViewName, LeaveState, CourseWeek, CourseStatus, UserWeeklyState, CheckInConfig, Language } from '../types';
 import { playSound, TRANSLATIONS } from '../constants';
-import { ScrollMemory } from '../types';
 // ==========================================
 // PART 1: DAILY VIEW
 // ==========================================
@@ -331,11 +330,17 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 
   useEffect(() => {
     // 🚩 从中转站读取高度
-    if (ScrollMemory.courseListHeight > 0) {
+    if (globalCourseScrollTop > 0) {
       const timer = setTimeout(() => {
-        if (mobileScrollRef.current) mobileScrollRef.current.scrollTop = ScrollMemory.courseListHeight;
-        if (desktopScrollRef.current) desktopScrollRef.current.scrollTop = ScrollMemory.courseListHeight;
-      }, 150);
+        // 确保 mobile 容器存在再赋值
+        if (mobileScrollRef.current) {
+            mobileScrollRef.current.scrollTop = globalCourseScrollTop;
+          }
+          // 确保 desktop 容器存在再赋值
+          if (desktopScrollRef.current) {
+            desktopScrollRef.current.scrollTop = globalCourseScrollTop;
+          }
+        }, 150);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -393,10 +398,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 {/* 中间滚动区 */}
 <div 
 ref={mobileScrollRef}
-onScroll={(e) => { 
-  // 🚩 实时存入中转站
-  ScrollMemory.courseListHeight = e.currentTarget.scrollTop; 
-}}
+onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
 className="flex-1 overflow-y-auto no-scrollbar px-4">
     {!checkInConfig?.isVacationMode && <CheckInSection />}
     
