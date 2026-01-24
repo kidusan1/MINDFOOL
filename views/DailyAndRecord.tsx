@@ -362,11 +362,11 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </div>
   </div>
 </div>
+
 {/* --- 手机端布局 --- */}
 {/* 适配 Safari 底部工具栏 */}
-<div className="md:hidden flex flex-col h-full overflow-hidden bg-[#E8E6E1]">
-  
-{/* 顶部固定区域 */}
+<div className="md:hidden flex flex-col h-[calc(100vh-144px)] overflow-hidden bg-[#E8E6E1]">
+    {/* 顶部固定区域 */}
 <div className="shrink-0 px-4 pt-2">
     {checkInConfig?.isVacationMode ? <VacationCard /> : renderCurrentWeekCard()}
   </div>
