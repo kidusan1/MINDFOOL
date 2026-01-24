@@ -307,6 +307,12 @@ if (course.status === CourseStatus.IN_PROGRESS) {
                     key={course.id} 
                     onClick={() => { 
                         playSound('medium');
+                        // 🚩 [新增] 点击时强制记录当前滚动高度
+        if (mobileScrollRef.current) {
+            globalCourseScrollTop = mobileScrollRef.current.scrollTop;
+        } else if (desktopScrollRef.current) {
+            globalCourseScrollTop = desktopScrollRef.current.scrollTop;
+        }
                         setCourseId(course.id); 
                         onNavigate(ViewName.COURSE_DETAIL); 
                     }}
@@ -329,21 +335,26 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   );
 
   useEffect(() => {
-    // 🚩 从中转站读取高度
-    if (globalCourseScrollTop > 0) {
+    if (globalCourseScrollTop > 0 && courses && courses.length > 0) {
       const timer = setTimeout(() => {
-        // 确保 mobile 容器存在再赋值
-        if (mobileScrollRef.current) {
-            mobileScrollRef.current.scrollTop = globalCourseScrollTop;
-          }
-          // 确保 desktop 容器存在再赋值
-          if (desktopScrollRef.current) {
-            desktopScrollRef.current.scrollTop = globalCourseScrollTop;
-          }
-        }, 150);
+        // 获取当前活跃的容器
+        const container = mobileScrollRef.current || desktopScrollRef.current;
+        
+        if (container) {
+          // 💡 关键改动：使用 scrollTo({ top: ... }) 替代直接赋值 scrollTop
+          // 这种方式在现代浏览器中触发滚动更加可靠
+          container.scrollTo({
+            top: globalCourseScrollTop,
+            behavior: 'auto' // 必须是 auto，否则会有滑动动画延迟
+          });
+          console.log("已尝试还原高度:", globalCourseScrollTop);
+        }
+      }, 100); 
       return () => clearTimeout(timer);
     }
-  }, []);
+}, [courses]); // 🚩 这里的 [courses] 很关键，确保列表出来后再滚
+
+
   return (
       <>
       <div className="h-full overflow-hidden">
