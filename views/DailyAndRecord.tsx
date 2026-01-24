@@ -412,17 +412,15 @@ className="flex-1 overflow-y-auto no-scrollbar px-4">
 
     {/* 情况 A：假期模式 */}
   <div className="sticky top-0 z-30 bg-[#E8E6E1] pt-2 pb-2">
-    {checkInConfig?.isVacationMode ? (
-      <VacationCard />
-    ) : (
-      <CheckInSection />
-    )}
+  {checkInConfig?.isVacationMode ? <VacationCard /> : <CheckInSection />}
   </div>
      {/* 第二层吸顶：正常的打卡和列表 */}
     {/* 课程列表头 */}
-    <div className="sticky top-[138px] z-20 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3"
-    style={{ transform: 'translateZ(0)' }} 
-    >      
+    <div className="sticky z-20 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50"
+        style={{ 
+            top: '126px',
+         }}  
+         >   
     <h3 className="text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
       {classVersion}{tApp.class}</span>
