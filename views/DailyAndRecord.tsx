@@ -1,9 +1,9 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import { Icons } from '../components/Icons';
 import { CheckInType, GrowthRecord, ViewName, LeaveState, CourseWeek, CourseStatus, UserWeeklyState, CheckInConfig, Language } from '../types';
 import { playSound, TRANSLATIONS } from '../constants';
-
+import { ScrollMemory } from '../types';
 // ==========================================
 // PART 1: DAILY VIEW
 // ==========================================
@@ -40,6 +40,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 export const DailyView: React.FC<DailyProps> = ({ 
+    
   checkInStatus, 
   setCheckInStatus, 
   currentWeek,
@@ -53,6 +54,9 @@ export const DailyView: React.FC<DailyProps> = ({
   checkInConfig,
   lang
 }) => {
+    const mobileScrollRef = useRef<HTMLDivElement>(null);
+    const desktopScrollRef = useRef<HTMLDivElement>(null);
+    
   const t = TRANSLATIONS[lang].daily;
   const tApp = TRANSLATIONS[lang].app;
   const [isLocating, setIsLocating] = useState(false);
@@ -65,7 +69,7 @@ export const DailyView: React.FC<DailyProps> = ({
     const statusLabel = lang === 'zh' ? '假期中' : 'In Recess';
     const resumeLabel = lang === 'zh' ? '预计复课时间' : 'Resumes on';
     const noticeLabel = lang === 'zh' ? '请留意班级公告' : 'Follow class notifications';
-  
+   
     // 合并逻辑：如果有日期就显示日期，没日期就显示公告
     const fullMessage = checkInConfig?.resumeDate 
       ? `${statusLabel} · ${resumeLabel}: ${checkInConfig.resumeDate}`
@@ -277,6 +281,8 @@ export const DailyView: React.FC<DailyProps> = ({
     </div>
   );
 
+let globalCourseScrollTop = 0; // 书签寄存处
+
   const renderCourses = () => (
 
     <>
@@ -323,6 +329,16 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </>
   );
 
+  useEffect(() => {
+    // 🚩 从中转站读取高度
+    if (ScrollMemory.courseListHeight > 0) {
+      const timer = setTimeout(() => {
+        if (mobileScrollRef.current) mobileScrollRef.current.scrollTop = ScrollMemory.courseListHeight;
+        if (desktopScrollRef.current) desktopScrollRef.current.scrollTop = ScrollMemory.courseListHeight;
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   return (
       <>
       <div className="h-full overflow-hidden">
@@ -352,7 +368,10 @@ if (course.status === CourseStatus.IN_PROGRESS) {
     </div>
 
     {/* 列表区：只有这里允许滚动 */}
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
+    <div 
+    ref={desktopScrollRef}
+    onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
+    className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
       {renderCourses()}
     </div>
 
@@ -372,7 +391,13 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
 {/* 中间滚动区 */}
-<div className="flex-1 overflow-y-auto no-scrollbar px-4">
+<div 
+ref={mobileScrollRef}
+onScroll={(e) => { 
+  // 🚩 实时存入中转站
+  ScrollMemory.courseListHeight = e.currentTarget.scrollTop; 
+}}
+className="flex-1 overflow-y-auto no-scrollbar px-4">
     {!checkInConfig?.isVacationMode && <CheckInSection />}
     
     
