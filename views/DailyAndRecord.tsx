@@ -409,15 +409,16 @@ if (course.status === CourseStatus.IN_PROGRESS) {
 ref={mobileScrollRef}
 onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
 className="flex-1 overflow-y-auto no-scrollbar px-4">
+
     {/* 情况 A：假期模式 */}
-    {checkInConfig?.isVacationMode && (
-      <div className="pt-2 pb-4">
-        <VacationCard />
-      </div>
+  <div className="sticky top-0 z-20 bg-[#E8E6E1] pt-2 pb-2">
+    {checkInConfig?.isVacationMode ? (
+      <VacationCard />
+    ) : (
+      <CheckInSection />
     )}
-     {/* 情况 B：正常的打卡和列表（如果你想假期也看列表，就把下面的 ! 删掉） */}
-    {!checkInConfig?.isVacationMode && <CheckInSection />} 
-    
+  </div>
+     {/* 第二层吸顶：正常的打卡和列表 */}
     {/* 课程列表头 */}
     <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">
       <h3 className="text-textSub font-medium">{t.courseList}</h3>
