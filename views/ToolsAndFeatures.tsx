@@ -580,7 +580,7 @@ const weeklyData = Array.from({length: 7}, (_, i) => {
 });
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar p-4 space-y-4 pb-48 md:pb-0 relative">
+    <div className="h-full overflow-y-auto no-scrollbar p-4 space-y-4 pb-24 md:pb-0 relative">
       <div className="bg-cloud rounded-3xl p-6 shadow-sm border border-white/50 text-center">
         <div className="inline-block text-left max-w-full">
             {completedItems.length > 0 ? (
