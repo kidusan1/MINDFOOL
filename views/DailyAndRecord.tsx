@@ -420,9 +420,10 @@ className="flex-1 overflow-y-auto no-scrollbar px-4">
   </div>
      {/* 第二层吸顶：正常的打卡和列表 */}
     {/* 课程列表头 */}
-    <div className="sticky top-0 z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">
-      <h3 className="text-textSub font-medium">{t.courseList}</h3>
-      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">{classVersion}{tApp.class}</span>
+    <div className="sticky top-[138px] z-10 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50 mb-3">      
+    <h3 className="text-textSub font-medium">{t.courseList}</h3>
+      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
+      {classVersion}{tApp.class}</span>
     </div>
     {/* 课程列表容器 */}
     <div className="space-y-3">
