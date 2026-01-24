@@ -405,28 +405,22 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
 {/* 中间滚动区 */}
-<div 
-ref={mobileScrollRef}
-onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
-className="flex-1 overflow-y-auto no-scrollbar px-4">
-
+<div ref={mobileScrollRef} className="flex-1 overflow-y-auto no-scrollbar px-4">
+<div className="sticky top-0 z-30 bg-[#E8E6E1] -mx-4 px-4">
     {/* 情况 A：假期模式 */}
-  <div className="sticky top-0 z-30 bg-[#E8E6E1] pt-2 pb-2">
+  <div className="pt-2 pb-2">
   {checkInConfig?.isVacationMode ? <VacationCard /> : <CheckInSection />}
   </div>
      {/* 第二层吸顶：正常的打卡和列表 */}
     {/* 课程列表头 */}
-    <div className="sticky z-20 bg-[#E8E6E1] py-3 flex items-center justify-between border-b border-gray-200/50"
-        style={{ 
-            top: '126px',
-         }}  
-         >   
+    <div className="py-3 flex items-center justify-between border-b border-gray-200/50">        
     <h3 className="text-textSub font-medium">{t.courseList}</h3>
       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
       {classVersion}{tApp.class}</span>
     </div>
+    </div>
     {/* 课程列表容器 */}
-    <div className="relative z-10 space-y-3">
+    <div className="rmt-3 space-y-3">
       {renderCourses()}
       {/* 1. 增加底部的提示文字，确保它在滚动区域内 */}
       <div className="pt-8 pb-4 flex justify-center items-center">  
