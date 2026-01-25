@@ -335,26 +335,41 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   );
 
   useEffect(() => {
-    if (globalCourseScrollTop > 0 && courses && courses.length > 0) {
-      const timer = setTimeout(() => {
-        // 获取当前活跃的容器
-        const container = mobileScrollRef.current || desktopScrollRef.current;
-        
-        if (container) {
-          // 💡 关键改动：使用 scrollTo({ top: ... }) 替代直接赋值 scrollTop
-          // 这种方式在现代浏览器中触发滚动更加可靠
-          container.scrollTo({
-            top: globalCourseScrollTop,
-            behavior: 'auto' // 必须是 auto，否则会有滑动动画延迟
-          });
-          console.log("已尝试还原高度:", globalCourseScrollTop);
+    // 如果没有记忆，或者还没数据，就不执行
+    if (globalCourseScrollTop <= 0 || !courses?.length) return;
+  
+    // 1. 自动识别当前生效的容器
+    const isMobile = window.innerWidth < 768;
+    const container = isMobile ? mobileScrollRef.current : desktopScrollRef.current;
+  
+    if (!container) return;
+  
+    // 2. 定义还原动作
+    const restore = () => {
+      // 🚩 核心：只有当内容高度足以支撑我们要还原的位置时才执行
+      // 这样避免了“数据还没加载完就滚动导致回弹到顶部”的失败经验
+      if (container.scrollHeight > globalCourseScrollTop) {
+        container.scrollTop = globalCourseScrollTop;
+        return true;
+      }
+      return false;
+    };
+  
+    // 3. 递归式检查还原
+    if (!restore()) {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        // 每 100ms 检查一次高度，高度够了就还原并清除定时器
+        // 最多尝试 20 次（2秒），防止死循环
+        if (restore() || attempts > 20) {
+          clearInterval(interval);
         }
-      }, 100); 
-      return () => clearTimeout(timer);
+      }, 100);
+      return () => clearInterval(interval);
     }
-}, [courses]); // 🚩 这里的 [courses] 很关键，确保列表出来后再滚
-
-
+  }, [courses, checkInConfig?.isVacationMode]);
+  
   return (
       <>
       <div className="h-full overflow-hidden">
@@ -405,7 +420,9 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
 {/* 中间滚动区 */}
-<div ref={mobileScrollRef} className="flex-1 overflow-y-auto no-scrollbar px-4">
+<div ref={mobileScrollRef} 
+  onScroll={(e) => { globalCourseScrollTop = e.currentTarget.scrollTop; }}
+className="flex-1 overflow-y-auto no-scrollbar px-4">
 <div className="sticky top-0 z-30 bg-[#E8E6E1] -mx-4 px-4">
     {/* 情况 A：假期模式 */}
   <div className="pt-2 pb-2">
