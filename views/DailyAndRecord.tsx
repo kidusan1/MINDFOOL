@@ -335,46 +335,43 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   );
 
   useEffect(() => {
-    // 如果没有记忆，或者还没数据，就不执行
+    // 逻辑不变
     if (globalCourseScrollTop <= 0 || !courses?.length) return;
   
-    // 1. 自动识别当前生效的容器
     const isMobile = window.innerWidth < 768;
     const container = isMobile ? mobileScrollRef.current : desktopScrollRef.current;
   
     if (!container) return;
   
-    // 2. 定义还原动作
     const restore = () => {
-      // 🚩 核心：只有当内容高度足以支撑我们要还原的位置时才执行
-      // 这样避免了“数据还没加载完就滚动导致回弹到顶部”的失败经验
-      if (container.scrollHeight > globalCourseScrollTop) {
+      // 🚩 核心修正：增加 container.offsetParent !== null
+      // 作用：确保只有当前“正显示在屏幕上”的容器才会执行滚动。
+      // 这能解决“电脑端运行时误触发了手机端逻辑”导致的页面偏移。
+      if (container.offsetParent !== null && container.scrollHeight > globalCourseScrollTop) {
         container.scrollTop = globalCourseScrollTop;
         return true;
       }
       return false;
     };
   
-    // 3. 递归式检查还原
+    // 递归逻辑保持原样，无需改动
     if (!restore()) {
       let attempts = 0;
       const interval = setInterval(() => {
         attempts++;
-        // 每 100ms 检查一次高度，高度够了就还原并清除定时器
-        // 最多尝试 20 次（2秒），防止死循环
         if (restore() || attempts > 20) {
           clearInterval(interval);
         }
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [courses, checkInConfig?.isVacationMode]);
+}, [courses, checkInConfig?.isVacationMode]);
   
   return (
       <>
       <div className="h-full overflow-hidden">
    {/* --- 电脑端布局 --- */}
-<div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center">
+<div className="hidden md:flex w-full h-[calc(100vh-100px)] gap-8 p-6 items-center justify-center relative">
   {/* 左侧固定 */}
   <div className="shrink-0 w-80">
     {checkInConfig?.isVacationMode ? <VacationCard /> : (
@@ -386,8 +383,7 @@ if (course.status === CourseStatus.IN_PROGRESS) {
   </div>
 
   {/* 右侧课程卡片：这里的 flex flex-col 和 min-h-0 是关键 */}
-  <div className="flex-1 max-w-3xl h-full min-h-0 flex flex-col bg-white/50 rounded-[32px] border border-white/60 shadow-sm overflow-hidden">
-    
+  <div className="flex-1 max-w-3xl h-full min-h-0 flex flex-col bg-white/50 rounded-[32px] border border-white/60 shadow-sm overflow-hidden">    
     {/* 标题栏：确保它 shrink-0（不被压缩） */}
     <div className="shrink-0 h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white/40 backdrop-blur-md">
       <h3 className="text-xl text-textSub font-medium">{t.courseList}</h3>
