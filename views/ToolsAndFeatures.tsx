@@ -188,16 +188,16 @@ export const BreathingView: React.FC<BreathingViewProps> = ({ onAddMinutes, lang
   const getTransitionDuration = () => (phase === 'In' || phase === 'Out') ? '4000ms' : '0ms';
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center min-h-[500px]">
-      <div className="relative flex items-center justify-center mb-8" style={{ width: MAX_SIZE, height: MAX_SIZE }}>
+<div className="h-full overflow-y-auto no-scrollbar flex flex-col items-center justify-start pt-12 md:pt-0 md:justify-center min-h-[480px]">      
+  <div className="relative flex items-center justify-center mb-4" style={{ width: MAX_SIZE, height: MAX_SIZE }}>
         <div 
           className="rounded-full bg-secondary/50 backdrop-blur-sm shadow-[0_0_40px_rgba(169,198,207,0.4)] flex items-center justify-center transition-all"
-          style={{ width: '180px', height: '180px', transform: `scale(${getScale()})`, transitionDuration: getTransitionDuration() }}
+          style={{ width: '160px', height: '160px', transform: `scale(${getScale()})`, transitionDuration: getTransitionDuration() }}
         >
           <div className={`absolute inset-0 rounded-full border border-primary/20 ${isActive ? 'animate-pulse' : ''}`}></div>
         </div>
       </div>
-      <div className="h-10 flex items-center justify-center mb-8">
+      <div className="h-10 flex items-center justify-center mb-6">
          <h2 className="text-3xl font-light text-primary tracking-widest">{text}</h2>
       </div>
       <button onClick={() => { playSound('confirm'); setIsActive(!isActive); }} className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform">
