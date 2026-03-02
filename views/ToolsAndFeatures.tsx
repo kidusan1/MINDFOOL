@@ -5,6 +5,7 @@ import { Icons } from '../components/Icons';
 import { ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import { toPng } from 'html-to-image';
 import { supabase } from '../src/supabaseClient';
+
 // 直接注入行楷字体样式
 if (typeof document !== 'undefined') {
   const styleId = 'poster-font-style';
@@ -561,14 +562,15 @@ export const StatsView: React.FC<{
 
 
 
-// --- 修改后的逻辑：从“昨天”起倒推 7 天 ---
+// --- 修改后的逻辑：从“昨天”起倒推 7 天 (仅加固北京时间) ---
 const weeklyData = Array.from({length: 7}, (_, i) => {
-  const today = new Date();
-  // 基于本地时间创建日期对象，避免时区偏移
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  d.setDate(d.getDate() - (7 - i)); 
+  // 1. 这一步确保 today 永远是北京时间
+  const today = new Date(new Date().getTime() + (new Date().getTimezoneOffset() + 480) * 60000);
   
-  // 生成 YYYY-MM-DD 格式，确保与 App.tsx 的 getBeijingDateString 匹配
+  // 2. 以下完全保留你原有的变量和逻辑
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  d.setDate(d.getDate() - (7 - i)); // 严格保持 7-i
+  
   const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   
   const val = history[dateKey] || 0;
