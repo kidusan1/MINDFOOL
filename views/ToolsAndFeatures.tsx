@@ -711,14 +711,23 @@ useEffect(() => {
   }
 }, [showDetails, lang]);
 
-    const blueBoxText = useMemo(() => {
-      const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
-      if (lang === 'zh') {
-          return `今天我已完成 ${items}，回向大家色身康泰、福慧增长、道业增上，世间法所求如愿，随喜赞叹各位伙伴！`;
-      } else {
-          return `I have completed ${items} today. Dedicated to everyone’s well-being, blessings, wisdom, and spiritual growth. May all wishes be fulfilled. Rejoicing in all！`;
-      }
-  }, [completedItems, lang]);
+const blueBoxText = useMemo(() => {
+  const items = completedItems.map(i => i.name).join(lang === 'zh' ? '、' : ', ');
+  
+  // 这里的文案严格保持了你要求的原文
+  const dedicationZh = "回向大家色身康泰、福慧增长、道业增上，世间法所求如愿，随喜赞叹各位伙伴！";
+  const dedicationEn = "Dedicated to everyone’s well-being, blessings, wisdom, and spiritual growth. May all wishes be fulfilled. Rejoicing in all！";
+
+  if (lang === 'zh') {
+      return completedItems.length > 0 
+        ? `今天我已完成 ${items}，${dedicationZh}`
+        : dedicationZh;
+  } else {
+      return completedItems.length > 0 
+        ? `I have completed ${items} today. ${dedicationEn}`
+        : dedicationEn;
+  }
+}, [completedItems, lang]);
 
   return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
