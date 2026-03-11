@@ -824,9 +824,11 @@ useEffect(() => {
         else if (thisWeekData.checkInStatus === '线上打卡') setCheckInStatus(CheckInType.ONLINE);
         else setCheckInStatus(CheckInType.NONE);
     } else {
-      console.log("上课期间暂无本周记录，不重置 UI 状态");
+      console.log("上课期间暂无本周记录，重置为初始状态");
+      setCurrentWeek(initialLeaveState);
+      setCheckInStatus(CheckInType.NONE);
     }
-  }, [currentUser, weeklyStates, weekShift, currentWeekRangeStr]);
+  }, [currentUser, weeklyStates, weekShift, currentWeekRangeStr, checkInConfig?.isVacationMode]);
 
   const dailyStats = useMemo(() => {
     const stats = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
