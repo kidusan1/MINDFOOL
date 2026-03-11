@@ -828,8 +828,8 @@ useEffect(() => {
       setCurrentWeek(initialLeaveState);
       setCheckInStatus(CheckInType.NONE);
     }
-  }, [currentUser, weeklyStates, weekShift, currentWeekRangeStr, checkInConfig?.isVacationMode]);
-
+  }, [currentUser?.id, weeklyStates, weekShift, currentWeekRangeStr, checkInConfig?.isVacationMode]);
+  
   const dailyStats = useMemo(() => {
     const stats = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
     return {
