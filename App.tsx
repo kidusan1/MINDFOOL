@@ -831,11 +831,18 @@ useEffect(() => {
   }, [currentUser?.id, weeklyStates, weekShift, currentWeekRangeStr, checkInConfig?.isVacationMode]);
   
   const dailyStats = useMemo(() => {
-    const stats = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+    const raw = currentUser ? (userStatsMap[currentUser.id] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 }) : { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
+    
+    // 直接在 map 时进行清洗，不引入新变量
+    const stats = {nianfo: (raw.nianfo > 1440 || raw.nianfo < 0) ? 0 : (raw.nianfo || 0),
+      baifo: (raw.baifo > 1440 || raw.baifo < 0) ? 0 : (raw.baifo || 0),
+      zenghui: (raw.zenghui > 1440 || raw.zenghui < 0) ? 0 : (raw.zenghui || 0),
+      breath: (raw.breath > 1440 || raw.breath < 0) ? 0 : (raw.breath || 0),
+    };
     return {
       ...stats,
-      // 这里主动算好总和，方便 UI 和排名逻辑直接调用
-      total_minutes: (stats.nianfo || 0) + (stats.baifo || 0) + (stats.zenghui || 0) + (stats.breath || 0)
+      // 这里的计算现在是基于安全的数字了
+      total_minutes: stats.nianfo + stats.baifo + stats.zenghui + stats.breath
     };
   }, [currentUser, userStatsMap]);
 
@@ -878,6 +885,7 @@ if (!currentUser || minutes < 1) {
   
   const todayStr = getBeijingDateString();
   const userId = currentUser.id;
+  const safeMinutesToAdd = minutes > 1440 ? 0 : minutes;
   const key = type === TimerType.NIANFO ? 'nianfo' 
             : type === TimerType.BAIFO ? 'baifo'
             : type === TimerType.ZENGHUI ? 'zenghui' : 'breath';
@@ -885,12 +893,25 @@ if (!currentUser || minutes < 1) {
 
   // . 计算新数据
   const currentStats = userStatsMap[userId] || { nianfo: 0, baifo: 0, zenghui: 0, breath: 0 };
-  const updatedStats = {
+  // 💡 再次防御：如果累加后超过 24 小时，也重置
+  let nextVal = (currentStats[key] || 0) + safeMinutesToAdd;
+  if (nextVal > 1440 || nextVal < 0) nextVal = 0;
+  // 3. 组装更新对象
+  let updatedStats = {
     ...currentStats,
-    [key]: (currentStats[key] || 0) + minutes
+    [key]: nextVal 
   };
-  const newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
-
+ // 4. 计算总和（如果总和也超标，全项熔断归零）
+ let newTotal = (updatedStats.nianfo || 0) + (updatedStats.baifo || 0) + (updatedStats.zenghui || 0) + (updatedStats.breath || 0);
+  
+ if (newTotal > 1440) {
+   // 💡 终极防御：总和超标，把所有分项都重置为 0
+   updatedStats.nianfo = 0;
+   updatedStats.baifo = 0;
+   updatedStats.zenghui = 0;
+   updatedStats.breath = 0;
+   newTotal = 0;
+ }
   // 3. 更新本地 UI (立即生效)
   // 更新今日数字
   setUserStatsMap(prev => ({ 
@@ -901,6 +922,7 @@ if (!currentUser || minutes < 1) {
   // 更新趋势图（柱状图）
   setUserHistoryMap(prev => {
     const userHist = prev[userId] || {};
+    const dailyIncrement = newTotal === 0 ? 0 : safeMinutesToAdd;
     return {
       ...prev,
       [userId]: { ...userHist, [todayStr]: (userHist[todayStr] || 0) + minutes }
